@@ -2622,3 +2622,14 @@ Stack trace:
 Stack trace:
 #0 {main}
   thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[11-Sep-2025 07:54:12 Europe/Rome] LOGIN: POST ricevuto
+[11-Sep-2025 07:56:31 Europe/Rome] PHP Fatal error:  Cannot redeclare e() (previously declared in /home/bwlxtuul/dojo.villaggiotramonto.it/core/security.php:3) in /home/bwlxtuul/dojo.villaggiotramonto.it/inventory/_role_guard.php on line 24
+[11-Sep-2025 09:48:30 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[11-Sep-2025 10:33:17 Europe/Rome] LOGIN: POST ricevuto
+[11-Sep-2025 14:54:21 Europe/Rome] LOGIN: POST ricevuto
+[11-Sep-2025 17:46:32 Europe/Rome] LOGIN: POST ricevuto
+[12-Sep-2025 07:44:57 Europe/Rome] LOGIN: POST ricevuto
+[12-Sep-2025 09:31:09 Europe/Rome] LOGIN: POST ricevuto

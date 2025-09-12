@@ -10,10 +10,10 @@ $user = current_user();
 
 // SE SEI GIÀ LOGGATO → DASHBOARD
 if ($user) {
-  header('Location: ' . $base . '/dashboard.php');
+  header('Location: dashboard.php');  
   exit;
 }else{
-     header('Location: ' . $base . '/login.php');
+     header('Location: login.php?msg=auth'); 
   exit; 
 }
 
