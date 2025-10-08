@@ -2633,3 +2633,771 @@ Stack trace:
 [11-Sep-2025 17:46:32 Europe/Rome] LOGIN: POST ricevuto
 [12-Sep-2025 07:44:57 Europe/Rome] LOGIN: POST ricevuto
 [12-Sep-2025 09:31:09 Europe/Rome] LOGIN: POST ricevuto
+[13-Sep-2025 17:41:47 Europe/Rome] LOGIN: POST ricevuto
+[13-Sep-2025 18:42:30 Europe/Rome] LOGIN: POST ricevuto
+[14-Sep-2025 17:06:12 Europe/Rome] LOGIN: POST ricevuto
+[15-Sep-2025 16:37:28 Europe/Rome] PHP Warning:  require(/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php on line 2
+[15-Sep-2025 16:37:28 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php on line 2
+[15-Sep-2025 16:39:51 Europe/Rome] PHP Warning:  require(/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php on line 2
+[15-Sep-2025 16:39:51 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/generate_vapid.php on line 2
+[15-Sep-2025 16:57:53 Europe/Rome] LOGIN: POST ricevuto
+[15-Sep-2025 17:37:56 Europe/Rome] LOGIN: POST ricevuto
+[15-Sep-2025 19:13:55 Europe/Rome] LOGIN: POST ricevuto
+[15-Sep-2025 19:20:03 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../core/db.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 3
+[15-Sep-2025 19:20:03 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../core/db.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php:3
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 3
+[15-Sep-2025 19:21:57 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../core/db.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 3
+[15-Sep-2025 19:21:57 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../core/db.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php:3
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(50): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 3
+[15-Sep-2025 19:25:16 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 4
+[15-Sep-2025 19:25:16 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php:4
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 4
+[15-Sep-2025 19:33:04 Europe/Rome] PHP Warning:  Undefined array key "data_esecuzione" in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 16
+[15-Sep-2025 19:33:04 Europe/Rome] PHP Warning:  require(/home/bwlxtuul/dojo.villaggiotramonto.it/../config/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 19
+[15-Sep-2025 19:33:04 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../config/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php:19
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): push_send_task_created()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 19
+[15-Sep-2025 19:33:45 Europe/Rome] PHP Warning:  require(/home/bwlxtuul/dojo.villaggiotramonto.it/../config/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 19
+[15-Sep-2025 19:33:45 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../config/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php:19
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): push_send_task_created()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/push_helpers.php on line 19
+[15-Sep-2025 23:10:45 Europe/Rome] LOGIN: POST ricevuto
+[16-Sep-2025 07:52:19 Europe/Rome] LOGIN: POST ricevuto
+[16-Sep-2025 07:56:30 Europe/Rome] LOGIN: POST ricevuto
+[16-Sep-2025 08:09:33 Europe/Rome] LOGIN: POST ricevuto
+[19-Sep-2025 18:13:29 Europe/Rome] LOGIN: POST ricevuto
+[20-Sep-2025 09:23:15 Europe/Rome] LOGIN: POST ricevuto
+[20-Sep-2025 10:58:43 Europe/Rome] LOGIN: POST ricevuto
+[20-Sep-2025 10:58:46 Europe/Rome] PHP Warning:  require_once(../core/auth.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 5
+[20-Sep-2025 10:58:46 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../core/auth.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:5
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 5
+[20-Sep-2025 10:59:27 Europe/Rome] PHP Warning:  require_once(../core/auth.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 5
+[20-Sep-2025 10:59:27 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../core/auth.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:5
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 5
+[20-Sep-2025 11:02:59 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/notification/core/auth.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 3
+[20-Sep-2025 11:02:59 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/notification/core/auth.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:3
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 3
+[20-Sep-2025 11:04:14 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/notification/core/security.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 4
+[20-Sep-2025 11:04:14 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/notification/core/security.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:4
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 4
+[20-Sep-2025 11:04:36 Europe/Rome] PHP Warning:  require(../config/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[20-Sep-2025 11:04:36 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../config/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:8
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[20-Sep-2025 11:04:52 Europe/Rome] PHP Warning:  require(../config/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[20-Sep-2025 11:04:52 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../config/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:8
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[20-Sep-2025 11:04:54 Europe/Rome] PHP Warning:  require(../config/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[20-Sep-2025 11:04:54 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '../config/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:8
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(5): require_once()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 8
+[21-Sep-2025 08:49:59 Europe/Rome] LOGIN: POST ricevuto
+[21-Sep-2025 10:34:49 Europe/Rome] LOGIN: POST ricevuto
+[21-Sep-2025 10:35:19 Europe/Rome] PHP Warning:  Undefined variable $data in /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php on line 45
+[21-Sep-2025 10:35:19 Europe/Rome] PHP Fatal error:  Uncaught TypeError: isToday(): Argument #1 ($date) must be of type string, null given, called in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 58 and defined in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:86
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php(58): isToday()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): notify()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 86
+[21-Sep-2025 20:28:43 Europe/Rome] LOGIN: POST ricevuto
+[21-Sep-2025 20:29:20 Europe/Rome] PHP Warning:  Undefined variable $data in /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php on line 45
+[21-Sep-2025 20:29:20 Europe/Rome] PHP Fatal error:  Uncaught TypeError: isToday(): Argument #1 ($date) must be of type string, null given, called in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 58 and defined in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:86
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php(58): isToday()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): notify()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 86
+[21-Sep-2025 20:34:50 Europe/Rome] PHP Warning:  Undefined variable $pdo in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 105
+[21-Sep-2025 20:34:50 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to a member function prepare() on null in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php:105
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php(59): getTelefoniByDipartimento()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/task_create.php(45): notify()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 105
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 64
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 67
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 70
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 73
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 77
+[21-Sep-2025 20:37:40 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 64
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 67
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 70
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 73
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 77
+[21-Sep-2025 20:37:41 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 66
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 69
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 72
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 75
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 80
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 66
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 69
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 72
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $i in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 75
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 80
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:41:42 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[21-Sep-2025 20:42:40 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 80
+[21-Sep-2025 20:42:40 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:42:40 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[21-Sep-2025 20:42:41 Europe/Rome] PHP Warning:  Undefined variable $numero in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 80
+[21-Sep-2025 20:42:41 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:42:41 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[21-Sep-2025 20:44:09 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:44:09 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[21-Sep-2025 20:44:09 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 20
+[21-Sep-2025 20:44:09 Europe/Rome] PHP Warning:  Undefined variable $mes in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 24
+[22-Sep-2025 21:17:30 Europe/Rome] LOGIN: POST ricevuto
+[23-Sep-2025 08:09:22 Europe/Rome] LOGIN: POST ricevuto
+[23-Sep-2025 09:02:59 Europe/Rome] LOGIN: POST ricevuto
+[23-Sep-2025 10:00:13 Europe/Rome] LOGIN: POST ricevuto
+[23-Sep-2025 11:44:23 Europe/Rome] LOGIN: POST ricevuto
+[23-Sep-2025 11:44:26 Europe/Rome] LOGIN: già autenticato, redirect a dashboard
+[23-Sep-2025 11:44:28 Europe/Rome] LOGIN: già autenticato, redirect a dashboard
+[23-Sep-2025 21:56:32 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 08:30:02 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 08:43:39 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 09:11:44 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 16:48:15 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 13
+[24-Sep-2025 16:48:15 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 15
+[24-Sep-2025 16:48:30 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 17:30:37 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 13
+[24-Sep-2025 17:30:37 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 15
+[24-Sep-2025 17:30:56 Europe/Rome] LOGIN: POST ricevuto
+[24-Sep-2025 18:09:38 Europe/Rome] LOGIN: POST ricevuto
+[25-Sep-2025 08:40:47 Europe/Rome] LOGIN: POST ricevuto
+[25-Sep-2025 09:37:20 Europe/Rome] PHP Fatal error:  Uncaught PDOException: There is no active transaction in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_create.php:50
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_create.php(50): PDO->commit()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_create.php on line 50
+[25-Sep-2025 09:38:42 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:44:21 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:45:05 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:45:21 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:45:24 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:45:45 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:51:24 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'camera' in 'SELECT'
+[25-Sep-2025 09:53:41 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'verso' in 'SELECT'
+[25-Sep-2025 09:54:24 Europe/Rome] Google Calendar create failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'localita' in 'SELECT'
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "localita" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 23
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "custom_localita" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 23
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "verso" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 25
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "camera" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 27
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "camera" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 29
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "verso" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 30
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "data" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 36
+[25-Sep-2025 10:15:46 Europe/Rome] PHP Warning:  Undefined array key "orario" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 36
+[25-Sep-2025 10:15:46 Europe/Rome] Google Calendar create failed: Data/Ora non valide
+[25-Sep-2025 10:22:14 Europe/Rome] Google Calendar create failed: Data/Ora non valide
+[25-Sep-2025 10:24:41 Europe/Rome] Google Calendar create failed: Data/Ora non valide
+[25-Sep-2025 10:55:39 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 10:56:25 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 11:26:04 Europe/Rome] PHP Warning:  Undefined variable $startDt in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 35
+[25-Sep-2025 11:26:04 Europe/Rome] Google Calendar create failed: Call to a member function format() on null
+[25-Sep-2025 11:26:30 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:20:42 Europe/Rome] LOGIN: POST ricevuto
+[25-Sep-2025 16:21:05 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:22:20 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:24:12 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:24:18 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:24:22 Europe/Rome] Google Calendar create failed: Call to a member function format() on bool
+[25-Sep-2025 16:31:48 Europe/Rome] Google Calendar create failed: Object of class DateTime could not be converted to string
+[25-Sep-2025 16:36:55 Europe/Rome] Google Calendar create failed: Object of class DateTime could not be converted to string
+[25-Sep-2025 18:24:04 Europe/Rome] LOGIN: POST ricevuto
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:24:07 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:25:25 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 3
+[25-Sep-2025 18:25:25 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 3
+[25-Sep-2025 18:26:21 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 3
+[25-Sep-2025 18:26:21 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php:3
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 3
+[25-Sep-2025 18:29:05 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.itgoogle/google_client.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 8
+[25-Sep-2025 18:29:05 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.itgoogle/google_client.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php:8
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 8
+[25-Sep-2025 18:29:17 Europe/Rome] PHP Warning:  require(/home/bwlxtuul/dojo.villaggiotramonto.itconfig/env.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 9
+[25-Sep-2025 18:29:17 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.itconfig/env.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php:9
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 9
+[25-Sep-2025 18:29:28 Europe/Rome] PHP Warning:  Undefined variable $user in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 12
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:14 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:17 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Undefined variable $row in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[25-Sep-2025 18:31:22 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 56
+[26-Sep-2025 08:19:14 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 08:33:18 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 08:34:06 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 08:53:11 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:02:43 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 09:02:57 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:07:22 Europe/Rome] PHP Warning:  Undefined array key "department" in /home/bwlxtuul/dojo.villaggiotramonto.it/partials/header.php on line 32
+[26-Sep-2025 09:07:22 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:11:45 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function user_is_reception_or_amministrazione() in /home/bwlxtuul/dojo.villaggiotramonto.it/partials/header.php:32
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php(14): include()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/partials/header.php on line 32
+[26-Sep-2025 09:12:19 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:12:55 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:25:24 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:25:39 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:30:20 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 09:30:44 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:36:42 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:37:50 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:37:52 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:38:15 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:40:30 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:40:33 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:40:34 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:40:35 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:44:26 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 09:44:30 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:44:34 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:50:43 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:53:53 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:57:16 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:57:19 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:57:20 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:57:45 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 09:59:43 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:00:37 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:01:03 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:02:00 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:09:40 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:18:41 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:20:27 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:20:31 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:20:32 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:20:33 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:20:34 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:14 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:15 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:16 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:16 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:17 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:18 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:18 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:21:19 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:22:20 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:22:45 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:22:50 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:25:51 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:28:32 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:28:34 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:28:35 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:28:36 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:29:52 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:29:56 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:29:57 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:29:58 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:30:14 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:30:50 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:30:53 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:32:16 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:39:20 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 10:39:23 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 10:40:08 Europe/Rome] PHP Warning:  Undefined array key "msg" in /home/bwlxtuul/dojo.villaggiotramonto.it/transfers_internal.php on line 24
+[26-Sep-2025 11:24:19 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 11:27:51 Europe/Rome] PHP Fatal error:  Cannot use empty array elements in arrays in /home/bwlxtuul/dojo.villaggiotramonto.it/google/calendar_transfers.php on line 57
+[26-Sep-2025 11:34:32 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 15:53:08 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 17:17:02 Europe/Rome] LOGIN: POST ricevuto
+[26-Sep-2025 17:18:50 Europe/Rome] LOGIN: POST ricevuto
+[27-Sep-2025 07:31:20 Europe/Rome] LOGIN: POST ricevuto
+[27-Sep-2025 11:25:01 Europe/Rome] LOGIN: POST ricevuto
+[27-Sep-2025 14:56:22 Europe/Rome] LOGIN: POST ricevuto
+[27-Sep-2025 15:03:30 Europe/Rome] LOGIN: POST ricevuto
+[28-Sep-2025 16:32:27 Europe/Rome] LOGIN: POST ricevuto
+[28-Sep-2025 17:16:36 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 06:40:49 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 09:23:24 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 13:30:55 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 14:25:53 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 19:21:18 Europe/Rome] LOGIN: POST ricevuto
+[29-Sep-2025 20:52:48 Europe/Rome] LOGIN: POST ricevuto
+[30-Sep-2025 07:33:18 Europe/Rome] LOGIN: POST ricevuto
+[30-Sep-2025 15:55:45 Europe/Rome] LOGIN: POST ricevuto
+[30-Sep-2025 17:06:37 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 13
+[30-Sep-2025 17:06:37 Europe/Rome] PHP Warning:  Undefined variable $token in /home/bwlxtuul/dojo.villaggiotramonto.it/notification/send-notification-chat.php on line 15
+[30-Sep-2025 20:18:06 Europe/Rome] LOGIN: POST ricevuto
+[30-Sep-2025 20:20:22 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[30-Sep-2025 20:20:29 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[30-Sep-2025 20:20:40 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[01-Oct-2025 09:18:02 Europe/Rome] LOGIN: POST ricevuto
+[01-Oct-2025 09:24:42 Europe/Rome] LOGIN: POST ricevuto
+[01-Oct-2025 10:30:23 Europe/Rome] LOGIN: POST ricevuto
+[01-Oct-2025 13:32:54 Europe/Rome] LOGIN: POST ricevuto
+[01-Oct-2025 13:33:06 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[01-Oct-2025 13:33:10 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[01-Oct-2025 13:33:13 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[01-Oct-2025 13:33:14 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[01-Oct-2025 13:33:19 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function logout() in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php:5
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/logout.php on line 5
+[01-Oct-2025 18:34:41 Europe/Rome] LOGIN: POST ricevuto
+[01-Oct-2025 19:29:39 Europe/Rome] LOGIN: POST ricevuto
+[02-Oct-2025 08:35:28 Europe/Rome] LOGIN: POST ricevuto
+[02-Oct-2025 11:49:04 Europe/Rome] LOGIN: POST ricevuto
+[02-Oct-2025 12:59:00 Europe/Rome] LOGIN: POST ricevuto
+[02-Oct-2025 13:04:44 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[02-Oct-2025 13:04:59 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[02-Oct-2025 16:29:16 Europe/Rome] LOGIN: POST ricevuto
+[02-Oct-2025 17:00:54 Europe/Rome] LOGIN: POST ricevuto
+[03-Oct-2025 09:35:39 Europe/Rome] LOGIN: POST ricevuto
+[03-Oct-2025 09:49:00 Europe/Rome] LOGIN: POST ricevuto
+[03-Oct-2025 13:08:52 Europe/Rome] LOGIN: POST ricevuto
+[03-Oct-2025 16:44:53 Europe/Rome] LOGIN: POST ricevuto
+[03-Oct-2025 20:15:22 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 09:40:31 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 10:12:04 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:12:04 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:13:45 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:13:45 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:13:53 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:13:53 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 2
+[04-Oct-2025 10:15:48 Europe/Rome] PHP Warning:  Undefined variable $user in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 6
+[04-Oct-2025 10:16:27 Europe/Rome] PHP Warning:  include(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/header.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 36
+[04-Oct-2025 10:16:27 Europe/Rome] PHP Warning:  include(): Failed opening '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/header.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 36
+[04-Oct-2025 10:16:27 Europe/Rome] PHP Warning:  include(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 91
+[04-Oct-2025 10:16:27 Europe/Rome] PHP Warning:  include(): Failed opening '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 91
+[04-Oct-2025 10:17:05 Europe/Rome] PHP Warning:  include(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 91
+[04-Oct-2025 10:17:05 Europe/Rome] PHP Warning:  include(): Failed opening '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_list.php on line 91
+[04-Oct-2025 10:18:02 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 2
+[04-Oct-2025 10:18:02 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 2
+[04-Oct-2025 10:18:36 Europe/Rome] PHP Warning:  include(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/header.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 61
+[04-Oct-2025 10:18:36 Europe/Rome] PHP Warning:  include(): Failed opening '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/header.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 61
+[04-Oct-2025 10:18:36 Europe/Rome] PHP Warning:  include(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 105
+[04-Oct-2025 10:18:36 Europe/Rome] PHP Warning:  include(): Failed opening '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/footer.php' for inclusion (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 105
+[04-Oct-2025 10:19:45 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../google/gcal_days_off.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 44
+[04-Oct-2025 10:19:45 Europe/Rome] PHP Fatal error:  Uncaught PDOException: There is no active transaction in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php:50
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php(50): PDO->rollBack()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_create.php on line 50
+[04-Oct-2025 10:34:10 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 10:54:25 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_delete.php on line 2
+[04-Oct-2025 10:54:25 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/../partials/_role_guard.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_delete.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/days_off_delete.php on line 2
+[04-Oct-2025 10:55:36 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:55:39 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:55:43 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:55:58 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:57:03 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:57:08 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:57:27 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:58:41 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:58:46 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:59:00 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 10:59:22 Europe/Rome] days_off delete: Call to undefined function gcal_days_off_delete()
+[04-Oct-2025 11:09:50 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "deleted",
+    "message": "Resource has been deleted"
+   }
+  ],
+  "code": 410,
+  "message": "Resource has been deleted"
+ }
+}
+
+[04-Oct-2025 12:26:25 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 12:28:20 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 12:28:20 Europe/Rome] LOGIN: utente non trovato per email=Bene89@live.it
+[04-Oct-2025 12:28:45 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 12:29:23 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[04-Oct-2025 12:32:28 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[04-Oct-2025 13:13:53 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 13:59:48 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 16:51:08 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 17:20:52 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 17:30:57 Europe/Rome] PHP Parse error:  Unclosed '{' on line 84 in /home/bwlxtuul/dojo.villaggiotramonto.it/dashboard.php on line 238
+[04-Oct-2025 17:37:41 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[04-Oct-2025 19:26:00 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 20:39:09 Europe/Rome] LOGIN: POST ricevuto
+[04-Oct-2025 22:29:09 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 08:43:59 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 09:20:45 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 09:21:30 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[05-Oct-2025 09:26:18 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 't.status!="completato"
+        ORDER BY t.due_date ASC, FIELD(t.priority,"urg...' at line 4 in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php:52
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php(52): PDOStatement->execute()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/tasks.php on line 52
+[05-Oct-2025 10:13:49 Europe/Rome] PHP Fatal error:  Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'p.deleted_at' in 'WHERE' in /home/bwlxtuul/dojo.villaggiotramonto.it/dashboard.php:262
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/dashboard.php(262): PDO->query()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/dashboard.php on line 262
+[05-Oct-2025 10:21:43 Europe/Rome] PHP Parse error:  Unmatched ')' in /home/bwlxtuul/dojo.villaggiotramonto.it/dashboard.php on line 243
+[05-Oct-2025 11:07:22 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 12:31:53 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 13:14:23 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 14:17:12 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 16:12:40 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 16:31:43 Europe/Rome] LOGIN: POST ricevuto
+[05-Oct-2025 17:58:14 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 11:10:48 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 12:05:04 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 12:06:47 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 12:43:40 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 15:08:26 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 16:00:06 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 16:34:48 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 18:49:20 Europe/Rome] LOGIN: POST ricevuto
+[06-Oct-2025 23:06:33 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 08:09:38 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 11:13:17 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 12:18:13 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 13:54:10 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 15:43:40 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 16:23:55 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 16:37:55 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 19:28:20 Europe/Rome] LOGIN: POST ricevuto
+[07-Oct-2025 20:21:42 Europe/Rome] LOGIN: POST ricevuto
+[08-Oct-2025 08:00:41 Europe/Rome] LOGIN: POST ricevuto
+[08-Oct-2025 08:38:48 Europe/Rome] LOGIN: POST ricevuto

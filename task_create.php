@@ -2,6 +2,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/notification/send-notification-chat.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -34,10 +35,27 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         $q = 'INSERT INTO tasks (title, description, priority, dipartimento, due_date, recurrence, created_by)
               VALUES (?,?,?,?,?,?,?)';
         $pdo->prepare($q)->execute([$title, $description, $priority, $dip, $due_date, $recurrence, $user['id']]);
+        
+        $taskId = (int)$pdo->lastInsertId();  // <-- qui prendi l’ID
+        
+        
+        
+        //$pdo->commit();
+         // invia la push
+        notify($title,$dip,$due_date,$priority, $description);
+
+
+        // redirect / messaggio di successo
+        header('Location: tasks.php?id=' . $taskId . '&msg=created');
+        exit;
+
+
+
+
         header('Location: ' . $base . '/tasks.php?view=mio');
         exit;
       } catch (PDOException $e) {
-        $message = 'Errore durante la creazione del compito.';
+        $message = 'Errore durante la creazione del compito.'.$e;
       }
     } else if(!$message) {
       $message = 'Compila titolo, descrizione e data.';

@@ -4,7 +4,8 @@ Header always set X-Frame-Options "SAMEORIGIN"
 Header always set X-Content-Type-Options "nosniff"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set X-XSS-Protection "1; mode=block"
-Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data:;"
+Header always set Content-Security-Policy "default-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://calendar.google.com https://www.google.com https://calendar.googleusercontent.com https://accounts.google.com; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:;"
+
 </IfModule>
 
 # BEGIN cPanel-generated php ini directives, do not edit
@@ -19,7 +20,7 @@ Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' ht
    php_value memory_limit 256M
    php_value post_max_size 128M
    php_value session.gc_maxlifetime 1440
-   php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php80"
    php_value upload_max_filesize 128M
    php_flag zlib.output_compression On
 </IfModule>
@@ -31,8 +32,15 @@ Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' ht
    php_value memory_limit 256M
    php_value post_max_size 128M
    php_value session.gc_maxlifetime 1440
-   php_value session.save_path "/var/cpanel/php/sessions/ea-php84"
+   php_value session.save_path "/var/cpanel/php/sessions/ea-php80"
    php_value upload_max_filesize 128M
    php_flag zlib.output_compression On
 </IfModule>
 # END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php80” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php80___lsphp .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

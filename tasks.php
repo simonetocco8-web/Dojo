@@ -27,9 +27,9 @@ if ($view === 'mio') {
   $args[] = $my_dep;
 } elseif ($view === 'tutti') {
   if ($is_admin) {
-    $where[] = 't.deleted_at IS NULL';
+    $where[] = 't.deleted_at IS NULL AND t.status!="completato"';
   } else {
-    $where[] = 't.deleted_at IS NULL AND t.dipartimento = ?';
+    $where[] = 't.deleted_at IS NULL AND t.dipartimento = ? t.status!="completato"';
     $args[] = $my_dep;
   }
 } elseif ($view === 'completati') {

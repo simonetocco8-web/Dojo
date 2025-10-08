@@ -7,6 +7,18 @@ $message = '';
 $categories = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
 $units = ['pacco','cartone','blister','Bottiglia','Busta','confezione'];
 
+
+$suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+function supplier_options(array $suppliers, ?int $selectedId = null): string {
+  $html = '<option value="">— Nessuno —</option>';
+  foreach ($suppliers as $s) {
+    $sel = ($selectedId !== null && (int)$s['id'] === (int)$selectedId) ? ' selected' : '';
+    $html .= '<option value="'.(int)$s['id'].'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
+  }
+  return $html;
+}
+
 // ... in cima al file già hai require e $categories / $units ...
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -20,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $unit  = trim($_POST['unit'] ?? '');
     $min   = (float)($_POST['min_qty'] ?? 0);
     $max   = (float)($_POST['max_qty'] ?? 0);
+    $supplier_id = trim($_POST['supplier_id'] ?? null); 
+
 
     // Normalizza/valida enum esattamente come in DB
     if (!in_array($cat, $categories, true)) {
@@ -32,12 +46,12 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $message = 'Sessione non valida: utente non rilevato.';
     } else {
       $stmt = $pdo->prepare("
-        INSERT INTO products (title, ean13, category, unit, min_qty, max_qty, created_by)
-        VALUES (?,?,?,?,?,?,?)
+        INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)
+        VALUES (?,?,?,?,?,?,?,?)
       ");
       try {
-        $stmt->execute([$title, $ean, $cat, $unit, $min, $max, $user['id']]);
-        header('Location: ' . ($base ? $base.'/' : '') . 'products.php');
+        $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
+        header('Location: ' . ($base ? $base.'/' : '') . 'inventory/products.php');
         exit;
       } catch (PDOException $e) {
         $sqlstate = $e->getCode();          // es. '23000'
@@ -92,6 +106,12 @@ include __DIR__ . '/../partials/header.php';
             <div class="col-md-2">
               <label class="form-label">Max</label>
               <input type="number" step="0.001" name="max_qty" class="form-control" value="0">
+            </div>
+             <div class="col-md-4">
+              <label class="form-label">Fornitore</label>
+               <select name="supplier_id" class="form-select">
+                <?= supplier_options($suppliers, null) ?>
+                </select>
             </div>
           </div>
           <div class="mt-3 d-flex gap-2">

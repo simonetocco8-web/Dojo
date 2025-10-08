@@ -2,6 +2,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/google/calendar_transfers.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -44,6 +45,24 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         } else {
           $ins = $pdo->prepare('INSERT INTO transfers_internal (room_number, direction, location, when_at, created_by) VALUES (?,?,?,?,?)');
           $ins->execute([$room, $direction, $location, $when_at->format('Y-m-d H:i:s'), $user['id']]);
+          
+            $transferId = (int)$pdo->lastInsertId();   // <-- ECCO L'ID
+          //  $pdo->commit();
+          echo "Sono qui".$transferId;
+          
+        try {
+          gcal_create_event_for_internal_transfer($pdo, $transferId);
+        } catch (Throwable $e) {
+          error_log('Google Calendar create failed: '.$e->getMessage());
+          // Non bloccare l’utente: il transfer è creato; al limite ritenta via coda/cron
+        }
+
+
+
+          
+          
+         
+          
           header('Location: ' . $base . '/transfers_internal.php');
           exit;
         }

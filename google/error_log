@@ -1,0 +1,60 @@
+[24-Sep-2025 12:12:19 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/google/../vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:12:19 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/google/../vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:14:55 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:14:55 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:15:33 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/google/vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:15:33 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/google/vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 2
+[24-Sep-2025 12:16:04 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:16:04 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:16:04 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[24-Sep-2025 12:16:04 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[24-Sep-2025 12:16:04 Europe/Rome] PHP Fatal error:  Uncaught InvalidArgumentException: missing the required client identifier in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php:843
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php(447): Google\Auth\OAuth2->buildFullAuthorizationUri()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php(11): Google\Client->createAuthUrl()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php on line 843
+[24-Sep-2025 12:44:33 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:44:33 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:44:33 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[24-Sep-2025 12:44:33 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[24-Sep-2025 12:44:33 Europe/Rome] PHP Fatal error:  Uncaught InvalidArgumentException: missing the required client identifier in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php:843
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php(447): Google\Auth\OAuth2->buildFullAuthorizationUri()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php(11): Google\Client->createAuthUrl()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php on line 843
+[24-Sep-2025 12:44:35 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:44:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php on line 6
+[24-Sep-2025 12:44:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[24-Sep-2025 12:44:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[24-Sep-2025 12:44:35 Europe/Rome] PHP Fatal error:  Uncaught InvalidArgumentException: missing the required client identifier in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php:843
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php(447): Google\Auth\OAuth2->buildFullAuthorizationUri()
+#1 /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php(11): Google\Client->createAuthUrl()
+#2 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/google/auth/src/OAuth2.php on line 843
+[24-Sep-2025 17:02:21 Europe/Rome] PHP Fatal error:  Uncaught InvalidArgumentException: file "/home/bwlxtuul/dojo.villaggiotramonto.it/config/google_client_secret.json" does not exist in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php:1034
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php(6): Google\Client->setAuthConfig()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1034
+[24-Sep-2025 17:07:40 Europe/Rome] PHP Fatal error:  Uncaught InvalidArgumentException: file "/home/bwlxtuul/dojo.villaggiotramonto.it/config/google_client_secret.json" does not exist in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php:1034
+Stack trace:
+#0 /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth_login.php(6): Google\Client->setAuthConfig()
+#1 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1034
+[24-Sep-2025 17:15:17 Europe/Rome] PHP Warning:  require_once(/home/bwlxtuul/dojo.villaggiotramonto.it/google/../vendor/autoload.php): Failed to open stream: No such file or directory in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth2callback.php on line 2
+[24-Sep-2025 17:15:17 Europe/Rome] PHP Fatal error:  Uncaught Error: Failed opening required '/home/bwlxtuul/dojo.villaggiotramonto.it/google/../vendor/autoload.php' (include_path='.:/opt/alt/php82/usr/share/pear:/opt/alt/php82/usr/share/php:/usr/share/pear:/usr/share/php') in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth2callback.php:2
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/google/oauth2callback.php on line 2

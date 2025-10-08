@@ -28,6 +28,7 @@ $rows = $pdo->query("
       <a class="btn btn-sm btn-outline-success" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a>
       <a class="btn btn-sm btn-outline-warning" href="<?= e($base) ?>/inventory/allineamento.php">Allineamento</a>
       <a class="btn btn-sm btn-outline-dark" href="<?= e($base) ?>/inventory/trasferimento.php">Trasferimento</a>
+      <a class="btn btn-sm btn-outline-dark" href="<?= e($base) ?>/suppliers/suppliers_list.php">Fornitori</a>
     <?php elseif (is_bar_or_amministrazione()): ?>
       <a class="btn btn-sm btn-outline-success" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a>
     <?php endif; ?>
