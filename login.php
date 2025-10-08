@@ -31,35 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $u = $st->fetch();
       if ($u) {
         $ok = password_verify($password, $u['password_hash']);
-        
-        
-        
-        
-        
-        start_session();                        // assicura che sia attiva
-session_regenerate_id(true);            // sicurezza: nuovo ID
-$_SESSION['user_id']    = $u['id'];
-$_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // opzionale
-
-session_write_close();                  // <— salva e chiudi il file di sessione
-header('Location: dashboard.php');      // usa redirect RELATIVO
-exit;
-
-
-
-
-
-
-
-
-
-
         error_log('LOGIN: utente trovato id='.$u['id'].' pwd_ok=' . ($ok?'1':'0'));
         if ($ok) {
-          session_regenerate_id(true);        
+          session_regenerate_id(true);
           $_SESSION['user_id'] = $u['id'];
           // rigenera token CSRF dopo login per sicurezza
           $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+          session_write_close();                  // — salva e chiudi il file di sessione
           header('Location: dashboard.php');  // <-- relativo! niente $base
           exit;
 
