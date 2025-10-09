@@ -32,6 +32,7 @@ Starter in PHP + MySQL con:
 /partials/{header.php,footer.php}
 /assets/style.css
 /database/{install.sql,password_reset.sql}
+/ewelink/{connect.php,callback.php,devices.php,device_action.php,disconnect.php}
 index.php
 dashboard.php
 users.php
@@ -40,3 +41,9 @@ password_reset.php
 logout.php
 .htaccess
 ```
+
+## Integrazione eWeLink
+- Compila la sezione `ewelink` in `config/env.php` con `client_id`, `client_secret` e l'URL pubblico di callback (es. `https://tua-app/ewelink/callback.php`).
+- Importa/aggiorna lo schema database con `database/install.sql` per creare la tabella `ewelink_tokens`.
+- Da menu “eWeLink” (visibile agli admin) collega l'account tramite OAuth 2.0.
+- Dopo l'autorizzazione potrai vedere l'elenco dei dispositivi Sonoff/eWeLink e inviare comandi on/off.

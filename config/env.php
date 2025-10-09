@@ -23,5 +23,16 @@ return [
     'smtp_port' => 587,
     'smtp_user' => '',
     'smtp_pass' => ''
+  ],
+  'ewelink' => [
+    'client_id' => '',
+    'client_secret' => '',
+    // URL pubblico verso ewelink/callback.php
+    'redirect_uri' => '',
+    // Endpoint di default (puoi sovrascriverli se usi una regione diversa)
+    'auth_base' => 'https://eu-apia.coolkit.cc',
+    'api_base' => 'https://eu-apia.coolkit.cc',
+    // Scopes consigliati: device lettura/scrittura
+    'scope' => 'userinfo:read device:read device:write'
   ]
 ];
