@@ -34,5 +34,10 @@ return [
     'api_base' => 'https://eu-apia.coolkit.cc',
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
+  ],
+  'google' => [
+    // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
+    'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
+    'oauth_token_json' =>  __DIR__ . '/../google/google_token.json' // percorso reale al file scaricato da Google Cloud
   ]
 ];
