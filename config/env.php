@@ -25,8 +25,8 @@ return [
     'smtp_pass' => ''
   ],
   'ewelink' => [
-    'client_id' => '',
-    'client_secret' => '',
+    'client_id' => 'mycTWeG1Fm3hO2iYW3QoOjbmmCiULMsQ',
+    'client_secret' => 'y4SwpC6cFcvEG5Kp3LMHP9JD2NXJxKGk',
     // URL pubblico verso ewelink/callback.php
     'redirect_uri' => '',
     // Endpoint di default (puoi sovrascriverli se usi una regione diversa)
