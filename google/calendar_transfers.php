@@ -1,8 +1,8 @@
 <?php
-require_once  '/home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php';
+require_once __DIR__ . '/google_client.php';
 
 function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?string {
-  $env = require  '/home/bwlxtuul/dojo.villaggiotramonto.it/config/env.php';
+  $env = require __DIR__ . '/../config/env.php';
   $calendarId = $env['google']['calendar_id'] ?? 'primary';
 
   // 1) Leggi transfer  
@@ -30,13 +30,11 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
 
   // 3) Start/End (default 30 minuti)
   $tz = new DateTimeZone('Europe/Rome');
-  
-   
-   
-// Crei un oggetto DateTime dalla stringa
-  $startDt = new DateTime($t['when_at']);
 
-  
+  // Crei un oggetto DateTime dalla stringa
+  $startDt = new DateTime($t['when_at'], $tz);
+
+
   if (!$startDt) throw new RuntimeException('Data/Ora non valide');
   $endDt = clone $startDt; $endDt->modify('+30 minutes');
 
