@@ -25,8 +25,8 @@ return [
     'smtp_pass' => ''
   ],
   'ewelink' => [
-    'client_id' => '',
-    'client_secret' => '',
+    'client_id' => 'mycTWeG1Fm3hO2iYW3QoOjbmmCiULMsQ',
+    'client_secret' => 'y4SwpC6cFcvEG5Kp3LMHP9JD2NXJxKGk',
     // URL pubblico verso ewelink/callback.php
     'redirect_uri' => '',
     // Endpoint di default (puoi sovrascriverli se usi una regione diversa)
@@ -34,5 +34,10 @@ return [
     'api_base' => 'https://eu-apia.coolkit.cc',
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
+  ],
+  'google' => [
+    // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
+    'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
+    'oauth_token_json' =>  __DIR__ . '/../google/google_token.json' // percorso reale al file scaricato da Google Cloud
   ]
 ];

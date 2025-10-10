@@ -37,7 +37,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php">Transfer</a></li>
         <?php endif; ?>
         <?php if($user && $user['role']==='admin'): ?>
-        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li>
+        <!--<li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li> -->
         <?php endif; ?>
        <?php if (user_is_bar_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/inventory/index_magazzino.php">Magazzino</a></li>
