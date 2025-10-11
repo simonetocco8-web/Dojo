@@ -47,6 +47,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php">Carico</a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php">Fornitori</a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php">Giorni liberi</a></li>
               </ul>
             </li>
         <?php endif; ?>
