@@ -40,6 +40,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <!--<li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li> -->
         <?php endif; ?>
         <?php if (user_is_bar_or_amministrazione($user)): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php">Giorni liberi</a></li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Magazzino</a>
               <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
@@ -47,7 +48,6 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php">Carico</a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php">Fornitori</a></li>
-                <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php">Giorni liberi</a></li>
               </ul>
             </li>
         <?php endif; ?>
