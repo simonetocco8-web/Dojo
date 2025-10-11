@@ -39,8 +39,16 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <?php if($user && $user['role']==='admin'): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li>
         <?php endif; ?>
-       <?php if (user_is_bar_or_amministrazione($user)): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/inventory/index_magazzino.php">Magazzino</a></li>
+        <?php if (user_is_bar_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Magazzino</a>
+              <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php">Prodotti</a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php">Carico</a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php">Fornitori</a></li>
+              </ul>
+            </li>
         <?php endif; ?>
       </ul>
       <div class="d-flex">
