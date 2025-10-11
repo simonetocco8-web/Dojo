@@ -1,7 +1,8 @@
 <?php
-require_once '/home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/autoload.php';
+require_once __DIR__ . '/google-api-client/vendor/autoload.php';
+
 function google_calendar_client(): Google\Service\Calendar {
-  $env = require  '/home/bwlxtuul/dojo.villaggiotramonto.it/config/env.php';
+  $env = require __DIR__ . '/../config/env.php';
   $client = new Google\Client();
   $client->setAuthConfig($env['google']['oauth_secret_json']);
   $client->setAccessType('offline');
