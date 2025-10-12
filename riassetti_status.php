@@ -1,0 +1,57 @@
+<?php
+require_once __DIR__ . '/core/auth.php';
+require_once __DIR__ . '/core/security.php';
+require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/roles.php';
+start_session();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+  http_response_code(405);
+  echo 'Metodo non consentito';
+  exit;
+}
+
+if (!csrf_check($_POST['csrf'] ?? '')) {
+  http_response_code(400);
+  echo 'Token CSRF non valido';
+  exit;
+}
+
+$env  = require __DIR__ . '/config/env.php';
+$base = rtrim($env['app']['base_url'] ?? '', '/');
+$pdo  = db();
+$user = current_user();
+if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+
+if (!(user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))) {
+  http_response_code(403);
+  echo 'Accesso negato';
+  exit;
+}
+
+$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+$action = $_POST['action'] ?? '';
+if ($id <= 0 || !in_array($action, ['complete','reopen'], true)) {
+  http_response_code(400);
+  echo 'Richiesta non valida';
+  exit;
+}
+
+$stmt = $pdo->prepare('SELECT id FROM riassetti WHERE id = ? LIMIT 1');
+$stmt->execute([$id]);
+if (!$stmt->fetchColumn()) {
+  http_response_code(404);
+  echo 'Riassetto non trovato';
+  exit;
+}
+
+if ($action === 'complete') {
+  $upd = $pdo->prepare('UPDATE riassetti SET completed_at = NOW(), completed_by = ?, updated_by = ?, updated_at = NOW() WHERE id = ?');
+  $upd->execute([$user['id'], $user['id'], $id]);
+} else {
+  $upd = $pdo->prepare('UPDATE riassetti SET completed_at = NULL, completed_by = NULL, updated_by = ?, updated_at = NOW() WHERE id = ?');
+  $upd->execute([$user['id'], $id]);
+}
+
+header('Location: ' . $base . '/riassetti.php?msg=completed');
+exit;

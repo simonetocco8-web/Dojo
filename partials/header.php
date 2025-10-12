@@ -51,6 +51,9 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
               </ul>
             </li>
         <?php endif; ?>
+        <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php">Riassetti</a></li>
+        <?php endif; ?>
       </ul>
       <div class="d-flex">
         <?php if($user): ?>

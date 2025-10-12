@@ -3,6 +3,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/roles.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -18,6 +19,7 @@ $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
 $my_dep   = $me['dipartimento'] ?? null;
+$can_see_riassetti = user_is_reception_or_amministrazione($user) || user_is_housekeeping($user);
 
 // --- Prossimi 5 TASK (stato aperto) ---
 // Admin: tutti; Non admin: solo del proprio dipartimento
@@ -57,6 +59,18 @@ $qExt = $pdo->prepare('SELECT id, type, place, date_time, pickup_time, room_numb
 $qExt->execute();
 $tex = $qExt->fetchAll();
 
+$riassettiToday = [];
+if ($can_see_riassetti) {
+  $tz = new DateTimeZone('Europe/Rome');
+  $todayRiassetto = (new DateTime('today', $tz))->format('Y-m-d');
+  $stRi = $pdo->prepare('SELECT id, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, completed_at
+                          FROM riassetti
+                          WHERE data_riassetto = ?
+                          ORDER BY room ASC, id ASC');
+  $stRi->execute([$todayRiassetto]);
+  $riassettiToday = $stRi->fetchAll();
+}
+
 $title = 'Dashboard';
 include __DIR__ . '/partials/header.php';
 
@@ -76,6 +90,14 @@ function it_dt($dts){ // Y-m-d H:i:s -> d/m/y H:i
   if(!$dts) return '';
   $d = new DateTime($dts);
   return $d->format('d/m/y H:i');
+}
+
+function riassetti_biancheria_short(array $row): string {
+  $parts = [];
+  if (!empty($row['qty_matrimoniale'])) $parts[] = $row['qty_matrimoniale'] . ' Matrimoniale';
+  if (!empty($row['qty_singola'])) $parts[] = $row['qty_singola'] . ' Singola';
+  if (!empty($row['qty_set_bagno'])) $parts[] = $row['qty_set_bagno'] . ' Set Bagno';
+  return $parts ? implode(', ', $parts) : 'Solo controllo';
 }
 
 
@@ -112,6 +134,50 @@ function it_dt($dts){ // Y-m-d H:i:s -> d/m/y H:i
       </div>
     </div>
   </div>
+  <?php if ($can_see_riassetti): ?>
+  <!-- BOX RIASSETTI -->
+  <div class="col-12 col-xl-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti di oggi</h2>
+          <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/riassetti.php" title="Vai alla sezione">Apri</a>
+        </div>
+        <?php if (empty($riassettiToday)): ?>
+          <div class="text-muted small">Nessun riassetto previsto per oggi.</div>
+        <?php else: ?>
+          <ul class="list-group list-group-flush">
+            <?php foreach ($riassettiToday as $ri): ?>
+              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                <div class="me-2">
+                  <div class="fw-semibold">Camera <?= e($ri['room']) ?></div>
+                  <div class="small text-muted">
+                    <?= e(riassetti_biancheria_short($ri)) ?>
+                    <?php if (!empty($ri['pulizia_extra'])): ?>
+                      · Pulizia extra
+                    <?php endif; ?>
+                  </div>
+                  <?php if (!empty(trim((string)($ri['note'] ?? '')))): ?>
+                    <div class="small">
+                      <?= nl2br(e($ri['note'])) ?>
+                    </div>
+                  <?php endif; ?>
+                </div>
+                <div class="text-end">
+                  <?php if (!empty($ri['completed_at'])): ?>
+                    <span class="badge bg-success">Completato</span>
+                  <?php else: ?>
+                    <span class="badge bg-info text-dark">Da fare</span>
+                  <?php endif; ?>
+                </div>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 <?php  if($my_dep!="Manutenzione"){ ?>
   <!-- BOX TRANSFER INTERNI -->
   <div class="col-12 col-xl-4">

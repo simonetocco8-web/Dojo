@@ -30,3 +30,11 @@ function user_is_reception_or_amministrazione($user = null) {
   $dep = $user['dipartimento'] ?? '';
   return in_array($dep, ['Amministrazione','Reception'], true);
 }
+
+function user_is_housekeeping($user = null) {
+  if ($user === null) $user = current_user();
+  if (!$user) return false;
+  if (user_is_admin($user)) return true;
+  $dep = $user['dipartimento'] ?? '';
+  return $dep === 'HouseKeeping';
+}

@@ -38,6 +38,7 @@ return [
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
     'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
-    'oauth_token_json' =>  __DIR__ . '/../google/google_token.json' // percorso reale al file scaricato da Google Cloud
+    'oauth_token_json' =>  __DIR__ . '/../google/google_token.json', // percorso reale al file scaricato da Google Cloud
+    'riassetti_calendar_id' => '13cbf1c11d4c3501563e17c909423fabeb42b3e74a7869f0dbaf6cfb6d12779b@group.calendar.google.com'
   ]
 ];
