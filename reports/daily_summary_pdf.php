@@ -375,13 +375,163 @@ function generate_daily_summary_pdf(?string $dateYmd = null, ?string $outputPath
     return $outputPath;
 }
 
+/**
+ * Recupera gli indirizzi email degli utenti attivi dei reparti Amministrazione e Reception.
+ *
+ * @param PDO $pdo
+ * @return string[]
+ */
+function fetch_daily_summary_recipients(PDO $pdo): array
+{
+    $stmt = $pdo->prepare(
+        "SELECT email\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND dipartimento IN ('Amministrazione','Reception')"
+    );
+    $stmt->execute();
+
+    $emails = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $validEmails = [];
+    foreach ($emails as $email) {
+        $email = trim((string)$email);
+        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $validEmails[$email] = true; // usa le chiavi per evitare duplicati
+        }
+    }
+
+    return array_keys($validEmails);
+}
+
+function encode_mime_header_utf8(string $value): string
+{
+    if (function_exists('mb_encode_mimeheader')) {
+        return mb_encode_mimeheader($value, 'UTF-8', 'B', "\r\n");
+    }
+
+    return '=?UTF-8?B?' . base64_encode($value) . '?=';
+}
+
+function log_mail_fallback(string $to, string $subject, string $body): void
+{
+    $logDir = __DIR__ . '/../storage';
+    if (!is_dir($logDir)) {
+        @mkdir($logDir, 0775, true);
+    }
+
+    $logPath = $logDir . '/mail.log';
+    $entry   = '[' . date('c') . "] TO:$to\nSUBJECT:$subject\n$body\n\n";
+    file_put_contents($logPath, $entry, FILE_APPEND);
+}
+
+/**
+ * Invia il PDF generato via email ai destinatari indicati.
+ *
+ * @param string[] $recipients
+ * @throws RuntimeException
+ */
+function send_daily_summary_pdf_email(array $recipients, string $subject, string $htmlBody, string $attachmentPath, string $attachmentFilename): void
+{
+    if (!$recipients) {
+        return;
+    }
+
+    if (!is_readable($attachmentPath)) {
+        throw new RuntimeException('Impossibile leggere il PDF generato per l\'invio.');
+    }
+
+    $pdfData = file_get_contents($attachmentPath);
+    if ($pdfData === false) {
+        throw new RuntimeException('Impossibile caricare il contenuto del PDF da allegare.');
+    }
+
+    $env       = require __DIR__ . '/../config/env.php';
+    $fromEmail = $env['mail']['from'] ?? 'no-reply@example.com';
+    $fromName  = $env['mail']['from_name'] ?? 'Admin';
+
+    $fromHeader   = encode_mime_header_utf8($fromName) . " <{$fromEmail}>";
+    $subjectFinal = encode_mime_header_utf8($subject);
+
+    $safeFilename = preg_replace('/[^A-Za-z0-9._-]/', '_', $attachmentFilename);
+    if ($safeFilename === '') {
+        $safeFilename = 'riepilogo.pdf';
+    }
+
+    $encodedPdf = chunk_split(base64_encode($pdfData));
+
+    foreach ($recipients as $email) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+
+        $boundary = '=_Part_' . bin2hex(random_bytes(16));
+
+        $headers = [
+            'From: ' . $fromHeader,
+            'Reply-To: ' . $fromHeader,
+            'MIME-Version: 1.0',
+            'Content-Type: multipart/mixed; boundary="' . $boundary . '"',
+        ];
+
+        $messageParts = [
+            '--' . $boundary,
+            'Content-Type: text/html; charset="UTF-8"',
+            'Content-Transfer-Encoding: 8bit',
+            '',
+            $htmlBody,
+            '',
+            '--' . $boundary,
+            'Content-Type: application/pdf; name="' . $safeFilename . '"',
+            'Content-Transfer-Encoding: base64',
+            'Content-Disposition: attachment; filename="' . $safeFilename . '"',
+            '',
+            $encodedPdf,
+            '',
+            '--' . $boundary . '--',
+            '',
+        ];
+
+        $message = implode("\r\n", $messageParts);
+        $headerString = implode("\r\n", $headers);
+
+        $ok = @mail($email, $subjectFinal, $message, $headerString);
+        if (!$ok) {
+            log_mail_fallback($email, $subject, $htmlBody . "\n[allegato: " . $safeFilename . ']');
+        }
+    }
+}
+
 if (PHP_SAPI === 'cli' && realpath($argv[0] ?? '') === __FILE__) {
-    $dateArg   = $argv[1] ?? null;
-    $pathArg   = $argv[2] ?? null;
+    $dateArg = $argv[1] ?? null;
+    $pathArg = $argv[2] ?? null;
 
     try {
         $generatedPath = generate_daily_summary_pdf($dateArg ?: null, $pathArg ?: null);
         fwrite(STDOUT, "PDF generato: {$generatedPath}\n");
+
+        $tz = new DateTimeZone('Europe/Rome');
+        $reportDate = $dateArg
+            ? DateTime::createFromFormat('Y-m-d', $dateArg, $tz)
+            : new DateTime('now', $tz);
+
+        if ($dateArg && !$reportDate) {
+            throw new RuntimeException('Formato data non valido.');
+        }
+
+        $pdo         = db();
+        $recipients  = fetch_daily_summary_recipients($pdo);
+        $displayDate = $reportDate->format('d/m/Y');
+
+        if ($recipients) {
+            $subject = 'Riepilogo giornaliero ' . $displayDate;
+            $body    = '<p>Buongiorno,</p>'
+                . '<p>in allegato trovi il riepilogo giornaliero del ' . $displayDate . '.</p>'
+                . '<p>Questo messaggio è stato generato automaticamente.</p>';
+            $filename = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
+
+            send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
+            fwrite(STDOUT, 'Email inviate a: ' . implode(', ', $recipients) . "\n");
+        } else {
+            fwrite(STDOUT, "Nessun destinatario trovato per l'invio del report.\n");
+        }
     } catch (Throwable $e) {
         fwrite(STDERR, 'Errore: ' . $e->getMessage() . "\n");
         exit(1);
