@@ -15,6 +15,21 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      WHERE t.deleted_at IS NULL
                      ORDER BY t.date_time ASC, t.id DESC')->fetchAll();
 
+$unpaidTotalsByCompany = [];
+foreach ($rows as $r) {
+    if (!($r['paid'] ?? 0)) {
+        $company = trim((string)($r['service_company'] ?? ''));
+        if ($company === '') {
+            $company = '—';
+        }
+
+        $price = $r['price_eur'];
+        if ($price !== null && $price !== '') {
+            $unpaidTotalsByCompany[$company] = ($unpaidTotalsByCompany[$company] ?? 0) + (float)$price;
+        }
+    }
+}
+
 $title = 'Transfere — Esterni';
 include __DIR__ . '/partials/header.php';
 ?>
@@ -154,6 +169,29 @@ include __DIR__ . '/partials/header.php';
         </tbody>
       </table>
     </div>
+    <?php if (!empty($unpaidTotalsByCompany)): ?>
+      <div class="mt-4 p-3 border rounded bg-light">
+        <h2 class="h6 mb-3">Totali non pagati per Compagnia</h2>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Compagnia</th>
+                <th class="text-end">Totale non pagato</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($unpaidTotalsByCompany as $company => $total): ?>
+              <tr>
+                <td><?= e($company) ?></td>
+                <td class="text-end">€ <?= e(number_format((float)$total, 2, ',', '.')) ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <?php endif; ?>
   </div>
 </div>
 
