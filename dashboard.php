@@ -184,7 +184,7 @@ function riassetti_biancheria_short(array $row): string {
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-building-check me-1"></i> Transfer Interni</h2>
+          <h2 class="h6 mb-0"><i class="bi bi-building-check me-1"></i>Prossimi Transfer Interni</h2>
           <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_internal.php" title="Vai alla sezione">Apri</a>
         </div>
         <?php if(empty($tin)): ?>
@@ -214,7 +214,7 @@ function riassetti_biancheria_short(array $row): string {
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-bus-front me-1"></i> Transfer Esterni</h2>
+          <h2 class="h6 mb-0"><i class="bi bi-bus-front me-1"></i>Prossimi Transfer Esterni</h2>
           <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_external.php" title="Vai alla sezione">Apri</a>
         </div>
         <?php if(empty($tex)): ?>
