@@ -547,7 +547,11 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
     }
 }
 
-if (PHP_SAPI === 'cli' && realpath($argv[0] ?? '') === __FILE__) {
+if (
+    PHP_SAPI === 'cli'
+    && isset($_SERVER['SCRIPT_FILENAME'])
+    && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__
+) {
     $dateArg = $argv[1] ?? null;
     $pathArg = $argv[2] ?? null;
 
