@@ -16,19 +16,32 @@ require_once __DIR__ . '/../dompdf/vendor/autoload.php';
  * the suppliers accepting orders. It returns the filesystem path of the saved
  * PDF so it can be consumed by a CRON job or any other automation.
  *
- * @param string|null $dateYmd     Date in Y-m-d format or null for today.
- * @param string|null $outputPath  Absolute path where the PDF should be saved.
- *                                 When null a file in the system temp directory
- *                                 will be created.
+ * @param string|null    $dateYmd            Date in Y-m-d format or null for today.
+ * @param string|null    $outputPath         Absolute path where the PDF should be saved.
+ *                                           When null a file in the system temp directory
+ *                                           will be created.
+ * @param PDO|null       $pdo                Existing PDO connection to reuse when available.
+ * @param Throwable|null $dbConnectionError  Receives the connection exception, if any.
  *
  * @throws InvalidArgumentException When the provided date is invalid.
  *
  * @return string The absolute path to the generated PDF file.
  */
-function generate_daily_summary_pdf(?string $dateYmd = null, ?string $outputPath = null): string
-{
-    $pdo = db();
-    $tz  = new DateTimeZone('Europe/Rome');
+function generate_daily_summary_pdf(
+    ?string $dateYmd = null,
+    ?string $outputPath = null,
+    ?PDO $pdo = null,
+    ?Throwable &$dbConnectionError = null
+): string {
+    if ($pdo === null && $dbConnectionError === null) {
+        try {
+            $pdo = db();
+        } catch (Throwable $exception) {
+            $dbConnectionError = $exception;
+        }
+    }
+
+    $tz = new DateTimeZone('Europe/Rome');
 
     if ($dateYmd === null) {
         $date = new DateTime('now', $tz);
@@ -43,53 +56,81 @@ function generate_daily_summary_pdf(?string $dateYmd = null, ?string $outputPath
     $displayDate = $date->format('d/m/Y');
 
     // --- Tasks (top 10 for the day) ---
-    $taskStmt = $pdo->prepare(
-        "SELECT title, description, priority, dipartimento, status\n         FROM tasks\n         WHERE deleted_at IS NULL\n           AND due_date = ?\n         ORDER BY FIELD(priority, 'urgente','alta','media','bassa') ASC, id DESC\n         LIMIT 10"
-    );
-    $taskStmt->execute([$dayYmd]);
-    $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $taskStmt = $pdo->prepare(
+            "SELECT title, description, priority, dipartimento, status\n         FROM tasks\n         WHERE deleted_at IS NULL\n           AND due_date = ?\n         ORDER BY FIELD(priority, 'urgente','alta','media','bassa') ASC, id DESC\n         LIMIT 10"
+        );
+        $taskStmt->execute([$dayYmd]);
+        $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $tasks = [];
+    }
 
     // --- Riassetti of the day ---
-    $riassettiStmt = $pdo->prepare(
-        "SELECT room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note\n         FROM riassetti\n         WHERE data_riassetto = ?\n         ORDER BY room ASC, id ASC"
-    );
-    $riassettiStmt->execute([$dayYmd]);
-    $riassetti = $riassettiStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $riassettiStmt = $pdo->prepare(
+            "SELECT room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note\n         FROM riassetti\n         WHERE data_riassetto = ?\n         ORDER BY room ASC, id ASC"
+        );
+        $riassettiStmt->execute([$dayYmd]);
+        $riassetti = $riassettiStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $riassetti = [];
+    }
 
     // --- Internal transfers ---
-    $internalStmt = $pdo->prepare(
-        "SELECT room_number, direction, location, when_at\n         FROM transfers_internal\n         WHERE deleted_at IS NULL\n           AND DATE(when_at) = ?\n         ORDER BY when_at ASC, id ASC"
-    );
-    $internalStmt->execute([$dayYmd]);
-    $internalTransfers = $internalStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $internalStmt = $pdo->prepare(
+            "SELECT room_number, direction, location, when_at\n         FROM transfers_internal\n         WHERE deleted_at IS NULL\n           AND DATE(when_at) = ?\n         ORDER BY when_at ASC, id ASC"
+        );
+        $internalStmt->execute([$dayYmd]);
+        $internalTransfers = $internalStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $internalTransfers = [];
+    }
 
     // --- External transfers ---
-    $externalStmt = $pdo->prepare(
-        "SELECT type, place, date_time, pickup_time, room_number, guest_name, service_company, booked, paid, status\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
-    );
-    $externalStmt->execute([$dayYmd]);
-    $externalTransfers = $externalStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $externalStmt = $pdo->prepare(
+            "SELECT type, place, date_time, pickup_time, room_number, guest_name, service_company, booked, paid, status\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
+        );
+        $externalStmt->execute([$dayYmd]);
+        $externalTransfers = $externalStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $externalTransfers = [];
+    }
 
     // --- Days off ---
-    $daysOffStmt = $pdo->prepare(
-        "SELECT u.nome, u.cognome, u.dipartimento, d.note\n         FROM days_off d\n         JOIN users u ON u.id = d.user_id\n         WHERE d.deleted_at IS NULL\n           AND d.day = ?\n         ORDER BY u.cognome ASC, u.nome ASC"
-    );
-    $daysOffStmt->execute([$dayYmd]);
-    $daysOff = $daysOffStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $daysOffStmt = $pdo->prepare(
+            "SELECT u.nome, u.cognome, u.dipartimento, d.note\n         FROM days_off d\n         JOIN users u ON u.id = d.user_id\n         WHERE d.deleted_at IS NULL\n           AND d.day = ?\n         ORDER BY u.cognome ASC, u.nome ASC"
+        );
+        $daysOffStmt->execute([$dayYmd]);
+        $daysOff = $daysOffStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $daysOff = [];
+    }
 
     // --- Low stock products (top 10) ---
-    $lowStockStmt = $pdo->query(
-        "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
-    );
-    $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $lowStockStmt = $pdo->query(
+            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
+        );
+        $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $lowStock = [];
+    }
 
     // --- Suppliers accepting orders today ---
     $weekdayIndex = (int)$date->format('w'); // 0=Sun ... 6=Sat in PHP
-    $supplierStmt = $pdo->prepare(
-        "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         ORDER BY s.name ASC"
-    );
-    $supplierStmt->execute([':day' => $weekdayIndex]);
-    $suppliersToday = $supplierStmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($pdo instanceof PDO) {
+        $supplierStmt = $pdo->prepare(
+            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         ORDER BY s.name ASC"
+        );
+        $supplierStmt->execute([':day' => $weekdayIndex]);
+        $suppliersToday = $supplierStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $suppliersToday = [];
+    }
 
     $weekdayLabels = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
     $weekdayName   = $weekdayLabels[$weekdayIndex] ?? '';
@@ -127,6 +168,8 @@ function generate_daily_summary_pdf(?string $dateYmd = null, ?string $outputPath
         return $parts ? implode(', ', $parts) : '—';
     };
 
+    $dbWarning = $dbConnectionError?->getMessage();
+
     ob_start();
     ?>
 <!doctype html>
@@ -143,10 +186,15 @@ function generate_daily_summary_pdf(?string $dateYmd = null, ?string $outputPath
     .small { font-size: 11px; color: #555; }
     .muted { color: #777; }
     .section-description { margin-bottom: 6px; }
+    .alert { padding: 10px 12px; border-radius: 4px; margin-bottom: 16px; border: 1px solid #d9534f; background: #f9d6d5; color: #a94442; }
   </style>
 </head>
 <body>
   <h1>Riepilogo giornaliero — <?= e($displayDate) ?></h1>
+
+  <?php if ($dbWarning): ?>
+    <p class="alert">Attenzione: impossibile connettersi al database per recuperare i dati (<?= e($dbWarning) ?>).</p>
+  <?php endif; ?>
 
   <h2>Task del giorno (Top 10)</h2>
   <?php if ($tasks): ?>
@@ -504,8 +552,20 @@ if (PHP_SAPI === 'cli' && realpath($argv[0] ?? '') === __FILE__) {
     $pathArg = $argv[2] ?? null;
 
     try {
-        $generatedPath = generate_daily_summary_pdf($dateArg ?: null, $pathArg ?: null);
+        $pdo      = null;
+        $dbError  = null;
+        try {
+            $pdo = db();
+        } catch (Throwable $connectionException) {
+            $dbError = $connectionException;
+        }
+
+        $generatedPath = generate_daily_summary_pdf($dateArg ?: null, $pathArg ?: null, $pdo, $dbError);
         fwrite(STDOUT, "PDF generato: {$generatedPath}\n");
+
+        if ($dbError !== null) {
+            fwrite(STDERR, 'Avviso: ' . $dbError->getMessage() . "\n");
+        }
 
         $tz = new DateTimeZone('Europe/Rome');
         $reportDate = $dateArg
@@ -516,21 +576,24 @@ if (PHP_SAPI === 'cli' && realpath($argv[0] ?? '') === __FILE__) {
             throw new RuntimeException('Formato data non valido.');
         }
 
-        $pdo         = db();
-        $recipients  = fetch_daily_summary_recipients($pdo);
-        $displayDate = $reportDate->format('d/m/Y');
+        if ($pdo instanceof PDO) {
+            $recipients  = fetch_daily_summary_recipients($pdo);
+            $displayDate = $reportDate->format('d/m/Y');
 
-        if ($recipients) {
-            $subject = 'Riepilogo giornaliero ' . $displayDate;
-            $body    = '<p>Buongiorno,</p>'
-                . '<p>in allegato trovi il riepilogo giornaliero del ' . $displayDate . '.</p>'
-                . '<p>Questo messaggio è stato generato automaticamente.</p>';
-            $filename = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
+            if ($recipients) {
+                $subject = 'Riepilogo giornaliero ' . $displayDate;
+                $body    = '<p>Buongiorno,</p>'
+                    . '<p>in allegato trovi il riepilogo giornaliero del ' . $displayDate . '.</p>'
+                    . '<p>Questo messaggio è stato generato automaticamente.</p>';
+                $filename = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
 
-            send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
-            fwrite(STDOUT, 'Email inviate a: ' . implode(', ', $recipients) . "\n");
+                send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
+                fwrite(STDOUT, 'Email inviate a: ' . implode(', ', $recipients) . "\n");
+            } else {
+                fwrite(STDOUT, "Nessun destinatario trovato per l'invio del report.\n");
+            }
         } else {
-            fwrite(STDOUT, "Nessun destinatario trovato per l'invio del report.\n");
+            fwrite(STDERR, "Impossibile inviare le email: connessione al database non disponibile.\n");
         }
     } catch (Throwable $e) {
         fwrite(STDERR, 'Errore: ' . $e->getMessage() . "\n");
