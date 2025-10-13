@@ -30,10 +30,10 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <?php if($user && $user['role']==='admin'): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php">Utenti</a></li>
         <?php endif; ?>
-        <?php if($user && $user['role']==='admin'): ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php">Task</a></li>
         <?php endif; ?>
-        <?php if($user && $user['role']==='admin'): ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php">Transfer</a></li>
         <?php endif; ?>
         <?php if($user && $user['role']==='admin'): ?>
