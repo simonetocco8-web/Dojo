@@ -3401,3 +3401,395 @@ Stack trace:
 [07-Oct-2025 20:21:42 Europe/Rome] LOGIN: POST ricevuto
 [08-Oct-2025 08:00:41 Europe/Rome] LOGIN: POST ricevuto
 [08-Oct-2025 08:38:48 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 12:58:27 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 12:58:27 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[09-Oct-2025 13:39:26 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 13:39:26 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[09-Oct-2025 14:07:28 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[09-Oct-2025 14:07:28 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[09-Oct-2025 16:31:47 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 16:31:47 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[09-Oct-2025 16:55:24 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 16:55:24 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[09-Oct-2025 16:55:58 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[09-Oct-2025 16:55:58 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[09-Oct-2025 17:49:09 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 17:49:09 Europe/Rome] LOGIN: utente trovato id=2 pwd_ok=0
+[09-Oct-2025 17:49:11 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 17:49:11 Europe/Rome] LOGIN: utente trovato id=2 pwd_ok=0
+[09-Oct-2025 17:49:16 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 17:49:16 Europe/Rome] LOGIN: utente trovato id=2 pwd_ok=0
+[09-Oct-2025 17:49:21 Europe/Rome] LOGIN: POST ricevuto
+[09-Oct-2025 17:49:21 Europe/Rome] LOGIN: utente trovato id=2 pwd_ok=0
+[10-Oct-2025 08:30:20 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 08:30:20 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[10-Oct-2025 08:31:19 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[10-Oct-2025 08:31:19 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[10-Oct-2025 10:41:00 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 10:41:00 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 6
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[10-Oct-2025 10:41:35 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 9
+[10-Oct-2025 10:41:35 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[10-Oct-2025 10:43:47 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 10:43:47 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 7
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 7
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 10
+[10-Oct-2025 11:00:52 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 10
+[10-Oct-2025 11:00:52 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 7
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 7
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1064
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/src/Client.php on line 1065
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Undefined array key "google" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 10
+[10-Oct-2025 11:09:26 Europe/Rome] PHP Warning:  Trying to access array offset on value of type null in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 10
+[10-Oct-2025 11:09:26 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[10-Oct-2025 11:35:35 Europe/Rome] PHP Warning:  Undefined array key "oauth_token_json" in /home/bwlxtuul/dojo.villaggiotramonto.it/google/google_client.php on line 10
+[10-Oct-2025 11:35:35 Europe/Rome] Google Calendar create failed: Token OAuth mancante. Visita /google/oauth_login.php per collegare il calendario.
+[10-Oct-2025 13:00:22 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 13:00:22 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[10-Oct-2025 13:34:18 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 13:34:18 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[10-Oct-2025 14:21:57 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 14:21:57 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[10-Oct-2025 16:05:41 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 16:05:41 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[10-Oct-2025 17:38:29 Europe/Rome] LOGIN: POST ricevuto
+[10-Oct-2025 17:38:29 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[11-Oct-2025 07:42:41 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 07:42:41 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 09:22:39 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 09:22:39 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 10:28:11 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 10:28:11 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 11:07:35 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 11:07:35 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 13:11:16 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 13:11:16 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[11-Oct-2025 14:10:38 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 14:10:38 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[11-Oct-2025 15:20:00 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 15:20:00 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 15:25:19 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 15:25:19 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[11-Oct-2025 16:56:26 Europe/Rome] LOGIN: POST ricevuto
+[11-Oct-2025 16:56:26 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[11-Oct-2025 17:03:25 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:26 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:28 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:29 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:31 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:32 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[11-Oct-2025 17:03:36 Europe/Rome] GCAL days_off delete failed: {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 08:52:06 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 08:52:06 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[12-Oct-2025 09:32:44 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 09:32:44 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[12-Oct-2025 10:09:19 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 10:09:19 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[12-Oct-2025 10:41:06 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 10:41:06 Europe/Rome] LOGIN: utente trovato id=1 pwd_ok=1
+[12-Oct-2025 10:43:23 Europe/Rome] GCAL delete failed (transfer 45): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:25 Europe/Rome] GCAL delete failed (transfer 44): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:26 Europe/Rome] GCAL delete failed (transfer 47): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:27 Europe/Rome] GCAL delete failed (transfer 46): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:29 Europe/Rome] GCAL delete failed (transfer 48): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:30 Europe/Rome] GCAL delete failed (transfer 50): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:31 Europe/Rome] GCAL delete failed (transfer 51): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:32 Europe/Rome] GCAL delete failed (transfer 49): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:43:40 Europe/Rome] GCAL delete failed (transfer 52): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 10:56:25 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 10:56:25 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[12-Oct-2025 11:00:26 Europe/Rome] PHP Fatal error:  Uncaught Error: Call to undefined function user_is_reception_or_amministrazione() in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php:16
+Stack trace:
+#0 {main}
+  thrown in /home/bwlxtuul/dojo.villaggiotramonto.it/transfer_internal_delete.php on line 16
+[12-Oct-2025 11:02:09 Europe/Rome] GCAL delete failed (transfer 65): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 11:02:10 Europe/Rome] GCAL delete failed (transfer 64): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 11:02:16 Europe/Rome] GCAL delete failed (transfer 63): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 11:02:18 Europe/Rome] GCAL delete failed (transfer 62): {
+ "error": {
+  "errors": [
+   {
+    "domain": "global",
+    "reason": "notFound",
+    "message": "Not Found"
+   }
+  ],
+  "code": 404,
+  "message": "Not Found"
+ }
+}
+
+[12-Oct-2025 11:14:42 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 11:14:42 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1
+[12-Oct-2025 15:58:15 Europe/Rome] LOGIN: POST ricevuto
+[12-Oct-2025 15:58:15 Europe/Rome] LOGIN: utente trovato id=5 pwd_ok=1

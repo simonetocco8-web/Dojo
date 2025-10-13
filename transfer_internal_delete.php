@@ -3,6 +3,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/roles.php';
 
 // (opzionale ma consigliato) helper Google già visto in precedenza
 require_once __DIR__ . '/google/google_client.php';         // google_calendar_client()
@@ -13,7 +14,7 @@ $pdo  = db();
 $user = current_user();
 
 // Permessi: limita a admin (adatta se vuoi estendere ad altri ruoli)
-if (!$user || !is_admin()) {
+if (!$user || !user_is_reception_or_amministrazione($user)) {
   http_response_code(403);
   exit('Permesso negato.');
 }
