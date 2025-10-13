@@ -48,6 +48,8 @@ include __DIR__ . '/partials/header.php';
             <th>Camera</th>
             <th>Nominativo</th>
             <th>Compagnia</th>
+            <th class="text-center">Persone</th>
+            <th>Prezzo</th>
             <th class="text-center">Pren.</th>
             <th class="text-center">Pag.</th>
             <th>Stato</th>
@@ -64,6 +66,14 @@ include __DIR__ . '/partials/header.php';
             <td><?= e($r['room_number']) ?></td>
             <td><?= e($r['guest_name']) ?></td>
             <td><?= $r['booked'] ? e($r['service_company'] ?? '') : '—' ?></td>
+            <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
+            <td>
+              <?php if ($r['price_eur'] !== null): ?>
+                € <?= e(number_format((float)$r['price_eur'], 2, ',', '.')) ?>
+              <?php else: ?>
+                —
+              <?php endif; ?>
+            </td>
             <td class="text-center"><?= $r['booked'] ? '✔' : '—' ?></td>
             <td class="text-center"><?= $r['paid'] ? '✔' : '—' ?></td>
             <td>

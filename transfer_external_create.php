@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pickup = $_POST['pickup_time'] ?? ''; // opzionale
     $room   = trim($_POST['room_number'] ?? '');
     $name   = trim($_POST['guest_name'] ?? '');
+    $people_raw = trim((string)($_POST['people_count'] ?? ''));
+    $price_raw  = trim((string)($_POST['price_eur'] ?? ''));
     $booked = isset($_POST['booked']) ? 1 : 0;
     $paid   = isset($_POST['paid']) ? 1 : 0;
 
@@ -52,15 +54,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pickup_db = ($pickup === '' ? null : $pickup);
 
     // Validazione minima (pickup escluso)
+    $people = null;
+    if ($people_raw === '' || ($people = filter_var($people_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) === false) {
+      $message = 'Inserisci un Numero Persone valido (maggiore o uguale a 1).';
+    }
+
+    $price = null;
+    if (!$message) {
+      if ($price_raw === '') {
+        $message = 'Inserisci il Prezzo del transfer.';
+      } else {
+        $normalized_price = str_replace([' ', ','], ['', '.'], $price_raw);
+        if (!is_numeric($normalized_price)) {
+          $message = 'Inserisci un Prezzo valido.';
+        } else {
+          $price_value = (float)$normalized_price;
+          if ($price_value < 0) {
+            $message = 'Il Prezzo non può essere negativo.';
+          } else {
+            $price = number_format($price_value, 2, '.', '');
+          }
+        }
+      }
+    }
+
     if (!$message && $date && $time && $room && $name) {
       $dt = DateTime::createFromFormat('Y-m-d H:i', $date . ' ' . $time);
       if (!$dt) {
         $message = 'Data/ora non valida.';
       } else {
         try {
-          $sql = 'INSERT INTO transfers_external 
-                    (type, place, date_time, pickup_time, room_number, guest_name, booked, paid, service_company, created_by)
-                  VALUES (?,?,?,?,?,?,?,?,?,?)';
+          $sql = 'INSERT INTO transfers_external
+                    (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, created_by)
+                  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)';
           $stmt = $pdo->prepare($sql);
           $stmt->execute([
             $type,
@@ -69,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pickup_db,
             $room,
             $name,
+            $people,
+            $price,
             $booked,
             $paid,
             $service_company,
@@ -136,6 +164,19 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-4">
               <label class="form-label">Nominativo</label>
               <input type="text" name="guest_name" class="form-control" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Numero Persone</label>
+              <input type="number" name="people_count" class="form-control" min="1" step="1" required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Prezzo</label>
+              <div class="input-group">
+                <span class="input-group-text">€</span>
+                <input type="number" name="price_eur" class="form-control" min="0" step="0.01" required>
+              </div>
             </div>
 
             <div class="col-md-4 d-flex align-items-center">
