@@ -4,7 +4,9 @@ declare(strict_types=1);
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+require_once __DIR__ . '/../core/auth.php';
 require_once __DIR__ . '/../core/db.php';
+require_once __DIR__ . '/../core/roles.php';
 require_once __DIR__ . '/../core/security.php';
 require_once __DIR__ . '/../dompdf/vendor/autoload.php';
 
@@ -475,11 +477,19 @@ function log_mail_fallback(string $to, string $subject, string $body): void
  *
  * @param string[] $recipients
  * @throws RuntimeException
+ *
+ * @return array{attempted: string[], invalid: string[], failed: string[]}
  */
-function send_daily_summary_pdf_email(array $recipients, string $subject, string $htmlBody, string $attachmentPath, string $attachmentFilename): void
+function send_daily_summary_pdf_email(array $recipients, string $subject, string $htmlBody, string $attachmentPath, string $attachmentFilename): array
 {
+    $result = [
+        'attempted' => [],
+        'invalid'   => [],
+        'failed'    => [],
+    ];
+
     if (!$recipients) {
-        return;
+        return $result;
     }
 
     if (!is_readable($attachmentPath)) {
@@ -506,9 +516,15 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
     $encodedPdf = chunk_split(base64_encode($pdfData));
 
     foreach ($recipients as $email) {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $email = trim((string)$email);
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            if ($email !== '') {
+                $result['invalid'][] = $email;
+            }
             continue;
         }
+
+        $result['attempted'][] = $email;
 
         $boundary = '=_Part_' . bin2hex(random_bytes(16));
 
@@ -542,9 +558,175 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
 
         $ok = @mail($email, $subjectFinal, $message, $headerString);
         if (!$ok) {
+            $result['failed'][] = $email;
             log_mail_fallback($email, $subject, $htmlBody . "\n[allegato: " . $safeFilename . ']');
         }
     }
+
+    $result['attempted'] = array_values(array_unique($result['attempted']));
+    $result['invalid']   = array_values(array_unique($result['invalid']));
+    $result['failed']    = array_values(array_unique($result['failed']));
+
+    return $result;
+}
+
+/**
+ * Esegue l'intero flusso di generazione e invio del riepilogo giornaliero.
+ *
+ * @param string|null $dateArg
+ * @param string|null $pathArg
+ * @return array{
+ *     path: string,
+ *     date: DateTime,
+ *     db_error: ?Throwable,
+ *     recipients: string[],
+ *     mail_summary: array{attempted: string[], invalid: string[], failed: string[]},
+ *     mail_skipped: bool
+ * }
+ */
+function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = null): array
+{
+    $tz = new DateTimeZone('Europe/Rome');
+
+    if ($dateArg !== null && $dateArg !== '') {
+        $reportDate = DateTime::createFromFormat('Y-m-d', $dateArg, $tz);
+        if (!$reportDate) {
+            throw new RuntimeException('Formato data non valido.');
+        }
+    } else {
+        $reportDate = new DateTime('now', $tz);
+    }
+
+    $pdo     = null;
+    $dbError = null;
+
+    try {
+        $pdo = db();
+    } catch (Throwable $connectionException) {
+        $dbError = $connectionException;
+    }
+
+    $generatedPath = generate_daily_summary_pdf($reportDate->format('Y-m-d'), $pathArg, $pdo, $dbError);
+
+    $recipients  = [];
+    $mailSummary = [
+        'attempted' => [],
+        'invalid'   => [],
+        'failed'    => [],
+    ];
+    $mailSkipped = false;
+
+    if ($pdo instanceof PDO) {
+        $recipients = fetch_daily_summary_recipients($pdo);
+
+        if ($recipients) {
+            $displayDate = $reportDate->format('d/m/Y');
+            $subject     = 'Riepilogo giornaliero ' . $displayDate;
+            $body        = '<p>Buongiorno,</p>'
+                . '<p>in allegato trovi il riepilogo giornaliero del ' . $displayDate . '.</p>'
+                . '<p>Questo messaggio è stato generato automaticamente.</p>';
+            $filename    = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
+
+            $mailSummary = send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
+        }
+    } else {
+        $mailSkipped = true;
+    }
+
+    return [
+        'path'         => $generatedPath,
+        'date'         => $reportDate,
+        'db_error'     => $dbError,
+        'recipients'   => $recipients,
+        'mail_summary' => $mailSummary,
+        'mail_skipped' => $mailSkipped,
+    ];
+}
+
+if (
+    PHP_SAPI !== 'cli'
+    && isset($_SERVER['SCRIPT_FILENAME'])
+    && realpath($_SERVER['SCRIPT_FILENAME']) === __FILE__
+) {
+    start_session();
+
+    if (empty($_SESSION['user_id'])) {
+        header('Location: ../login.php');
+        exit;
+    }
+
+    $authError = null;
+    try {
+        $user = current_user();
+    } catch (Throwable $exception) {
+        $authError = $exception;
+        $user      = null;
+    }
+
+    if ($authError !== null) {
+        header($_SERVER['SERVER_PROTOCOL'] . ' 500 Internal Server Error');
+        echo '<h1>Errore</h1><p>Impossibile verificare le credenziali utente.</p>';
+        exit;
+    }
+
+    if (!$user || !user_is_amministrazione($user)) {
+        header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+        echo '<h1>403</h1><p>Accesso riservato al reparto Amministrazione.</p>';
+        exit;
+    }
+
+    $title = 'Report giornaliero';
+
+    try {
+        $workflow   = run_daily_summary_workflow();
+        $displayDate = $workflow['date']->format('d/m/Y');
+        $mailSummary = $workflow['mail_summary'];
+    } catch (Throwable $exception) {
+        $workflow    = null;
+        $displayDate = null;
+        $mailSummary = null;
+        $error       = $exception;
+    }
+
+    require __DIR__ . '/../partials/header.php';
+
+    if (isset($error)) {
+        echo '<div class="alert alert-danger" role="alert">';
+        echo '<h1 class="h4 mb-3">Errore durante la generazione del report</h1>';
+        echo '<p class="mb-0">' . e($error->getMessage()) . '</p>';
+        echo '</div>';
+    } elseif ($workflow !== null) {
+        echo '<div class="alert alert-success" role="alert">';
+        echo '<h1 class="h4 mb-3">Report del ' . e($displayDate) . ' inviato</h1>';
+        echo '<p>Il PDF è stato generato e salvato in <code>' . e($workflow['path']) . '</code>.</p>';
+
+        if ($workflow['mail_skipped']) {
+            echo '<p class="mb-0">La connessione al database non è disponibile, quindi nessuna email è stata inviata.</p>';
+        } elseif (!$workflow['recipients']) {
+            echo '<p class="mb-0">Nessun destinatario disponibile per l\'invio del report.</p>';
+        } else {
+            if ($mailSummary['attempted']) {
+                echo '<p class="mb-0">Email inviate a: ' . e(implode(', ', $mailSummary['attempted'])) . '</p>';
+            } else {
+                echo '<p class="mb-0">Nessun indirizzo valido per l\'invio.</p>';
+            }
+
+            if ($mailSummary['invalid']) {
+                echo '<p class="mt-2 mb-0">Indirizzi ignorati: ' . e(implode(', ', $mailSummary['invalid'])) . '</p>';
+            }
+
+            if ($mailSummary['failed']) {
+                echo '<p class="mt-2 mb-0">Invio non riuscito per: ' . e(implode(', ', $mailSummary['failed'])) . '</p>';
+            }
+        }
+
+        echo '</div>';
+    }
+
+    echo '<a class="btn btn-primary" href="../dashboard.php">Torna alla dashboard</a>';
+
+    require __DIR__ . '/../partials/footer.php';
+    exit;
 }
 
 if (
@@ -556,48 +738,33 @@ if (
     $pathArg = $argv[2] ?? null;
 
     try {
-        $pdo      = null;
-        $dbError  = null;
-        try {
-            $pdo = db();
-        } catch (Throwable $connectionException) {
-            $dbError = $connectionException;
+        $workflow = run_daily_summary_workflow($dateArg ?: null, $pathArg ?: null);
+
+        fwrite(STDOUT, 'PDF generato: ' . $workflow['path'] . "\n");
+
+        if ($workflow['db_error'] !== null) {
+            fwrite(STDERR, 'Avviso: ' . $workflow['db_error']->getMessage() . "\n");
         }
 
-        $generatedPath = generate_daily_summary_pdf($dateArg ?: null, $pathArg ?: null, $pdo, $dbError);
-        fwrite(STDOUT, "PDF generato: {$generatedPath}\n");
-
-        if ($dbError !== null) {
-            fwrite(STDERR, 'Avviso: ' . $dbError->getMessage() . "\n");
-        }
-
-        $tz = new DateTimeZone('Europe/Rome');
-        $reportDate = $dateArg
-            ? DateTime::createFromFormat('Y-m-d', $dateArg, $tz)
-            : new DateTime('now', $tz);
-
-        if ($dateArg && !$reportDate) {
-            throw new RuntimeException('Formato data non valido.');
-        }
-
-        if ($pdo instanceof PDO) {
-            $recipients  = fetch_daily_summary_recipients($pdo);
-            $displayDate = $reportDate->format('d/m/Y');
-
-            if ($recipients) {
-                $subject = 'Riepilogo giornaliero ' . $displayDate;
-                $body    = '<p>Buongiorno,</p>'
-                    . '<p>in allegato trovi il riepilogo giornaliero del ' . $displayDate . '.</p>'
-                    . '<p>Questo messaggio è stato generato automaticamente.</p>';
-                $filename = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
-
-                send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
-                fwrite(STDOUT, 'Email inviate a: ' . implode(', ', $recipients) . "\n");
-            } else {
-                fwrite(STDOUT, "Nessun destinatario trovato per l'invio del report.\n");
-            }
-        } else {
+        if ($workflow['mail_skipped']) {
             fwrite(STDERR, "Impossibile inviare le email: connessione al database non disponibile.\n");
+        } elseif (!$workflow['recipients']) {
+            fwrite(STDOUT, "Nessun destinatario trovato per l'invio del report.\n");
+        } else {
+            $mailSummary = $workflow['mail_summary'];
+            if ($mailSummary['attempted']) {
+                fwrite(STDOUT, 'Email inviate a: ' . implode(', ', $mailSummary['attempted']) . "\n");
+            } else {
+                fwrite(STDOUT, "Nessun destinatario valido trovato per l'invio del report.\n");
+            }
+
+            if ($mailSummary['invalid']) {
+                fwrite(STDERR, 'Indirizzi email ignorati: ' . implode(', ', $mailSummary['invalid']) . "\n");
+            }
+
+            if ($mailSummary['failed']) {
+                fwrite(STDERR, 'Invio fallito per: ' . implode(', ', $mailSummary['failed']) . "\n");
+            }
         }
     } catch (Throwable $e) {
         fwrite(STDERR, 'Errore: ' . $e->getMessage() . "\n");
