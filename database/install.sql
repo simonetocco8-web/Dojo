@@ -50,3 +50,8 @@ CREATE TABLE IF NOT EXISTS riassetti (
   CONSTRAINT fk_riassetti_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_riassetti_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Aggiornamenti tabella transfers_external
+ALTER TABLE transfers_external
+  ADD COLUMN IF NOT EXISTS people_count INT UNSIGNED DEFAULT NULL AFTER guest_name,
+  ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER people_count;
