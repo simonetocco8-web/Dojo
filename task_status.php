@@ -49,6 +49,12 @@ try {
     if ($note === '') { $note = 'Non specificato'; }
     $pdo->prepare('UPDATE tasks SET status="non_fattibile", status_note=?, not_feasible_by=?, not_feasible_at=NOW() WHERE id=?')
         ->execute([$note, $user['id'], $id]);
+  } elseif ($action === 'update_due_date' && $canAct && $task['deleted_at']===null) {
+    $due = trim($_POST['due_date'] ?? '');
+    $dt = DateTime::createFromFormat('Y-m-d', $due);
+    if ($dt && $dt->format('Y-m-d') === $due) {
+      $pdo->prepare('UPDATE tasks SET due_date=? WHERE id=?')->execute([$due, $id]);
+    }
   } elseif ($action === 'trash' && $is_admin) {
     $pdo->prepare('UPDATE tasks SET deleted_at=NOW() WHERE id=? AND deleted_at IS NULL')->execute([$id]);
   } elseif ($action === 'restore' && $is_admin) {
