@@ -452,8 +452,8 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
 </div>
 <?php endif; ?>
 
-<div class="row g-4 justify-content-center mb-4">
-  <div class="col-12 col-xl-4">
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-6">
     <div class="card h-100 shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -468,7 +468,7 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
       </div>
     </div>
   </div>
-  <div class="col-12 col-xl-4">
+  <div class="col-12 col-lg-6">
     <div class="card h-100 shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-2">
