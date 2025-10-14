@@ -125,15 +125,40 @@ function badge_status($s){
         </thead>
         <tbody>
           <?php foreach($tasks as $t): ?>
+          <?php $canAct = $is_admin || ($t['dipartimento'] === $my_dep); ?>
           <tr>
             <td>
               <?php
                 // Format data in italiano
                 if (!empty($t['due_date'])) {
                   $d = DateTime::createFromFormat('Y-m-d', $t['due_date']);
-                  echo $d ? $d->format('d/m/y') : e($t['due_date']);
+                  $formatted = $d ? $d->format('d/m/y') : $t['due_date'];
+                } else {
+                  $formatted = '';
                 }
               ?>
+              <div class="d-flex flex-column gap-1">
+                <div class="d-flex align-items-center gap-2">
+                  <span><?= $formatted ? e($formatted) : '-' ?></span>
+                  <?php if($canAct && $t['deleted_at']===null): ?>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" title="Modifica scadenza"
+                          data-bs-toggle="collapse" data-bs-target="#due_<?= (int)$t['id'] ?>">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <?php endif; ?>
+                </div>
+                <?php if($canAct && $t['deleted_at']===null): ?>
+                <div id="due_<?= (int)$t['id'] ?>" class="collapse">
+                  <form method="post" action="<?= e($base) ?>/task_status.php" class="d-flex gap-2 align-items-center">
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                    <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                    <input type="hidden" name="action" value="update_due_date">
+                    <input type="date" name="due_date" value="<?= e($t['due_date']) ?>" class="form-control form-control-sm" required>
+                    <button class="btn btn-sm btn-primary" title="Salva"><i class="bi bi-check"></i></button>
+                  </form>
+                </div>
+                <?php endif; ?>
+              </div>
             </td>
             <td><?= badge_priority($t['priority']) ?></td>
             <td><?= e($t['dipartimento']) ?></td>
@@ -143,7 +168,6 @@ function badge_status($s){
             <td><?= badge_status($t['status']) ?></td>
            <td class="text-nowrap">
               <?php
-                $canAct = $is_admin || ($t['dipartimento'] === $my_dep);
                 if ($t['status']==='aperto' && $canAct):
               ?>
                 <!-- Completa -->
