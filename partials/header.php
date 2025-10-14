@@ -39,6 +39,9 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <?php if($user && $user['role']==='admin'): ?>
         <!--<li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li> -->
         <?php endif; ?>
+        <?php if($user && user_is_admin($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php">Setting</a></li>
+        <?php endif; ?>
         <?php if (user_is_bar_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php">Giorni liberi</a></li>
             <li class="nav-item dropdown">

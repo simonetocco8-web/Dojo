@@ -4,12 +4,14 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
+require_once __DIR__ . '/core/settings.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
 $base  = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo   = db();
 $user  = current_user();
+$seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
@@ -41,26 +43,31 @@ if ($is_admin) {
   $tasks = $stt->fetchAll();
 }
 
-// --- Prossimi 5 TRANSFER INTERNI ---
-$qInt = $pdo->prepare('SELECT id, room_number, direction, location, when_at
-                       FROM transfers_internal
-                       WHERE deleted_at IS NULL AND when_at >= NOW()
-                       ORDER BY when_at ASC, id DESC
-                       LIMIT 5');
-$qInt->execute();
-$tin = $qInt->fetchAll();
+$tin = [];
+$tex = [];
 
-// --- Prossimi 5 TRANSFER ESTERNI ---
-$qExt = $pdo->prepare('SELECT id, type, place, date_time, pickup_time, room_number, guest_name, booked, paid, status
-                       FROM transfers_external
-                       WHERE deleted_at IS NULL AND date_time >= NOW()
-                       ORDER BY date_time ASC, id DESC
-                       LIMIT 5');
-$qExt->execute();
-$tex = $qExt->fetchAll();
+if ($seasonActive) {
+  // --- Prossimi 5 TRANSFER INTERNI ---
+  $qInt = $pdo->prepare('SELECT id, room_number, direction, location, when_at
+                         FROM transfers_internal
+                         WHERE deleted_at IS NULL AND when_at >= NOW()
+                         ORDER BY when_at ASC, id DESC
+                         LIMIT 5');
+  $qInt->execute();
+  $tin = $qInt->fetchAll();
+
+  // --- Prossimi 5 TRANSFER ESTERNI ---
+  $qExt = $pdo->prepare('SELECT id, type, place, date_time, pickup_time, room_number, guest_name, booked, paid, status
+                         FROM transfers_external
+                         WHERE deleted_at IS NULL AND date_time >= NOW()
+                         ORDER BY date_time ASC, id DESC
+                         LIMIT 5');
+  $qExt->execute();
+  $tex = $qExt->fetchAll();
+}
 
 $riassettiToday = [];
-if ($can_see_riassetti) {
+if ($seasonActive && $can_see_riassetti) {
   $tz = new DateTimeZone('Europe/Rome');
   $todayRiassetto = (new DateTime('today', $tz))->format('Y-m-d');
   $stRi = $pdo->prepare('SELECT id, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, completed_at
@@ -134,119 +141,122 @@ function riassetti_biancheria_short(array $row): string {
       </div>
     </div>
   </div>
-  <?php if ($can_see_riassetti): ?>
-  <!-- BOX RIASSETTI -->
-  <div class="col-12 col-xl-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti di oggi</h2>
-          <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/riassetti.php" title="Vai alla sezione">Apri</a>
-        </div>
-        <?php if (empty($riassettiToday)): ?>
-          <div class="text-muted small">Nessun riassetto previsto per oggi.</div>
-        <?php else: ?>
-          <ul class="list-group list-group-flush">
-            <?php foreach ($riassettiToday as $ri): ?>
-              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
-                <div class="me-2">
-                  <div class="fw-semibold">Camera <?= e($ri['room']) ?></div>
-                  <div class="small text-muted">
-                    <?= e(riassetti_biancheria_short($ri)) ?>
-                    <?php if (!empty($ri['pulizia_extra'])): ?>
-                      · Pulizia extra
+  <?php if ($seasonActive): ?>
+    <?php if ($can_see_riassetti): ?>
+    <!-- BOX RIASSETTI -->
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti di oggi</h2>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/riassetti.php" title="Vai alla sezione">Apri</a>
+          </div>
+          <?php if (empty($riassettiToday)): ?>
+            <div class="text-muted small">Nessun riassetto previsto per oggi.</div>
+          <?php else: ?>
+            <ul class="list-group list-group-flush">
+              <?php foreach ($riassettiToday as $ri): ?>
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                  <div class="me-2">
+                    <div class="fw-semibold">Camera <?= e($ri['room']) ?></div>
+                    <div class="small text-muted">
+                      <?= e(riassetti_biancheria_short($ri)) ?>
+                      <?php if (!empty($ri['pulizia_extra'])): ?>
+                        · Pulizia extra
+                      <?php endif; ?>
+                    </div>
+                    <?php if (!empty(trim((string)($ri['note'] ?? '')))): ?>
+                      <div class="small">
+                        <?= nl2br(e($ri['note'])) ?>
+                      </div>
                     <?php endif; ?>
                   </div>
-                  <?php if (!empty(trim((string)($ri['note'] ?? '')))): ?>
-                    <div class="small">
-                      <?= nl2br(e($ri['note'])) ?>
+                  <div class="text-end">
+                    <?php if (!empty($ri['completed_at'])): ?>
+                      <span class="badge bg-success">Completato</span>
+                    <?php else: ?>
+                      <span class="badge bg-info text-dark">Da fare</span>
+                    <?php endif; ?>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+    <?php if ($my_dep !== "Manutenzione"): ?>
+    <!-- BOX TRANSFER INTERNI -->
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0"><i class="bi bi-building-check me-1"></i>Prossimi Transfer Interni</h2>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_internal.php" title="Vai alla sezione">Apri</a>
+          </div>
+          <?php if(empty($tin)): ?>
+            <div class="text-muted small">Nessun transfer interno imminente.</div>
+          <?php else: ?>
+            <ul class="list-group list-group-flush">
+              <?php foreach($tin as $r): ?>
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                  <div class="me-2">
+                    <div class="fw-semibold">
+                      Cam. <?= e($r['room_number']) ?> · <?= e(strtoupper($r['direction'])) ?> <?= e($r['location']) ?>
                     </div>
-                  <?php endif; ?>
-                </div>
-                <div class="text-end">
-                  <?php if (!empty($ri['completed_at'])): ?>
-                    <span class="badge bg-success">Completato</span>
-                  <?php else: ?>
-                    <span class="badge bg-info text-dark">Da fare</span>
-                  <?php endif; ?>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
-  <?php endif; ?>
-<?php  if($my_dep!="Manutenzione"){ ?>
-  <!-- BOX TRANSFER INTERNI -->
-  <div class="col-12 col-xl-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-building-check me-1"></i>Prossimi Transfer Interni</h2>
-          <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_internal.php" title="Vai alla sezione">Apri</a>
+                    <div class="small text-muted">
+                      <?= it_dt($r['when_at']) ?>
+                    </div>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
         </div>
-        <?php if(empty($tin)): ?>
-          <div class="text-muted small">Nessun transfer interno imminente.</div>
-        <?php else: ?>
-          <ul class="list-group list-group-flush">
-            <?php foreach($tin as $r): ?>
-              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
-                <div class="me-2">
-                  <div class="fw-semibold">
-                    Cam. <?= e($r['room_number']) ?> · <?= e(strtoupper($r['direction'])) ?> <?= e($r['location']) ?>
-                  </div>
-                  <div class="small text-muted">
-                    <?= it_dt($r['when_at']) ?>
-                  </div>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
       </div>
     </div>
-  </div>
 
-  <!-- BOX TRANSFER ESTERNI -->
-  <div class="col-12 col-xl-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h2 class="h6 mb-0"><i class="bi bi-bus-front me-1"></i>Prossimi Transfer Esterni</h2>
-          <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_external.php" title="Vai alla sezione">Apri</a>
+    <!-- BOX TRANSFER ESTERNI -->
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0"><i class="bi bi-bus-front me-1"></i>Prossimi Transfer Esterni</h2>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/transfers_external.php" title="Vai alla sezione">Apri</a>
+          </div>
+          <?php if(empty($tex)): ?>
+            <div class="text-muted small">Nessun transfer esterno imminente.</div>
+          <?php else: ?>
+            <ul class="list-group list-group-flush">
+              <?php foreach($tex as $r): ?>
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                  <div class="me-2">
+                    <div class="fw-semibold">
+                      <?= e(ucfirst($r['type'])) ?> · <?= e($r['place'] ?? '') ?> · Cam. <?= e($r['room_number']) ?>
+                    </div>
+                    <div class="small text-muted">
+                      <?= it_dt($r['date_time']) ?> · Pickup <?= e(substr($r['pickup_time'],0,5)) ?> · <?= e($r['guest_name']) ?>
+                    </div>
+                  </div>
+                  <div class="text-nowrap small">
+                    <?= ($r['booked'] ? '<span class="badge bg-primary">Pren.</span>' : '') ?>
+                    <?= ($r['paid']   ? '<span class="badge bg-success ms-1">Pag.</span>' : '') ?>
+                    <?= (($r['status'] ?? 'attivo') === 'annullato' ? '<span class="badge bg-warning text-dark ms-1">Ann.</span>' : '') ?>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
         </div>
-        <?php if(empty($tex)): ?>
-          <div class="text-muted small">Nessun transfer esterno imminente.</div>
-        <?php else: ?>
-          <ul class="list-group list-group-flush">
-            <?php foreach($tex as $r): ?>
-              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
-                <div class="me-2">
-                  <div class="fw-semibold">
-                    <?= e(ucfirst($r['type'])) ?> · <?= e($r['place'] ?? '') ?> · Cam. <?= e($r['room_number']) ?>
-                  </div>
-                  <div class="small text-muted">
-                    <?= it_dt($r['date_time']) ?> · Pickup <?= e(substr($r['pickup_time'],0,5)) ?> · <?= e($r['guest_name']) ?>
-                  </div>
-                </div>
-                <div class="text-nowrap small">
-                  <?= ($r['booked'] ? '<span class="badge bg-primary">Pren.</span>' : '') ?>
-                  <?= ($r['paid']   ? '<span class="badge bg-success ms-1">Pag.</span>' : '') ?>
-                  <?= (($r['status'] ?? 'attivo') === 'annullato' ? '<span class="badge bg-warning text-dark ms-1">Ann.</span>' : '') ?>
-                </div>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
       </div>
     </div>
-  </div>
-  <?php } ?>
+    <?php endif; ?>
+  <?php endif; ?>
   
 </div>  
-<div class="row g-4">  
+<?php if ($seasonActive): ?>
+<div class="row g-4">
   <?php
 // --- BOX: Giorni liberi prossimi 7 giorni ---
 if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
@@ -440,5 +450,6 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
 
 
 </div>
+<?php endif; ?>
 
 <?php include __DIR__ . '/partials/footer.php'; ?>
