@@ -452,4 +452,34 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
 </div>
 <?php endif; ?>
 
+<div class="row g-4 justify-content-center mb-4">
+  <div class="col-12 col-xl-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-cloud-sun me-1"></i>Previsioni Meteo</h2>
+        </div>
+        <div class="ratio" style="--bs-aspect-ratio:50%;">
+          <iframe src="https://www.3bmeteo.com/moduli_esterni/localita_7_giorni_compatto/11525246/ffffff/4a4a4a/5e5e5e/ffffff/it" class="border-0 w-100 h-100" allowtransparency="true"></iframe>
+        </div>
+        <div class="small text-end mt-2">
+          <a href="https://www.3bmeteo.com/meteo/capo+vaticano" target="_blank" rel="noopener">Meteo Capo Vaticano</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-xl-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h6 mb-0"><i class="bi bi-water me-1"></i>Previsioni Mare</h2>
+        </div>
+        <div class="ratio" style="--bs-aspect-ratio:96%;">
+          <iframe src="https://www.lamma.toscana.it/previ/ita/widget_mare_500.php?area=D" class="border-0 w-100 h-100" scrolling="no"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php include __DIR__ . '/partials/footer.php'; ?>
