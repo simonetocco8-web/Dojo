@@ -8,6 +8,7 @@ require_once __DIR__ . '/../core/auth.php';
 require_once __DIR__ . '/../core/db.php';
 require_once __DIR__ . '/../core/roles.php';
 require_once __DIR__ . '/../core/security.php';
+require_once __DIR__ . '/../core/settings.php';
 require_once __DIR__ . '/../dompdf/vendor/autoload.php';
 
 /**
@@ -57,6 +58,8 @@ function generate_daily_summary_pdf(
     $dayYmd      = $date->format('Y-m-d');
     $displayDate = $date->format('d/m/Y');
 
+    $showFullSummary = is_date_within_summer_season($date, $pdo);
+
     // --- Tasks (top 10 for the day) ---
     if ($pdo instanceof PDO) {
         $taskStmt = $pdo->prepare(
@@ -69,7 +72,7 @@ function generate_daily_summary_pdf(
     }
 
     // --- Riassetti of the day ---
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $riassettiStmt = $pdo->prepare(
             "SELECT room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note\n         FROM riassetti\n         WHERE data_riassetto = ?\n         ORDER BY room ASC, id ASC"
         );
@@ -80,7 +83,7 @@ function generate_daily_summary_pdf(
     }
 
     // --- Internal transfers ---
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $internalStmt = $pdo->prepare(
             "SELECT room_number, direction, location, when_at\n         FROM transfers_internal\n         WHERE deleted_at IS NULL\n           AND DATE(when_at) = ?\n         ORDER BY when_at ASC, id ASC"
         );
@@ -91,7 +94,7 @@ function generate_daily_summary_pdf(
     }
 
     // --- External transfers ---
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $externalStmt = $pdo->prepare(
             "SELECT type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, service_company, booked, paid, status\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
         );
@@ -102,7 +105,7 @@ function generate_daily_summary_pdf(
     }
 
     // --- Days off ---
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $daysOffStmt = $pdo->prepare(
             "SELECT u.nome, u.cognome, u.dipartimento, d.note\n         FROM days_off d\n         JOIN users u ON u.id = d.user_id\n         WHERE d.deleted_at IS NULL\n           AND d.day = ?\n         ORDER BY u.cognome ASC, u.nome ASC"
         );
@@ -113,7 +116,7 @@ function generate_daily_summary_pdf(
     }
 
     // --- Low stock products (top 10) ---
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $lowStockStmt = $pdo->query(
             "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
         );
@@ -124,7 +127,7 @@ function generate_daily_summary_pdf(
 
     // --- Suppliers accepting orders today ---
     $weekdayIndex = (int)$date->format('w'); // 0=Sun ... 6=Sat in PHP
-    if ($pdo instanceof PDO) {
+    if ($showFullSummary && $pdo instanceof PDO) {
         $supplierStmt = $pdo->prepare(
             "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         ORDER BY s.name ASC"
         );
@@ -226,6 +229,7 @@ function generate_daily_summary_pdf(
     <p class="muted">Nessun task con data odierna.</p>
   <?php endif; ?>
 
+  <?php if ($showFullSummary): ?>
   <h2>Riassetti</h2>
   <?php if ($riassetti): ?>
   <table>
@@ -396,6 +400,7 @@ function generate_daily_summary_pdf(
   </table>
   <?php else: ?>
     <p class="muted">Nessun fornitore accetta ordini oggi.</p>
+  <?php endif; ?>
   <?php endif; ?>
 </body>
 </html>
