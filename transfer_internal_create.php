@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
             gcal_create_event_for_internal_transfer($pdo, $transferId);
           } catch (Throwable $e) {
             error_log('Google Calendar create failed: '.$e->getMessage());
-            $calendarMsg = 'calendar_error';
+            $calendarMsg = 'calendar_error: ' . $e->getMessage();
           }
 
           $redir = $base . '/transfers_internal.php';

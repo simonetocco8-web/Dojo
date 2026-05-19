@@ -25,8 +25,8 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
   <?php if (!empty($_GET['msg'])): ?>
     <?php
       $msgKey = (string)$_GET['msg'];
-      $msgText = ($msgKey === 'calendar_error')
-        ? 'Transfer creato, ma non sincronizzato su Google Calendar.'
+      $msgText = (strpos($msgKey, 'calendar_error') === 0)
+        ? ('Transfer creato, ma non sincronizzato su Google Calendar. ' . trim(substr($msgKey, strlen('calendar_error:'))))
         : $msgKey;
     ?>
     <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($msgText) ?></div>

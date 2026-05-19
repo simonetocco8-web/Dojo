@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/google_client.php';
 
+
+function gcal_try_insert_event(Google\Service\Calendar $service, string $calendarId, Google\Service\Calendar\Event $event): Google\Service\Calendar\Event {
+  return $service->events->insert($calendarId, $event);
+}
+
 function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?string {
   $env = require __DIR__ . '/../config/env.php';
   $googleCfg = $env['google'] ?? [];
@@ -67,7 +72,16 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
   ],
   ]);
 
-  $created = $service->events->insert($calendarId, $event);
+  try {
+    $created = gcal_try_insert_event($service, $calendarId, $event);
+  } catch (Throwable $e) {
+    $msg = $e->getMessage();
+    $canFallback = ($calendarId !== 'primary') && (stripos($msg, 'Not Found') !== false || stripos($msg, 'notFound') !== false);
+    if (!$canFallback) {
+      throw $e;
+    }
+    $created = gcal_try_insert_event($service, 'primary', $event);
+  }
   $eventId = $created->getId();
 
   // 5) Salva event_id in DB
