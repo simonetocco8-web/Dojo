@@ -23,7 +23,13 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h5 mb-0">Transfer Interni</h1>
   <?php if (!empty($_GET['msg'])): ?>
-    <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($_GET['msg']) ?></div>
+    <?php
+      $msgKey = (string)$_GET['msg'];
+      $msgText = (strpos($msgKey, 'calendar_error') === 0)
+        ? ('Transfer creato, ma non sincronizzato su Google Calendar. ' . trim(substr($msgKey, strlen('calendar_error:'))))
+        : $msgKey;
+    ?>
+    <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($msgText) ?></div>
   <?php endif; ?>
   <div class="d-flex gap-2 ms-auto">
     <a class="btn btn-outline-secondary btn-sm" href="<?= e($base) ?>/transfers_internal_blocks.php">Periodi Bloccati</a>
@@ -96,8 +102,15 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
           <h2 class="h6 mb-0">Calendario</h2>
         </div>
         <div class="card-body p-0" style="height: calc(100vh - 200px);">
+          <?php
+            $transferCalId = (string)($env['google']['calendar_id'] ?? '');
+            $iframeSrc = 'https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FRome&showPrint=0&showTz=0&mode=WEEK&title=Transfer&color=%23d50000';
+            if ($transferCalId !== '') {
+              $iframeSrc .= '&src=' . rawurlencode($transferCalId);
+            }
+          ?>
           <iframe
-            src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FRome&showPrint=0&showTz=0&mode=WEEK&title=Transfer&src=ZTUyYjE5MGFiYjEwMWUwMzY4ZTc4NDQ3ZjBhODg1NzQ3NWYwZjMxMTYzZjA3ZTYzNWEzNTczNTRmZGUzODE3ZEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23d50000"
+            src="<?= e($iframeSrc) ?>"
             class="w-100 h-100 border-0"
             style="min-height: 400px;"
             loading="lazy"
