@@ -3,7 +3,8 @@ require_once __DIR__ . '/google_client.php';
 
 function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?string {
   $env = require __DIR__ . '/../config/env.php';
-  $calendarId = $env['google']['calendar_id'] ?? 'primary';
+  $googleCfg = $env['google'] ?? [];
+  $calendarId = $googleCfg['calendar_id'] ?? 'primary';
 
   // 1) Leggi transfer  
 
@@ -31,12 +32,18 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
   // 3) Start/End (default 30 minuti)
   $tz = new DateTimeZone('Europe/Rome');
 
-  // Crei un oggetto DateTime dalla stringa
-  $startDt = new DateTime($t['when_at'], $tz);
+  if (empty($t['when_at'])) {
+    throw new RuntimeException('Data/Ora non valide (when_at vuoto).');
+  }
 
-
-  if (!$startDt) throw new RuntimeException('Data/Ora non valide');
-  $endDt = clone $startDt; $endDt->modify('+30 minutes');
+  $startDt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string)$t['when_at'], $tz);
+  if (!$startDt) {
+    $startDt = DateTimeImmutable::createFromFormat('Y-m-d H:i', (string)$t['when_at'], $tz);
+  }
+  if (!$startDt) {
+    throw new RuntimeException('Data/Ora non valide per Google Calendar: ' . (string)$t['when_at']);
+  }
+  $endDt = $startDt->modify('+30 minutes');
 
   // 4) Crea evento
   $service = google_calendar_client();
