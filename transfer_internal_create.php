@@ -48,15 +48,19 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 
           $transferId = (int)$pdo->lastInsertId();
 
+          $calendarMsg = '';
           try {
             gcal_create_event_for_internal_transfer($pdo, $transferId);
           } catch (Throwable $e) {
             error_log('Google Calendar create failed: '.$e->getMessage());
-            // Non bloccare l’utente: il transfer è creato; al limite ritenta via coda/cron
+            $calendarMsg = 'calendar_error';
           }
 
-          
-          header('Location: ' . $base . '/transfers_internal.php');
+          $redir = $base . '/transfers_internal.php';
+          if ($calendarMsg !== '') {
+            $redir .= '?msg=' . rawurlencode($calendarMsg);
+          }
+          header('Location: ' . $redir);
           exit;
         }
       }
