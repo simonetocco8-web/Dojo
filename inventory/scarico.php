@@ -302,7 +302,7 @@ include __DIR__ . '/../partials/header.php';
 </div>
 <?php endif; ?>
 
-<script src="<?= e($base) ?>/assets/scarico.js" defer></script>
+<script src="<?= e($base) ?>/assets/scarico.js?v=<?= urlencode((string)@filemtime(__DIR__ . '/../assets/scarico.js')) ?>" defer></script>
 
 
 <style>

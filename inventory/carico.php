@@ -114,6 +114,6 @@ include __DIR__ . '/../partials/header.php';
   </div>
 </div>
 
-<script src="<?= e($base) ?>/assets/carico.js" defer></script>
+<script src="<?= e($base) ?>/assets/carico.js?v=<?= urlencode((string)@filemtime(__DIR__ . '/../assets/carico.js')) ?>" defer></script>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
