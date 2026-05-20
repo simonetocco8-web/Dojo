@@ -72,4 +72,15 @@ window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
 
-invAddRow();
+function initInventoryRows(){
+  const addBtn = document.getElementById('btnAddCaricoProductRow');
+  if (addBtn) addBtn.addEventListener('click', () => invAddRow());
+
+  invAddRow();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initInventoryRows, { once: true });
+} else {
+  initInventoryRows();
+}
