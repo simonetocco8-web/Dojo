@@ -50,8 +50,8 @@ async function invAutocomplete(id, q){
     if (!Array.isArray(data) || data.length===0){ box.innerHTML='<div class="list-group-item small text-muted">Nessun risultato</div>'; return; }
     box.innerHTML = data.map(r => `
       <button type="button" class="list-group-item list-group-item-action"
-        data-pid="${r.id}" data-title="${r.title || ''}" data-stock="${r.stock ?? 0}">
-        ${escAttr(r.title)} <span class="badge bg-light text-dark">Giacenza tot: ${r.stock ?? 0}</span>
+        data-pid="${r.id}" data-title="${r.title || ''}" data-stock="${(r.stock != null ? r.stock : 0)}">
+        ${escAttr(r.title)} <span class="badge bg-light text-dark">Giacenza tot: ${(r.stock != null ? r.stock : 0)}</span>
       </button>
     `).join('');
   } catch(e){
@@ -72,4 +72,27 @@ window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
 
-invAddRow();
+function initInventoryRows(){
+  const wrap = document.getElementById('items');
+  if (!wrap) return false;
+
+  const addBtn = document.getElementById('btnAddCaricoProductRow');
+  if (addBtn && !addBtn.dataset.bound) {
+    addBtn.addEventListener('click', () => invAddRow());
+    addBtn.dataset.bound = '1';
+  }
+
+  if (!wrap.dataset.initialized) {
+    invAddRow();
+    wrap.dataset.initialized = '1';
+  }
+
+  return true;
+}
+
+(function bootInventoryRows(attempt){
+  if (initInventoryRows()) return;
+  if (attempt < 20) {
+    window.setTimeout(() => bootInventoryRows(attempt + 1), 50);
+  }
+})(0);

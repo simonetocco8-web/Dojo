@@ -106,7 +106,7 @@ include __DIR__ . '/../partials/header.php';
       </div>
       <hr>
       <div id="items"></div>
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.invAddRow()">+ Prodotto</button>
+      <button type="button" id="btnAddCaricoProductRow" class="btn btn-outline-secondary btn-sm">+ Prodotto</button>
       <div class="mt-3">
         <button class="btn btn-primary">Registra Carico</button>
       </div>
