@@ -63,4 +63,13 @@ function invPick(id, pid, title, stock){
 window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
-invAddRow();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const addBtn = document.getElementById('btnAddProductRow');
+  if (addBtn) addBtn.addEventListener('click', () => invAddRow());
+
+  const printBtn = document.getElementById('btnPrintSummary');
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+  invAddRow();
+});

@@ -72,4 +72,9 @@ window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
 
-invAddRow();
+document.addEventListener('DOMContentLoaded', () => {
+  const addBtn = document.getElementById('btnAddCaricoProductRow');
+  if (addBtn) addBtn.addEventListener('click', () => invAddRow());
+
+  invAddRow();
+});
