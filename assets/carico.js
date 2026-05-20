@@ -73,14 +73,26 @@ window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
 
 function initInventoryRows(){
+  const wrap = document.getElementById('items');
+  if (!wrap) return false;
+
   const addBtn = document.getElementById('btnAddCaricoProductRow');
-  if (addBtn) addBtn.addEventListener('click', () => invAddRow());
+  if (addBtn && !addBtn.dataset.bound) {
+    addBtn.addEventListener('click', () => invAddRow());
+    addBtn.dataset.bound = '1';
+  }
 
-  invAddRow();
+  if (!wrap.dataset.initialized) {
+    invAddRow();
+    wrap.dataset.initialized = '1';
+  }
+
+  return true;
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initInventoryRows, { once: true });
-} else {
-  initInventoryRows();
-}
+(function bootInventoryRows(attempt){
+  if (initInventoryRows()) return;
+  if (attempt < 20) {
+    window.setTimeout(() => bootInventoryRows(attempt + 1), 50);
+  }
+})(0);
