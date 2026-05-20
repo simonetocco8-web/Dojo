@@ -207,7 +207,7 @@ include __DIR__ . '/../partials/header.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h5 mb-0">Scarico</h1>
-  <?php if($summary): ?><button class="btn btn-sm btn-outline-secondary" onclick="window.print()">Stampa riepilogo</button><?php endif; ?>
+  <?php if($summary): ?><button id="btnPrintSummary" type="button" class="btn btn-sm btn-outline-secondary">Stampa riepilogo</button><?php endif; ?>
   <div class="d-flex gap-2">
     <?php if (is_amministrazione()): ?>
       <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/inventory/products.php">Prodotti</a>
@@ -269,7 +269,7 @@ include __DIR__ . '/../partials/header.php';
       </div>
       <hr>
       <div id="items"></div>
-      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.invAddRow()">+ Prodotto</button>
+      <button type="button" id="btnAddProductRow" class="btn btn-outline-secondary btn-sm">+ Prodotto</button>
       <div class="mt-3">
         <button class="btn btn-success">Registra Scarico</button>
       </div>
