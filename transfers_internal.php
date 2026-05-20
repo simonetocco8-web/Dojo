@@ -26,12 +26,16 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
     <?php
       $msgKey = (string)$_GET['msg'];
       $msgText = $msgKey;
-      if (strpos($msgKey, 'calendar_error') === 0) {
-        $detail = trim(substr($msgKey, strlen('calendar_error:')));
+      if (strpos($msgKey, 'calendar_error') !== false) {
+        $detail = trim(substr($msgKey, strpos($msgKey, 'calendar_error:') + strlen('calendar_error:')));
         if (stripos($detail, 'invalid_grant') !== false) {
           $detail = "Connessione Google scaduta/revocata. Vai su /google/oauth_login.php e ricollega l'account.";
         }
         $msgText = 'Transfer creato, ma non sincronizzato su Google Calendar. ' . $detail;
+      }
+      if (strpos($msgKey, 'sms_error') !== false) {
+        $smsDetail = trim(substr($msgKey, strpos($msgKey, 'sms_error:') + strlen('sms_error:')));
+        $msgText .= ' SMS non inviato: ' . $smsDetail;
       }
     ?>
     <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($msgText) ?></div>
