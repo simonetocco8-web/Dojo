@@ -39,7 +39,7 @@ return [
     'enabled' => true,
     'provider' => 'openapi',
     'api_key' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
-    'endpoint' => 'https://api.openapi.com/v1/sms/send',
+    'endpoint' => 'https://sms.openapi.com/v1/sms/send',
     'to' => '+393341913800'
   ],
 
