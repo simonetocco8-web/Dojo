@@ -64,7 +64,7 @@ window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
 
-document.addEventListener('DOMContentLoaded', () => {
+function initInventoryRows(){
   const addBtn = document.getElementById('btnAddProductRow');
   if (addBtn) addBtn.addEventListener('click', () => invAddRow());
 
@@ -72,4 +72,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (printBtn) printBtn.addEventListener('click', () => window.print());
 
   invAddRow();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initInventoryRows, { once: true });
+} else {
+  initInventoryRows();
+}
