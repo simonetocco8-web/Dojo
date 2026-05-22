@@ -5,15 +5,19 @@ function sms_send_internal_transfer(array $env, array $payload): void {
   if (empty($cfg['enabled'])) return;
 
   $apiKey = (string)($cfg['api_key'] ?? '');
-  $endpoint = (string)($cfg['endpoint'] ?? '');
+  $endpoint = (string)($cfg['endpoint'] ?? 'https://sms.openapi.com/v1/sms/send');
   $to = (string)($cfg['to'] ?? '');
+  $sender = (string)($cfg['sender'] ?? 'Dojo');
 
-  if ($apiKey === '' || $endpoint === '' || $to === '') {
-    throw new RuntimeException('Configurazione SMS incompleta (api_key/endpoint/to).');
+  if ($apiKey === '' || $to === '') {
+    throw new RuntimeException('Configurazione SMS incompleta (api_key/to).');
   }
 
+  // Se in configurazione è rimasto host legacy, normalizza automaticamente.
+  $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
+
   $message = sprintf(
-    "Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s",
+    'Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s',
     (string)($payload['room_number'] ?? ''),
     strtoupper((string)($payload['direction'] ?? '')),
     (string)($payload['location'] ?? ''),
@@ -22,8 +26,13 @@ function sms_send_internal_transfer(array $env, array $payload): void {
   );
 
   $body = json_encode([
-    'to' => $to,
+    'sender' => $sender,
+    'recipient' => $to,
     'message' => $message,
+    'options' => [
+      'dryRun' => false,
+      'failOnMultipleMessages' => false,
+    ],
   ], JSON_UNESCAPED_UNICODE);
 
   $ch = curl_init($endpoint);
@@ -35,7 +44,7 @@ function sms_send_internal_transfer(array $env, array $payload): void {
       'Authorization: Bearer ' . $apiKey,
     ],
     CURLOPT_POSTFIELDS => $body,
-    CURLOPT_TIMEOUT => 15,
+    CURLOPT_TIMEOUT => 20,
   ]);
 
   $resp = curl_exec($ch);
