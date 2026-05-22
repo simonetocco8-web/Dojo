@@ -8,6 +8,7 @@ function sms_send_internal_transfer(array $env, array $payload): void {
   $endpoint = (string)($cfg['endpoint'] ?? 'https://sms.openapi.com/v1/sms/send');
   $to = (string)($cfg['to'] ?? '');
   $sender = (string)($cfg['sender'] ?? 'Dojo');
+  $authMode = strtolower((string)($cfg['auth_mode'] ?? 'auto'));
 
   if ($apiKey === '' || $to === '') {
     throw new RuntimeException('Configurazione SMS incompleta (api_key/to).');
@@ -35,14 +36,25 @@ function sms_send_internal_transfer(array $env, array $payload): void {
     ],
   ], JSON_UNESCAPED_UNICODE);
 
+  $headers = ['Content-Type: application/json'];
+  if ($authMode === 'bearer') {
+    $headers[] = 'Authorization: Bearer ' . $apiKey;
+  } elseif ($authMode === 'x-api-key') {
+    $headers[] = 'X-API-Key: ' . $apiKey;
+  } elseif ($authMode === 'apikey') {
+    $headers[] = 'apikey: ' . $apiKey;
+  } else {
+    // auto: invia tutte le forme più comuni per compatibilità provider
+    $headers[] = 'Authorization: Bearer ' . $apiKey;
+    $headers[] = 'X-API-Key: ' . $apiKey;
+    $headers[] = 'apikey: ' . $apiKey;
+  }
+
   $ch = curl_init($endpoint);
   curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-      'Content-Type: application/json',
-      'Authorization: Bearer ' . $apiKey,
-    ],
+    CURLOPT_HTTPHEADER => $headers,
     CURLOPT_POSTFIELDS => $body,
     CURLOPT_TIMEOUT => 20,
   ]);
@@ -58,6 +70,6 @@ function sms_send_internal_transfer(array $env, array $payload): void {
   curl_close($ch);
 
   if ($status < 200 || $status >= 300) {
-    throw new RuntimeException('SMS provider HTTP ' . $status . ': ' . $resp);
+    throw new RuntimeException('SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $endpoint . ', auth_mode=' . $authMode . ']');
   }
 }

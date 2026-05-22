@@ -41,7 +41,8 @@ return [
     'api_key' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
     'endpoint' => 'https://sms.openapi.com/v1/sms/send',
     'to' => '+393341913800',
-    'sender' => 'Dojo' 
+    'sender' => 'Dojo',
+    'auth_mode' => 'auto'
   ],
 
   'google' => [
