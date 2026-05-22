@@ -44,8 +44,8 @@ async function invAutocomplete(id, q){
     if (!Array.isArray(data) || data.length===0){ box.innerHTML='<div class="list-group-item small text-muted">Nessun risultato</div>'; return; }
     box.innerHTML = data.map(r => `
       <button type="button" class="list-group-item list-group-item-action"
-        data-pid="${r.id}" data-title="${r.title || ''}" data-stock="${r.stock ?? 0}">
-        ${escAttr(r.title)} <span class="badge bg-light text-dark">Giacenza tot: ${r.stock ?? 0}</span>
+        data-pid="${r.id}" data-title="${r.title || ''}" data-stock="${(r.stock != null ? r.stock : 0)}">
+        ${escAttr(r.title)} <span class="badge bg-light text-dark">Giacenza tot: ${(r.stock != null ? r.stock : 0)}</span>
       </button>
     `).join('');
   } catch(e){
@@ -63,4 +63,19 @@ function invPick(id, pid, title, stock){
 window.invAddRow = invAddRow;
 window.invAutocomplete = invAutocomplete;
 window.invPick = invPick;
-invAddRow();
+
+function initInventoryRows(){
+  const addBtn = document.getElementById('btnAddProductRow');
+  if (addBtn) addBtn.addEventListener('click', () => invAddRow());
+
+  const printBtn = document.getElementById('btnPrintSummary');
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+  invAddRow();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initInventoryRows, { once: true });
+} else {
+  initInventoryRows();
+}
