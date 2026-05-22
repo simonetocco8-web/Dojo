@@ -35,6 +35,15 @@ return [
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
   ],
+  'sms' => [
+    'enabled' => true,
+    'provider' => 'openapi',
+    'api_key' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
+    'endpoint' => 'https://sms.openapi.com/v1/sms/send',
+    'to' => '+393341913800',
+    'sender' => 'Dojo' 
+  ],
+
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
     'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
