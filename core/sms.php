@@ -14,7 +14,10 @@ function sms_send_internal_transfer(array $env, array $payload): void {
     throw new RuntimeException('Configurazione SMS incompleta (api_key/to).');
   }
 
+<<<<<<< codex/fix-redirect-to-inventory/products.php-k1p2h1
+=======
   // Se in configurazione è rimasto host legacy, normalizza automaticamente.
+>>>>>>> main
   $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
 
   $message = sprintf(
@@ -26,7 +29,11 @@ function sms_send_internal_transfer(array $env, array $payload): void {
     (string)($payload['time'] ?? '')
   );
 
+<<<<<<< codex/fix-redirect-to-inventory/products.php-k1p2h1
+  $baseBody = [
+=======
   $body = json_encode([
+>>>>>>> main
     'sender' => $sender,
     'recipient' => $to,
     'message' => $message,
@@ -34,6 +41,65 @@ function sms_send_internal_transfer(array $env, array $payload): void {
       'dryRun' => false,
       'failOnMultipleMessages' => false,
     ],
+<<<<<<< codex/fix-redirect-to-inventory/products.php-k1p2h1
+  ];
+
+  $attempts = [];
+  if ($authMode === 'bearer') {
+    $attempts[] = ['mode' => 'bearer', 'headers' => ['Authorization: Bearer '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'x-api-key') {
+    $attempts[] = ['mode' => 'x-api-key', 'headers' => ['X-API-Key: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'apikey') {
+    $attempts[] = ['mode' => 'apikey', 'headers' => ['apikey: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'query') {
+    $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
+    $attempts[] = ['mode' => 'query', 'headers' => [], 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey), 'body' => $baseBody];
+  } else {
+    $attempts[] = ['mode' => 'bearer', 'headers' => ['Authorization: Bearer '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $attempts[] = ['mode' => 'x-api-key', 'headers' => ['X-API-Key: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $attempts[] = ['mode' => 'apikey', 'headers' => ['apikey: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
+    $attempts[] = ['mode' => 'query', 'headers' => [], 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey), 'body' => $baseBody];
+  }
+
+  $lastErr = 'SMS provider auth fallita';
+  foreach ($attempts as $a) {
+    $body = json_encode($a['body'], JSON_UNESCAPED_UNICODE);
+    $headers = array_merge(['Content-Type: application/json'], $a['headers']);
+
+    $ch = curl_init($a['url']);
+    curl_setopt_array($ch, [
+      CURLOPT_POST => true,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => $headers,
+      CURLOPT_POSTFIELDS => $body,
+      CURLOPT_TIMEOUT => 20,
+    ]);
+
+    $resp = curl_exec($ch);
+    if ($resp === false) {
+      $err = curl_error($ch);
+      curl_close($ch);
+      $lastErr = 'SMS curl error: ' . $err;
+      continue;
+    }
+
+    $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($status >= 200 && $status < 300) {
+      return;
+    }
+
+    $lastErr = 'SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $a['url'] . ', auth_mode=' . $a['mode'] . ']';
+
+    if ($status !== 401) {
+      break;
+    }
+  }
+
+  throw new RuntimeException($lastErr);
+=======
   ], JSON_UNESCAPED_UNICODE);
 
   $headers = ['Content-Type: application/json'];
@@ -72,4 +138,5 @@ function sms_send_internal_transfer(array $env, array $payload): void {
   if ($status < 200 || $status >= 300) {
     throw new RuntimeException('SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $endpoint . ', auth_mode=' . $authMode . ']');
   }
+>>>>>>> main
 }

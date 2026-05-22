@@ -42,7 +42,7 @@ return [
     'endpoint' => 'https://sms.openapi.com/v1/sms/send',
     'to' => '+393341913800',
     'sender' => 'Dojo',
-    'auth_mode' => 'auto'
+    'auth_mode' => 'auto' // auto|bearer|x-api-key|apikey|query
   ],
 
   'google' => [
