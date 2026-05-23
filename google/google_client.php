@@ -16,21 +16,7 @@ function google_calendar_client(): Google\Service\Calendar {
   $client->setAccessToken($accessToken);
 
   if ($client->isAccessTokenExpired()) {
-    $refreshToken = $client->getRefreshToken();
-    if (!$refreshToken) {
-      throw new RuntimeException('Token Google scaduto e refresh_token assente. Ricollega Google da /google/oauth_login.php.');
-    }
-
-    $newToken = $client->fetchAccessTokenWithRefreshToken($refreshToken);
-    if (isset($newToken['error'])) {
-      $err = (string)($newToken['error'] ?? '');
-      $desc = (string)($newToken['error_description'] ?? '');
-      if ($err === 'invalid_grant') {
-        throw new RuntimeException("Connessione Google scaduta/revocata (invalid_grant). Ricollega l'account da /google/oauth_login.php.");
-      }
-      throw new RuntimeException('Refresh token Google fallito: ' . trim($err . ' ' . $desc));
-    }
-
+    $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
     file_put_contents($tokenPath, json_encode($client->getAccessToken()));
   }
   return new Google\Service\Calendar($client);

@@ -1,15 +1,9 @@
 <?php
 require_once __DIR__ . '/google_client.php';
 
-
-function gcal_try_insert_event(Google\Service\Calendar $service, string $calendarId, Google\Service\Calendar\Event $event): Google\Service\Calendar\Event {
-  return $service->events->insert($calendarId, $event);
-}
-
 function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?string {
   $env = require __DIR__ . '/../config/env.php';
-  $googleCfg = $env['google'] ?? [];
-  $calendarId = $googleCfg['calendar_id'] ?? 'primary';
+  $calendarId = $env['google']['calendar_id'] ?? 'primary';
 
   // 1) Leggi transfer  
 
@@ -37,18 +31,12 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
   // 3) Start/End (default 30 minuti)
   $tz = new DateTimeZone('Europe/Rome');
 
-  if (empty($t['when_at'])) {
-    throw new RuntimeException('Data/Ora non valide (when_at vuoto).');
-  }
+  // Crei un oggetto DateTime dalla stringa
+  $startDt = new DateTime($t['when_at'], $tz);
 
-  $startDt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', (string)$t['when_at'], $tz);
-  if (!$startDt) {
-    $startDt = DateTimeImmutable::createFromFormat('Y-m-d H:i', (string)$t['when_at'], $tz);
-  }
-  if (!$startDt) {
-    throw new RuntimeException('Data/Ora non valide per Google Calendar: ' . (string)$t['when_at']);
-  }
-  $endDt = $startDt->modify('+30 minutes');
+
+  if (!$startDt) throw new RuntimeException('Data/Ora non valide');
+  $endDt = clone $startDt; $endDt->modify('+30 minutes');
 
   // 4) Crea evento
   $service = google_calendar_client();
@@ -72,16 +60,7 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
   ],
   ]);
 
-  try {
-    $created = gcal_try_insert_event($service, $calendarId, $event);
-  } catch (Throwable $e) {
-    $msg = $e->getMessage();
-    $canFallback = ($calendarId !== 'primary') && (stripos($msg, 'Not Found') !== false || stripos($msg, 'notFound') !== false);
-    if (!$canFallback) {
-      throw $e;
-    }
-    $created = gcal_try_insert_event($service, 'primary', $event);
-  }
+  $created = $service->events->insert($calendarId, $event);
   $eventId = $created->getId();
 
   // 5) Salva event_id in DB

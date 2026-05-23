@@ -23,22 +23,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h5 mb-0">Transfer Interni</h1>
   <?php if (!empty($_GET['msg'])): ?>
-    <?php
-      $msgKey = (string)$_GET['msg'];
-      $msgText = $msgKey;
-      if (strpos($msgKey, 'calendar_error') !== false) {
-        $detail = trim(substr($msgKey, strpos($msgKey, 'calendar_error:') + strlen('calendar_error:')));
-        if (stripos($detail, 'invalid_grant') !== false) {
-          $detail = "Connessione Google scaduta/revocata. Vai su /google/oauth_login.php e ricollega l'account.";
-        }
-        $msgText = 'Transfer creato, ma non sincronizzato su Google Calendar. ' . $detail;
-      }
-      if (strpos($msgKey, 'sms_error') !== false) {
-        $smsDetail = trim(substr($msgKey, strpos($msgKey, 'sms_error:') + strlen('sms_error:')));
-        $msgText .= ' SMS non inviato: ' . $smsDetail;
-      }
-    ?>
-    <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($msgText) ?></div>
+    <div class="alert alert-info mb-0 ms-3 py-1 px-2"><?= e($_GET['msg']) ?></div>
   <?php endif; ?>
   <div class="d-flex gap-2 ms-auto">
     <a class="btn btn-outline-secondary btn-sm" href="<?= e($base) ?>/transfers_internal_blocks.php">Periodi Bloccati</a>
@@ -111,15 +96,8 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
           <h2 class="h6 mb-0">Calendario</h2>
         </div>
         <div class="card-body p-0" style="height: calc(100vh - 200px);">
-          <?php
-            $transferCalId = (string)($env['google']['calendar_id'] ?? '');
-            $iframeSrc = 'https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FRome&showPrint=0&showTz=0&mode=WEEK&title=Transfer&color=%23d50000';
-            if ($transferCalId !== '') {
-              $iframeSrc .= '&src=' . rawurlencode($transferCalId);
-            }
-          ?>
           <iframe
-            src="<?= e($iframeSrc) ?>"
+            src="https://calendar.google.com/calendar/embed?height=600&wkst=2&ctz=Europe%2FRome&showPrint=0&showTz=0&mode=WEEK&title=Transfer&src=ZTUyYjE5MGFiYjEwMWUwMzY4ZTc4NDQ3ZjBhODg1NzQ3NWYwZjMxMTYzZjA3ZTYzNWEzNTczNTRmZGUzODE3ZEBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23d50000"
             class="w-100 h-100 border-0"
             style="min-height: 400px;"
             loading="lazy"

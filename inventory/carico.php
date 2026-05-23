@@ -106,7 +106,7 @@ include __DIR__ . '/../partials/header.php';
       </div>
       <hr>
       <div id="items"></div>
-      <button type="button" id="btnAddCaricoProductRow" class="btn btn-outline-secondary btn-sm">+ Prodotto</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.invAddRow()">+ Prodotto</button>
       <div class="mt-3">
         <button class="btn btn-primary">Registra Carico</button>
       </div>
@@ -114,6 +114,6 @@ include __DIR__ . '/../partials/header.php';
   </div>
 </div>
 
-<script src="<?= e($base) ?>/assets/carico.js?v=<?= urlencode((string)@filemtime(__DIR__ . '/../assets/carico.js')) ?>" defer></script>
+<script src="<?= e($base) ?>/assets/carico.js" defer></script>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>

@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       ");
       try {
         $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
-        header('Location: ' . ($base ?: '') . '/inventory/products.php');
+        header('Location: ' . ($base ? $base.'/' : '') . 'inventory/products.php');
         exit;
       } catch (PDOException $e) {
         $sqlstate = $e->getCode();          // es. '23000'
