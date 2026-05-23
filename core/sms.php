@@ -59,6 +59,43 @@ function sms_send_internal_transfer($env, $payload) {
     $attempts[] = array('mode' => 'apikey', 'headers' => array('apikey: '.$apiKey), 'url' => $endpoint, 'body' => $baseBody);
     $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
     $attempts[] = array('mode' => 'query', 'headers' => array(), 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey), 'body' => $baseBody);
+  $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
+
+  $message = sprintf(
+    'Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s',
+    (string)($payload['room_number'] ?? ''),
+    strtoupper((string)($payload['direction'] ?? '')),
+    (string)($payload['location'] ?? ''),
+    (string)($payload['date'] ?? ''),
+    (string)($payload['time'] ?? '')
+  );
+
+  $baseBody = [
+    'sender' => $sender,
+    'recipient' => $to,
+    'message' => $message,
+    'options' => [
+      'dryRun' => false,
+      'failOnMultipleMessages' => false,
+    ],
+  ];
+
+  $attempts = [];
+  if ($authMode === 'bearer') {
+    $attempts[] = ['mode' => 'bearer', 'headers' => ['Authorization: Bearer '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'x-api-key') {
+    $attempts[] = ['mode' => 'x-api-key', 'headers' => ['X-API-Key: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'apikey') {
+    $attempts[] = ['mode' => 'apikey', 'headers' => ['apikey: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+  } elseif ($authMode === 'query') {
+    $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
+    $attempts[] = ['mode' => 'query', 'headers' => [], 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey), 'body' => $baseBody];
+  } else {
+    $attempts[] = ['mode' => 'bearer', 'headers' => ['Authorization: Bearer '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $attempts[] = ['mode' => 'x-api-key', 'headers' => ['X-API-Key: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $attempts[] = ['mode' => 'apikey', 'headers' => ['apikey: '.$apiKey], 'url' => $endpoint, 'body' => $baseBody];
+    $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
+    $attempts[] = ['mode' => 'query', 'headers' => [], 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey), 'body' => $baseBody];
   }
 
   $lastErr = 'SMS provider auth fallita';
