@@ -23,66 +23,75 @@ function sms_send_internal_transfer($env, $payload) {
   $date = isset($payload['date']) ? (string)$payload['date'] : '';
   $time = isset($payload['time']) ? (string)$payload['time'] : '';
 
-  $message = sprintf(
-    'Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s',
-    $room,
-    $direction,
-    $location,
-    $date,
-    $time
-  );
+  $message = sprintf('Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s', $room, $direction, $location, $date, $time);
 
-  $bodyPayload = array(
+  $jsonBody = json_encode(array(
     'sender' => $sender,
     'recipient' => $to,
     'message' => $message,
-    'options' => array(
-      'dryRun' => false,
-      'failOnMultipleMessages' => false,
-    ),
+    'options' => array('dryRun' => false, 'failOnMultipleMessages' => false),
+  ), JSON_UNESCAPED_UNICODE);
+
+  $multipartBody = array(
+    'sender' => $sender,
+    'recipient' => $to,
+    'message' => $message,
+    'dryRun' => 'false',
+    'failOnMultipleMessages' => 'false',
   );
 
-  $authHeaders = array(
-    array('mode' => 'bearer', 'headers' => array('Authorization: Bearer ' . $apiKey), 'url' => $endpoint),
+  $authAttempts = array(
     array('mode' => 'x-api-key', 'headers' => array('X-API-Key: ' . $apiKey), 'url' => $endpoint),
     array('mode' => 'apikey', 'headers' => array('apikey: ' . $apiKey), 'url' => $endpoint),
+    array('mode' => 'bearer', 'headers' => array('Authorization: Bearer ' . $apiKey), 'url' => $endpoint),
   );
-
   $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
-  $authHeaders[] = array('mode' => 'query', 'headers' => array(), 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey));
+  $authAttempts[] = array('mode' => 'query', 'headers' => array(), 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey));
 
+  $contentModes = array('json', 'multipart');
   $lastErr = 'SMS provider auth fallita';
 
-  foreach ($authHeaders as $attempt) {
-    $body = json_encode($bodyPayload, JSON_UNESCAPED_UNICODE);
-    $headers = array_merge(array('Content-Type: application/json'), $attempt['headers']);
+  foreach ($authAttempts as $attempt) {
+    foreach ($contentModes as $contentMode) {
+      $headers = $attempt['headers'];
+      $postFields = null;
 
-    $ch = curl_init($attempt['url']);
-    curl_setopt_array($ch, array(
-      CURLOPT_POST => true,
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_HTTPHEADER => $headers,
-      CURLOPT_POSTFIELDS => $body,
-      CURLOPT_TIMEOUT => 20,
-    ));
+      if ($contentMode === 'json') {
+        $headers = array_merge(array('Content-Type: application/json'), $headers);
+        $postFields = $jsonBody;
+      } else {
+        // NON impostare Content-Type: curl aggiunge boundary multipart/form-data automaticamente
+        $postFields = $multipartBody;
+      }
 
-    $resp = curl_exec($ch);
-    if ($resp === false) {
-      $lastErr = 'SMS curl error: ' . curl_error($ch);
+      $ch = curl_init($attempt['url']);
+      curl_setopt_array($ch, array(
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_POSTFIELDS => $postFields,
+        CURLOPT_TIMEOUT => 20,
+      ));
+
+      $resp = curl_exec($ch);
+      if ($resp === false) {
+        $lastErr = 'SMS curl error: ' . curl_error($ch);
+        curl_close($ch);
+        continue;
+      }
+
+      $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
       curl_close($ch);
-      continue;
-    }
 
-    $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+      if ($status >= 200 && $status < 300) {
+        return;
+      }
 
-    if ($status >= 200 && $status < 300) {
-      return;
-    }
+      $lastErr = 'SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $attempt['url'] . ', auth_mode=' . $attempt['mode'] . ', content=' . $contentMode . ']';
 
-    $lastErr = 'SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $attempt['url'] . ', auth_mode=' . $attempt['mode'] . ']';
-    if ($status !== 401) {
-      break;
+      if ($status !== 400 && $status !== 401) {
+        break 2;
+      }
     }
   }
 
