@@ -2,6 +2,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/sms.php';
 require_once __DIR__ . '/google/calendar_transfers.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
@@ -48,15 +49,32 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 
           $transferId = (int)$pdo->lastInsertId();
 
+          $messages = [];
           try {
             gcal_create_event_for_internal_transfer($pdo, $transferId);
           } catch (Throwable $e) {
             error_log('Google Calendar create failed: '.$e->getMessage());
-            // Non bloccare l’utente: il transfer è creato; al limite ritenta via coda/cron
+            $messages[] = 'calendar_error: ' . $e->getMessage();
           }
 
-          
-          header('Location: ' . $base . '/transfers_internal.php');
+          try {
+            sms_send_internal_transfer($env, [
+              'room_number' => $room,
+              'direction' => $direction,
+              'location' => $location,
+              'date' => $date,
+              'time' => $time,
+            ]);
+          } catch (Throwable $e) {
+            error_log('SMS send failed: ' . $e->getMessage());
+            $messages[] = 'sms_error: ' . $e->getMessage();
+          }
+
+          $redir = $base . '/transfers_internal.php';
+          if (!empty($messages)) {
+            $redir .= '?msg=' . rawurlencode(implode(' | ', $messages));
+          }
+          header('Location: ' . $redir);
           exit;
         }
       }
