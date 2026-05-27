@@ -17,6 +17,12 @@ function sms_send_internal_transfer($env, $payload) {
 
   $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
 
+  $endpointCandidates = array($endpoint);
+  if (strpos($endpoint, '/v1/sms/send') !== false) {
+    $endpointCandidates[] = str_replace('/v1/sms/send', '/sms/send', $endpoint);
+    $endpointCandidates[] = str_replace('/v1/sms/send', '/v1/messages', $endpoint);
+  }
+
   $room = isset($payload['room_number']) ? (string)$payload['room_number'] : '';
   $direction = isset($payload['direction']) ? strtoupper((string)$payload['direction']) : '';
   $location = isset($payload['location']) ? (string)$payload['location'] : '';
@@ -40,13 +46,14 @@ function sms_send_internal_transfer($env, $payload) {
     'failOnMultipleMessages' => 'false',
   );
 
-  $authAttempts = array(
-    array('mode' => 'x-api-key', 'headers' => array('X-API-Key: ' . $apiKey), 'url' => $endpoint),
-    array('mode' => 'apikey', 'headers' => array('apikey: ' . $apiKey), 'url' => $endpoint),
-    array('mode' => 'bearer', 'headers' => array('Authorization: Bearer ' . $apiKey), 'url' => $endpoint),
-  );
-  $sep = (strpos($endpoint, '?') !== false) ? '&' : '?';
-  $authAttempts[] = array('mode' => 'query', 'headers' => array(), 'url' => $endpoint . $sep . 'apiKey=' . rawurlencode($apiKey));
+  $authAttempts = array();
+  foreach ($endpointCandidates as $ep) {
+    $authAttempts[] = array('mode' => 'x-api-key', 'headers' => array('X-API-Key: ' . $apiKey), 'url' => $ep);
+    $authAttempts[] = array('mode' => 'apikey', 'headers' => array('apikey: ' . $apiKey), 'url' => $ep);
+    $authAttempts[] = array('mode' => 'bearer', 'headers' => array('Authorization: Bearer ' . $apiKey), 'url' => $ep);
+    $sep = (strpos($ep, '?') !== false) ? '&' : '?';
+    $authAttempts[] = array('mode' => 'query', 'headers' => array(), 'url' => $ep . $sep . 'apiKey=' . rawurlencode($apiKey));
+  }
 
   $contentModes = array('json', 'multipart');
   $lastErr = 'SMS provider auth fallita';
@@ -89,7 +96,7 @@ function sms_send_internal_transfer($env, $payload) {
 
       $lastErr = 'SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $attempt['url'] . ', auth_mode=' . $attempt['mode'] . ', content=' . $contentMode . ']';
 
-      if ($status !== 400 && $status !== 401) {
+      if ($status !== 400 && $status !== 401 && $status !== 404) {
         break 2;
       }
     }

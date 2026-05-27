@@ -39,7 +39,7 @@ return [
     'enabled' => true,
     'provider' => 'openapi',
     'api_key' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
-    'endpoint' => 'https://sms.openapi.com/v1/sms/send',
+    'endpoint' => 'https://sms.openapi.com/sms/send',
     'to' => '+393341913800',
     'sender' => 'Dojo',
     'auth_mode' => 'auto' // auto|bearer|x-api-key|apikey|query
