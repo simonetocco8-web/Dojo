@@ -7,7 +7,7 @@ function sms_send_internal_transfer($env, $payload) {
   }
 
   $apiKey = isset($cfg['api_key']) ? (string)$cfg['api_key'] : '';
-  $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/v1/sms/send';
+  $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/IT-messages';
   $to = isset($cfg['to']) ? (string)$cfg['to'] : '';
   $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo';
 
@@ -18,6 +18,9 @@ function sms_send_internal_transfer($env, $payload) {
   $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
 
   $endpointCandidates = array($endpoint);
+  if (strpos($endpoint, '/IT-messages') === false) {
+    $endpointCandidates[] = 'https://sms.openapi.com/IT-messages';
+  }
   if (strpos($endpoint, '/v1/sms/send') !== false) {
     $endpointCandidates[] = str_replace('/v1/sms/send', '/sms/send', $endpoint);
     $endpointCandidates[] = str_replace('/v1/sms/send', '/v1/messages', $endpoint);
