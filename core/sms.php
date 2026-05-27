@@ -58,12 +58,12 @@ function sms_send_internal_transfer($env, $payload) {
     $authAttempts[] = array('mode' => 'query', 'headers' => array(), 'url' => $ep . $sep . 'apiKey=' . rawurlencode($apiKey));
   }
 
-  $contentModes = array('json', 'multipart');
+  $contentModes = array('multipart', 'json');
   $lastErr = 'SMS provider auth fallita';
 
   foreach ($authAttempts as $attempt) {
     foreach ($contentModes as $contentMode) {
-      $headers = $attempt['headers'];
+      $headers = array_merge(array('User-Agent: DojoSMS/1.0', 'Accept: */*'), $attempt['headers']);
       $postFields = null;
 
       if ($contentMode === 'json') {
@@ -99,7 +99,7 @@ function sms_send_internal_transfer($env, $payload) {
 
       $lastErr = 'SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $attempt['url'] . ', auth_mode=' . $attempt['mode'] . ', content=' . $contentMode . ']';
 
-      if ($status !== 400 && $status !== 401 && $status !== 404) {
+      if ($status !== 400 && $status !== 401 && $status !== 403 && $status !== 404) {
         break 2;
       }
     }
