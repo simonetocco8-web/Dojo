@@ -26,6 +26,8 @@ $WAREHOUSES = ['Tizzo','Tramonto'];
 $q         = trim((string)($_GET['q'] ?? ''));                // nome prodotto (LIKE)
 $category  = trim((string)($_GET['category'] ?? ''));         // categoria precisa
 $warehouse = trim((string)($_GET['warehouse'] ?? ''));        // Tizzo | Tramonto | ''
+$quantity  = trim((string)($_GET['quantity'] ?? 'all'));       // all | low
+if (!in_array($quantity, ['all','low'], true)) { $quantity = 'all'; }
 $page      = max(1, (int)($_GET['page'] ?? 1));
 $perPage   = 20;
 $offset    = ($page - 1) * $perPage;
@@ -58,14 +60,19 @@ if ($warehouse !== '' && in_array($warehouse, $WAREHOUSES, true)) {
 // WHERE finale
 $whereSql = $where ? ('WHERE '.implode(' AND ', $where)) : '';
 
-// --- COUNT totale risultati (senza LIMIT), usando DISTINCT su prodotti ---
+// --- COUNT totale risultati (senza LIMIT), con eventuale filtro sottoscorta ---
+$havingSql = ($quantity === 'low') ? 'HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty' : '';
+
 $countSql = "
   SELECT COUNT(*) AS total
   FROM (
-    SELECT DISTINCT p.id
+    SELECT p.id
     FROM products p
+    LEFT JOIN stock_levels sl ON sl.product_id = p.id
     $joinWarehouse
     $whereSql
+    GROUP BY p.id, p.min_qty
+    $havingSql
   ) t
 ";
 $countStmt = $pdo->prepare($countSql);
@@ -93,6 +100,7 @@ $listSql = "
   $joinWarehouse
   $whereSql
   GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name
+  $havingSql
   ORDER BY p.title ASC
   LIMIT :limit OFFSET :offset
 ";
@@ -146,7 +154,14 @@ include __DIR__ . '/../partials/header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-12 col-md-2 d-grid">
+      <div class="col-6 col-md-2">
+        <label class="form-label">Quantità</label>
+        <select name="quantity" class="form-select">
+          <option value="all" <?= $quantity==='all'?'selected':''; ?>>Tutti</option>
+          <option value="low" <?= $quantity==='low'?'selected':''; ?>>Sottoscorta</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2 d-grid">
         <button class="btn btn-outline-primary">Filtra</button>
       </div>
     </div>
