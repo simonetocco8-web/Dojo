@@ -38,11 +38,11 @@ return [
   'sms' => [
     'enabled' => true,
     'provider' => 'openapi',
-    'api_key' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
+    'access_token' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
     'endpoint' => 'https://sms.openapi.com/IT-messages',
     'to' => '+393341913800',
     'sender' => 'Dojo',
-    'auth_mode' => 'auto' // auto|bearer|x-api-key|apikey|query
+    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
   ],
 
   'google' => [
