@@ -35,6 +35,16 @@ return [
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
   ],
+  'sms' => [
+    'enabled' => true,
+    'provider' => 'openapi',
+    'access_token' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
+    'endpoint' => 'https://sms.openapi.com/IT-messages',
+    'to' => '+393341913800',
+    'sender' => 'Dojo',
+    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
+  ],
+
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
     'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
