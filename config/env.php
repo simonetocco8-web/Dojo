@@ -38,10 +38,12 @@ return [
   'sms' => [
     'enabled' => true,
     'provider' => 'openapi',
-    'access_token' => 'haxaguwpis88ysvnbjfw8jhvr8rbqmbs',
+    'access_token' => '6a185e25847aaa113b0959c6',
     'endpoint' => 'https://sms.openapi.com/IT-messages',
     'to' => '+393341913800',
-    'sender' => 'Dojo',
+    'sender' => 'Openapi',
+    'dry_run' => false,
+    'fail_on_multiple_messages' => false,
     'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
   ],
 

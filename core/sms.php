@@ -14,7 +14,9 @@ function sms_send_internal_transfer($env, $payload) {
 
   $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/IT-messages';
   $to = isset($cfg['to']) ? (string)$cfg['to'] : '';
-  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo';
+  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Openapi';
+  $dryRun = isset($cfg['dry_run']) ? (bool)$cfg['dry_run'] : false;
+  $failOnMultipleMessages = isset($cfg['fail_on_multiple_messages']) ? (bool)$cfg['fail_on_multiple_messages'] : false;
 
   if ($token === '' || $to === '') {
     throw new RuntimeException('Configurazione SMS incompleta (access_token/to).');
@@ -38,10 +40,10 @@ function sms_send_internal_transfer($env, $payload) {
     'recipient' => $to,
     'message' => $message,
     'options' => array(
-      'dryRun' => false,
-      'failOnMultipleMessages' => false,
+      'dryRun' => $dryRun,
+      'failOnMultipleMessages' => $failOnMultipleMessages,
     ),
-  ), JSON_UNESCAPED_UNICODE);
+  ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
   $ch = curl_init($endpoint);
   curl_setopt_array($ch, array(
@@ -53,7 +55,10 @@ function sms_send_internal_transfer($env, $payload) {
       'Authorization: Bearer ' . $token,
     ),
     CURLOPT_POSTFIELDS => $body,
-    CURLOPT_TIMEOUT => 20,
+    CURLOPT_TIMEOUT => 30,
+    CURLOPT_CONNECTTIMEOUT => 15,
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
   ));
 
   $resp = curl_exec($ch);
