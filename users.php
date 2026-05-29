@@ -58,7 +58,7 @@ include __DIR__ . '/partials/header.php';
             <td><?= e($u['cognome'] ?? '') ?></td>
             <td><?= e($u['email']) ?></td>
             <td><?= e($u['telefono'] ?? '') ?></td>
-            <td><?= e(departments_label($u['dipartimento'] ?? '')) ?></td>
+            <td><?= department_badges($u['dipartimento'] ?? '') ?></td>
             <td><span class="badge bg-secondary"><?= e($u['role']) ?></span></td>
             <td><?= !empty($u['is_active']) ? '✔' : '—' ?></td>
             <?php if($show_trash): ?>

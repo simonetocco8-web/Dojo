@@ -149,12 +149,15 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
               <?php $userDeps = user_departments($user); ?>
-              <select name="dipartimento[]" class="form-select" multiple size="7">
+              <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
-                  <option value="<?= e($d) ?>" <?= in_array($d, $userDeps, true) ? 'selected' : '' ?>><?= e($d) ?></option>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_edit_<?= e($d) ?>" <?= in_array($d, $userDeps, true) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="dep_edit_<?= e($d) ?>"><?= e($d) ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </select>
-              <div class="form-text">Puoi selezionare più dipartimenti tenendo premuto Ctrl (Windows) o Cmd (Mac).</div>
+              </div>
+              <div class="form-text">Puoi selezionare uno o più dipartimenti.</div>
             </div>
 
             <div class="col-md-6">

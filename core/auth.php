@@ -28,17 +28,38 @@ function current_user() {
 
 function user_departments($user = null) {
   if ($user === null) $user = current_user();
-  if (!$user) return [];
-  $raw = $user['dipartimento'] ?? '';
-  if (is_array($raw)) return array_values(array_filter(array_map('trim', $raw)));
-  return array_values(array_filter(array_map('trim', explode(',', (string)$raw))));
+  if (!$user) return array();
+
+  $raw = isset($user['dipartimento']) ? $user['dipartimento'] : '';
+  if (is_array($raw)) {
+    $parts = $raw;
+  } else {
+    $raw = trim((string)$raw);
+    if ($raw === '') return array();
+
+    $decoded = json_decode($raw, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+      $parts = $decoded;
+    } else {
+      $parts = preg_split('/\s*[,;|]\s*/', $raw);
+    }
+  }
+
+  $departments = array();
+  foreach ($parts as $part) {
+    $part = trim((string)$part);
+    if ($part !== '' && !in_array($part, $departments, true)) {
+      $departments[] = $part;
+    }
+  }
+  return $departments;
 }
 
 function user_has_department($user, $department) {
   return in_array($department, user_departments($user), true);
 }
 
-function user_has_any_department($user, array $departments) {
+function user_has_any_department($user, $departments) {
   foreach ($departments as $department) {
     if (user_has_department($user, $department)) return true;
   }
@@ -46,8 +67,19 @@ function user_has_any_department($user, array $departments) {
 }
 
 function departments_label($departments) {
-  if (!is_array($departments)) $departments = user_departments(['dipartimento' => $departments]);
+  if (!is_array($departments)) $departments = user_departments(array('dipartimento' => $departments));
   return implode(', ', $departments);
+}
+
+function department_badges($departments) {
+  $items = is_array($departments) ? $departments : user_departments(array('dipartimento' => $departments));
+  if (!$items) return '<span class="text-muted">—</span>';
+
+  $html = '';
+  foreach ($items as $department) {
+    $html .= '<span class="badge bg-light text-dark border me-1">' . htmlspecialchars($department, ENT_QUOTES, 'UTF-8') . '</span>';
+  }
+  return $html;
 }
 
 function is_admin() {

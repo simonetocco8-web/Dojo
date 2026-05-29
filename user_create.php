@@ -87,12 +87,15 @@ include __DIR__ . '/partials/header.php';
             </div>
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
-              <select name="dipartimento[]" class="form-select" multiple size="7">
+              <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
-                  <option value="<?= e($d) ?>"><?= e($d) ?></option>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_create_<?= e($d) ?>">
+                    <label class="form-check-label" for="dep_create_<?= e($d) ?>"><?= e($d) ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </select>
-              <div class="form-text">Puoi selezionare più dipartimenti tenendo premuto Ctrl (Windows) o Cmd (Mac).</div>
+              </div>
+              <div class="form-text">Puoi selezionare uno o più dipartimenti.</div>
             </div>
 
             <div class="col-md-6">
