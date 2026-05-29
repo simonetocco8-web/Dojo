@@ -106,7 +106,7 @@ function isToday(string $date): bool {
 
 function getTelefoniByDipartimento(string $dipartimento): array {
     try {
-        $sql = "SELECT telefono FROM users WHERE dipartimento = :dipartimento";
+        $sql = "SELECT telefono FROM users WHERE FIND_IN_SET(:dipartimento, REPLACE(dipartimento, ' ', '')) > 0";
         $pdo   = db();
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':dipartimento', $dipartimento, PDO::PARAM_STR);
