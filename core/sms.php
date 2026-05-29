@@ -14,7 +14,7 @@ function sms_send_internal_transfer($env, $payload) {
 
   $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/IT-messages';
   $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
-  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo - Villaggio Tramonto';
+  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo';
   $dryRun = isset($cfg['dry_run']) ? (bool)$cfg['dry_run'] : false;
   $failOnMultipleMessages = isset($cfg['fail_on_multiple_messages']) ? (bool)$cfg['fail_on_multiple_messages'] : false;
 

@@ -41,7 +41,7 @@ return [
     'access_token' => '6a185e25847aaa113b0959c6',
     'endpoint' => 'https://sms.openapi.com/IT-messages',
     'to' => '+393341913800',
-    'sender' => 'Dojo - Villaggio Tramonto',
+    'sender' => 'Dojo',
     'dry_run' => false,
     'fail_on_multiple_messages' => false,
     'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
