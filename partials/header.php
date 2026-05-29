@@ -26,37 +26,40 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
       <img class="dojo-logo" src="<?= e($logo) ?>" width="128" height="48" alt="Dojo">
     </a>
     <ul class="nav nav-pills flex-column gap-1">
-      <?php if($user && $user['role']==='admin'): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
-      <?php endif; ?>
-      <?php if($user && user_is_reception_or_amministrazione($user)): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
-      <?php endif; ?>
-      <?php if($user && user_can_send_sms($user)): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
-      <?php endif; ?>
-      <?php if($user && user_is_admin($user)): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
-      <?php endif; ?>
-      <?php if (user_is_bar_or_amministrazione($user)): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
-      <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
-        <ul class="dropdown-menu" aria-labelledby="magazzinoSidebarDropdown">
-          <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
-          <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
-          <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
-          <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
-        </ul>
-      </li>
-      <?php endif; ?>
-      <?php if ($user && user_is_amministrazione($user)): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
-      <?php endif; ?>
-      <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
-      <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
-      <?php endif; ?>
+        <?php if($user): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
+        <?php endif; ?>
+        <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
+          <ul class="dropdown-menu" aria-labelledby="magazzinoSidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+        <?php endif; ?>
+        <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
+        <?php endif; ?>
+        <?php if($user && user_can_send_sms($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
+        <?php endif; ?>
+        <?php if ($user && user_is_amministrazione($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
+        <?php endif; ?>
+        <?php if($user && $user['role']==='admin'): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
+        <?php endif; ?>
+        <?php if($user && user_is_admin($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
+        <?php endif; ?>
     </ul>
     <?php if($user): ?>
       <div class="mt-auto pt-3 border-top border-secondary-subtle">
@@ -75,21 +78,14 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         </button>
         <div class="collapse navbar-collapse" id="navbarColor">
           <ul class="navbar-nav me-auto">
-            <?php if($user && $user['role']==='admin'): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
+            <?php if($user): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <?php endif; ?>
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
             <?php endif; ?>
-            <?php if($user && user_can_send_sms($user)): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
-            <?php endif; ?>
-            <?php if($user && user_is_admin($user)): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
-            <?php endif; ?>
-            <?php if (user_is_bar_or_amministrazione($user)): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+            <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
               <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
@@ -99,12 +95,22 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
               </ul>
             </li>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+            <?php endif; ?>
+            <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
+            <?php endif; ?>
+            <?php if($user && user_can_send_sms($user)): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
             <?php endif; ?>
             <?php if ($user && user_is_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
             <?php endif; ?>
-            <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
+            <?php if($user && $user['role']==='admin'): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
+            <?php endif; ?>
+            <?php if($user && user_is_admin($user)): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
             <?php endif; ?>
           </ul>
           <div class="d-flex">
