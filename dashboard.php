@@ -14,6 +14,7 @@ $user  = current_user();
 $seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+ensure_task_user_assignments_table($pdo);
 
 // Ruolo e dipartimento
 $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1');
@@ -26,24 +27,27 @@ $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')
 $can_see_riassetti = user_is_reception_or_amministrazione($user) || user_is_housekeeping($user);
 
 // --- Prossimi 5 TASK (stato aperto) ---
-// Admin: tutti; Non admin: solo del proprio dipartimento
-if ($is_admin) {
-  $qTasks = 'SELECT id, title, priority, dipartimento, due_date
-             FROM tasks
-             WHERE deleted_at IS NULL AND status = "aperto"
-             ORDER BY due_date ASC, FIELD(priority,"urgente","alta","media","bassa") ASC, id DESC
-             LIMIT 5';
-  $tasks = $pdo->query($qTasks)->fetchAll();
-} else {
-  $qTasks = 'SELECT id, title, priority, dipartimento, due_date
-             FROM tasks
-             WHERE deleted_at IS NULL AND status = "aperto" AND dipartimento IN (' . $myDepPlaceholders . ')
-             ORDER BY due_date ASC, FIELD(priority,"urgente","alta","media","bassa") ASC, id DESC
-             LIMIT 5';
-  $stt = $pdo->prepare($qTasks);
-  $stt->execute($my_deps);
-  $tasks = $stt->fetchAll();
+// Admin: tutti; Non admin: task assegnati direttamente o al proprio dipartimento.
+$taskArgs = [$user['id']];
+$taskWhere = 't.deleted_at IS NULL AND t.status = "aperto"';
+if (!$is_admin) {
+  $myTaskCondition = '((NOT EXISTS (SELECT 1 FROM task_user_assignments tv WHERE tv.task_id = t.id) AND t.dipartimento IN ('.$myDepPlaceholders.')) OR tua_me.user_id IS NOT NULL)';
+  $taskWhere .= ' AND (' . $myTaskCondition . ')';
+  $taskArgs = array_merge($taskArgs, $my_deps);
 }
+$qTasks = "SELECT t.id, t.title, t.priority, t.dipartimento, t.due_date,
+                  (SELECT GROUP_CONCAT(TRIM(CONCAT(COALESCE(au.cognome, ''), ' ', COALESCE(au.nome, ''))) ORDER BY au.cognome, au.nome SEPARATOR ', ')
+                   FROM task_user_assignments tua_names
+                   JOIN users au ON au.id = tua_names.user_id
+                   WHERE tua_names.task_id = t.id) AS assigned_user_names
+           FROM tasks t
+           LEFT JOIN task_user_assignments tua_me ON tua_me.task_id = t.id AND tua_me.user_id = ?
+           WHERE $taskWhere
+           ORDER BY t.due_date ASC, FIELD(t.priority,'urgente','alta','media','bassa') ASC, t.id DESC
+           LIMIT 5";
+$stt = $pdo->prepare($qTasks);
+$stt->execute($taskArgs);
+$tasks = $stt->fetchAll();
 
 $tin = [];
 $tex = [];
@@ -128,14 +132,26 @@ function riassetti_biancheria_short(array $row): string {
         <?php else: ?>
           <ul class="list-group list-group-flush">
             <?php foreach($tasks as $t): ?>
-              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+              <?php $taskRecipientLabel = !empty($t['assigned_user_names']) ? $t['assigned_user_names'] : $t['dipartimento']; ?>
+              <li class="list-group-item px-0 d-flex justify-content-between align-items-start gap-2">
                 <div class="me-2">
                   <div class="fw-semibold"><?= e($t['title']) ?></div>
                   <div class="small text-muted">
-                    Scad.: <?= it_date($t['due_date']) ?> · Dip.: <?= e($t['dipartimento']) ?>
+                    Scad.: <?= it_date($t['due_date']) ?> · Dest.: <?= e($taskRecipientLabel) ?>
                   </div>
                 </div>
-                <div><?= badge_priority($t['priority']) ?></div>
+                <div class="text-end">
+                  <div class="mb-1"><?= badge_priority($t['priority']) ?></div>
+                  <form method="post" action="<?= e($base) ?>/task_status.php" class="d-inline">
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                    <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                    <input type="hidden" name="action" value="complete">
+                    <input type="hidden" name="return_to" value="dashboard">
+                    <button class="btn btn-sm btn-outline-success" title="Completa" aria-label="Completa task">
+                      <i class="bi bi-check2-circle"></i>
+                    </button>
+                  </form>
+                </div>
               </li>
             <?php endforeach; ?>
           </ul>

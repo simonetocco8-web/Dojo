@@ -13,7 +13,8 @@ ensure_task_user_assignments_table($pdo);
 $allowedViews = ['mio','tutti','completati','nonfattibili','cestino'];
 $returnView = $_POST['return_view'] ?? $_GET['view'] ?? 'mio';
 if (!in_array($returnView, $allowedViews, true)) $returnView = 'mio';
-$returnUrl = $base . '/tasks.php?view=' . rawurlencode($returnView);
+$returnTo = $_POST['return_to'] ?? $_GET['return_to'] ?? '';
+$returnUrl = $returnTo === 'dashboard' ? $base . '/dashboard.php' : $base . '/tasks.php?view=' . rawurlencode($returnView);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_check($_POST['csrf'] ?? '')) {
   header('Location: ' . $returnUrl);
