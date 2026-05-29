@@ -345,7 +345,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h6 mb-0"><i class="bi bi-exclamation-octagon me-1"></i>Sottoscorta (Top 10)</h2>
-        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/index.php">Magazzino</a>
+        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/products.php">Magazzino</a>
       </div>
 
       <?php if (empty($lowStock)): ?>
