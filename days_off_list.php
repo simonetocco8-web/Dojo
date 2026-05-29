@@ -8,8 +8,9 @@ $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
+$msg = $_GET['msg'] ?? '';
 
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 
@@ -38,6 +39,18 @@ include __DIR__ . '/partials/header.php';
   <h1 class="h5 mb-0">Giorni Liberi</h1>
   <a class="btn btn-primary btn-sm" href="days_off_create.php">Nuovo</a>
 </div>
+
+<?php if ($msg === 'created'): ?>
+  <div class="alert alert-success">Giorno libero creato.</div>
+<?php elseif ($msg === 'created_repeated'): ?>
+  <div class="alert alert-success">Giorni liberi ricorrenti creati: <?= (int)($_GET['count'] ?? 0) ?>.</div>
+<?php elseif ($msg === 'updated'): ?>
+  <div class="alert alert-success">Prossimo giorno libero sostituito.</div>
+<?php elseif ($msg === 'updated_all'): ?>
+  <div class="alert alert-success">Giorni liberi futuri aggiornati con la nuova ricorrenza settimanale.</div>
+<?php elseif ($msg === 'deleted'): ?>
+  <div class="alert alert-success">Giorno libero eliminato.</div>
+<?php endif; ?>
 
 <form class="row g-2 mb-3" method="get">
   <div class="col-auto">
@@ -69,7 +82,7 @@ include __DIR__ . '/partials/header.php';
             <tr>
               <td><?= (new DateTime($r['day']))->format('d/m/Y') ?></td>
               <td><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
-              <td><?= e($r['dipartimento']) ?></td>
+              <td><?= e(departments_label($r['dipartimento'])) ?></td>
               <td><?= e($r['note']) ?></td>
               <td class="text-end">
                 <form method="post" action="days_off_delete.php" class="d-inline" onsubmit="return confirm('Eliminare questo giorno libero?');">
