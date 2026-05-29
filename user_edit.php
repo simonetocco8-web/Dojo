@@ -22,13 +22,13 @@ if ($id <= 0) {
 $stmt = $pdo->prepare('SELECT id, email, role, is_active, nome, cognome, telefono, dipartimento, deleted_at
                        FROM users WHERE id = ? LIMIT 1');
 $stmt->execute([$id]);
-$user = $stmt->fetch();
+$editUser = $stmt->fetch();
 
-if (!$user) {
+if (!$editUser) {
   header('Location: ' . $base . '/users.php');
   exit;
 }
-if (!empty($user['deleted_at'])) {
+if (!empty($editUser['deleted_at'])) {
   header('Location: ' . $base . '/users.php?trash=1');
   exit;
 }
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('SELECT id, email, role, is_active, nome, cognome, telefono, dipartimento, deleted_at
                                    FROM users WHERE id = ? LIMIT 1');
             $stmt->execute([$id]);
-            $user = $stmt->fetch();
+            $editUser = $stmt->fetch();
             $message = 'Utente aggiornato con successo.';
           }
         }
@@ -131,7 +131,7 @@ include __DIR__ . '/partials/header.php';
   <div class="col-12 col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h5 mb-3">Modifica utente #<?= (int)$user['id'] ?></h1>
+        <h1 class="h5 mb-3">Modifica utente #<?= (int)$editUser['id'] ?></h1>
 
         <?php if($message): ?>
           <div class="alert alert-info"><?= e($message) ?></div>
@@ -139,25 +139,25 @@ include __DIR__ . '/partials/header.php';
 
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-          <input type="hidden" name="id" value="<?= (int)$user['id'] ?>">
+          <input type="hidden" name="id" value="<?= (int)$editUser['id'] ?>">
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Nome</label><?= e($user['nome']) ?>
-              <input type="text" name="nome" class="form-control" value="<?= e($user['nome']) ?>" required>
+              <label class="form-label">Nome</label><?= e($editUser['nome']) ?>
+              <input type="text" name="nome" class="form-control" value="<?= e($editUser['nome']) ?>" required>
             </div>
             <div class="col-md-6">
               <label class="form-label">Cognome</label>
-              <input type="text" name="cognome" class="form-control" value="<?= e($user['cognome']) ?>" required>
+              <input type="text" name="cognome" class="form-control" value="<?= e($editUser['cognome']) ?>" required>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Telefono</label>
-              <input type="text" name="telefono" class="form-control" value="<?= e($user['telefono']) ?>">
+              <input type="text" name="telefono" class="form-control" value="<?= e($editUser['telefono']) ?>">
             </div>
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
-              <?php $userDeps = user_departments($user); ?>
+              <?php $userDeps = user_departments($editUser); ?>
               <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
                   <div class="form-check">
@@ -171,7 +171,7 @@ include __DIR__ . '/partials/header.php';
 
             <div class="col-md-6">
               <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" value="<?= e($user['email']) ?>" required>
+              <input type="email" name="email" class="form-control" value="<?= e($editUser['email']) ?>" required>
             </div>
             <div class="col-md-6">
               <label class="form-label">Nuova password (opzionale)</label>
@@ -181,13 +181,13 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-6">
               <label class="form-label">Ruolo</label>
               <select name="role" class="form-select">
-                <option value="editor" <?= $user['role']==='editor' ? 'selected' : '' ?>>Editor</option>
-                <option value="admin"  <?= $user['role']==='admin'  ? 'selected' : '' ?>>Admin</option>
+                <option value="editor" <?= $editUser['role']==='editor' ? 'selected' : '' ?>>Editor</option>
+                <option value="admin"  <?= $editUser['role']==='admin'  ? 'selected' : '' ?>>Admin</option>
               </select>
             </div>
             <div class="col-md-6 d-flex align-items-center">
               <div class="form-check mt-4">
-                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" <?= $user['is_active'] ? 'checked' : '' ?>>
+                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" <?= $editUser['is_active'] ? 'checked' : '' ?>>
                 <label class="form-check-label" for="is_active">Attivo</label>
               </div>
             </div>
