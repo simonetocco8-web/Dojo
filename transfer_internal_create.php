@@ -58,12 +58,24 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
           }
 
           try {
+            $navStmt = $pdo->prepare("
+              SELECT telefono
+              FROM users
+              WHERE deleted_at IS NULL
+                AND is_active = 1
+                AND telefono <> ''
+                AND FIND_IN_SET('Navettista', REPLACE(dipartimento, ' ', '')) > 0
+            ");
+            $navStmt->execute();
+            $navettistaPhones = $navStmt->fetchAll(PDO::FETCH_COLUMN);
+
             sms_send_internal_transfer($env, [
               'room_number' => $room,
               'direction' => $direction,
               'location' => $location,
-              'date' => $date,
+              'date' => $when_at->format('d/m/Y'),
               'time' => $time,
+              'recipients' => $navettistaPhones,
             ]);
           } catch (Throwable $e) {
             error_log('SMS send failed: ' . $e->getMessage());

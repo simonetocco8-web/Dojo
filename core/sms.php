@@ -13,13 +13,13 @@ function sms_send_internal_transfer($env, $payload) {
   }
 
   $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/IT-messages';
-  $to = isset($cfg['to']) ? (string)$cfg['to'] : '';
-  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Openapi';
+  $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
+  $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo - Villaggio Tramonto';
   $dryRun = isset($cfg['dry_run']) ? (bool)$cfg['dry_run'] : false;
   $failOnMultipleMessages = isset($cfg['fail_on_multiple_messages']) ? (bool)$cfg['fail_on_multiple_messages'] : false;
 
-  if ($token === '' || $to === '') {
-    throw new RuntimeException('Configurazione SMS incompleta (access_token/to).');
+  if ($token === '') {
+    throw new RuntimeException('Configurazione SMS incompleta (access_token).');
   }
 
   $endpoint = str_replace('://api.openapi.com/', '://sms.openapi.com/', $endpoint);
@@ -32,46 +32,66 @@ function sms_send_internal_transfer($env, $payload) {
   $location = isset($payload['location']) ? (string)$payload['location'] : '';
   $date = isset($payload['date']) ? (string)$payload['date'] : '';
   $time = isset($payload['time']) ? (string)$payload['time'] : '';
+  $recipients = array();
+  if (isset($payload['recipients']) && is_array($payload['recipients'])) {
+    $recipients = $payload['recipients'];
+  } elseif (isset($payload['recipient'])) {
+    $recipients = array($payload['recipient']);
+  } elseif ($fallbackTo !== '') {
+    $recipients = array($fallbackTo);
+  }
+  $recipients = array_values(array_unique(array_filter(array_map('trim', array_map('strval', $recipients)))));
+  if (!$recipients) {
+    throw new RuntimeException('Nessun destinatario SMS configurato.');
+  }
 
   $message = sprintf('Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s', $room, $direction, $location, $date, $time);
 
-  $body = json_encode(array(
-    'sender' => $sender,
-    'recipient' => $to,
-    'message' => $message,
-    'options' => array(
-      'dryRun' => $dryRun,
-      'failOnMultipleMessages' => $failOnMultipleMessages,
-    ),
-  ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  $errors = array();
+  foreach ($recipients as $recipient) {
+    $body = json_encode(array(
+      'sender' => $sender,
+      'recipient' => $recipient,
+      'message' => $message,
+      'options' => array(
+        'dryRun' => $dryRun,
+        'failOnMultipleMessages' => $failOnMultipleMessages,
+      ),
+    ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-  $ch = curl_init($endpoint);
-  curl_setopt_array($ch, array(
-    CURLOPT_POST => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => array(
-      'Accept: application/json',
-      'Content-Type: application/json',
-      'Authorization: Bearer ' . $token,
-    ),
-    CURLOPT_POSTFIELDS => $body,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_CONNECTTIMEOUT => 15,
-    CURLOPT_SSL_VERIFYPEER => true,
-    CURLOPT_SSL_VERIFYHOST => 2,
-  ));
+    $ch = curl_init($endpoint);
+    curl_setopt_array($ch, array(
+      CURLOPT_POST => true,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_HTTPHEADER => array(
+        'Accept: application/json',
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $token,
+      ),
+      CURLOPT_POSTFIELDS => $body,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_CONNECTTIMEOUT => 15,
+      CURLOPT_SSL_VERIFYPEER => true,
+      CURLOPT_SSL_VERIFYHOST => 2,
+    ));
 
-  $resp = curl_exec($ch);
-  if ($resp === false) {
-    $err = curl_error($ch);
+    $resp = curl_exec($ch);
+    if ($resp === false) {
+      $errors[] = $recipient . ': SMS curl error: ' . curl_error($ch);
+      curl_close($ch);
+      continue;
+    }
+
+    $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    throw new RuntimeException('SMS curl error: ' . $err);
+
+    if ($status < 200 || $status >= 300) {
+      $errors[] = $recipient . ': SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $endpoint . ', auth=bearer, content=json]';
+    }
   }
 
-  $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-  curl_close($ch);
-
-  if ($status < 200 || $status >= 300) {
-    throw new RuntimeException('SMS provider HTTP ' . $status . ': ' . $resp . ' [endpoint=' . $endpoint . ', auth=bearer, content=json]');
+  if ($errors) {
+    throw new RuntimeException(implode(' ; ', $errors));
   }
+
 }
