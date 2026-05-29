@@ -34,10 +34,19 @@ if (!empty($user['deleted_at'])) {
 }
 
 $message = '';
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping'];
+$departmentSchemaReady = true;
+try {
+  ensure_users_department_column_supports_multiple($pdo);
+} catch (PDOException $e) {
+  $departmentSchemaReady = false;
+  $message = 'Errore aggiornamento struttura dipartimenti utente: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+}
+$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (!csrf_check($_POST['csrf'] ?? '')) {
+  if (!$departmentSchemaReady) {
+    // Messaggio già valorizzato dal controllo schema sopra.
+  } elseif (!csrf_check($_POST['csrf'] ?? '')) {
     $message = 'Token CSRF non valido.';
   } else {
     $email        = trim($_POST['email'] ?? '');
@@ -46,13 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome         = trim($_POST['nome'] ?? '');
     $cognome      = trim($_POST['cognome'] ?? '');
     $telefono     = trim($_POST['telefono'] ?? '');
-    $dipartimento = $_POST['dipartimento'] ?? 'Amministrazione';
+    $dipartimenti = $_POST['dipartimento'] ?? [];
+    if (!is_array($dipartimenti)) { $dipartimenti = [$dipartimenti]; }
+    $dipartimenti = array_values(array_intersect($allowedDeps, $dipartimenti));
+    if (!$dipartimenti) { $dipartimenti = ['Amministrazione']; }
+    $dipartimento = implode(',', $dipartimenti);
     $new_password = $_POST['password'] ?? '';
-
-    // Normalizza dipartimento
-    if (!in_array($dipartimento, $allowedDeps, true)) {
-      $dipartimento = 'Amministrazione';
-    }
 
     if ($email && $nome && $cognome) {
       try {
@@ -149,11 +157,16 @@ include __DIR__ . '/partials/header.php';
             </div>
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
-              <select name="dipartimento" class="form-select">
+              <?php $userDeps = user_departments($user); ?>
+              <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
-                  <option value="<?= e($d) ?>" <?= $user['dipartimento']===$d ? 'selected' : '' ?>><?= e($d) ?></option>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_edit_<?= e($d) ?>" <?= in_array($d, $userDeps, true) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="dep_edit_<?= e($d) ?>"><?= e($d) ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </select>
+              </div>
+              <div class="form-text">Puoi selezionare uno o più dipartimenti.</div>
             </div>
 
             <div class="col-md-6">

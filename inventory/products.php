@@ -14,7 +14,7 @@ $pdo  = db();
 $user = current_user();
 
 // Permessi (adatta se vuoi renderla visibile ad altri reparti in sola lettura)
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione') || (($user['dipartimento'] ?? '') === 'Bar'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione') || user_has_department($user, 'Bar'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 
