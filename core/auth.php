@@ -25,6 +25,31 @@ function current_user() {
   return $st->fetch() ?: null;
 }
 
+
+function user_departments($user = null) {
+  if ($user === null) $user = current_user();
+  if (!$user) return [];
+  $raw = $user['dipartimento'] ?? '';
+  if (is_array($raw)) return array_values(array_filter(array_map('trim', $raw)));
+  return array_values(array_filter(array_map('trim', explode(',', (string)$raw))));
+}
+
+function user_has_department($user, $department) {
+  return in_array($department, user_departments($user), true);
+}
+
+function user_has_any_department($user, array $departments) {
+  foreach ($departments as $department) {
+    if (user_has_department($user, $department)) return true;
+  }
+  return false;
+}
+
+function departments_label($departments) {
+  if (!is_array($departments)) $departments = user_departments(['dipartimento' => $departments]);
+  return implode(', ', $departments);
+}
+
 function is_admin() {
   $u = current_user();
   return $u && isset($u['role']) && $u['role'] === 'admin';
