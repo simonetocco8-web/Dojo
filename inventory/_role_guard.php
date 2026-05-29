@@ -11,12 +11,11 @@ $user = current_user();                  // può essere null: NON fare redirect 
 
 function is_amministrazione() {
   $u = current_user();
-  return ($u && (($u['role'] ?? '') === 'admin' || ($u['dipartimento'] ?? '') === 'Amministrazione'));
+  return ($u && (($u['role'] ?? '') === 'admin' || user_has_department($u, 'Amministrazione')));
 }
 function is_bar_or_amministrazione() {
   $u = current_user();
   if (!$u) return false;
   if (($u['role'] ?? '') === 'admin') return true;
-  $dep = $u['dipartimento'] ?? '';
-  return in_array($dep, ['Amministrazione','Bar'], true);
+  return user_has_any_department($u, ['Amministrazione','Bar']);
 }

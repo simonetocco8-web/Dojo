@@ -12,7 +12,9 @@ if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 $stmt = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id = ? LIMIT 1');
 $stmt->execute([$user['id']]);
 $me = $stmt->fetch();
-$my_dep = $me['dipartimento'] ?? null;
+$my_deps = user_departments($me);
+$my_dep = $my_deps[0] ?? null;
+$myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
 $is_admin = ($me['role'] ?? '') === 'admin';
 
 $view = $_GET['view'] ?? 'mio';
@@ -23,21 +25,21 @@ $where = [];
 $args = [];
 
 if ($view === 'mio') {
-  $where[] = 't.deleted_at IS NULL AND t.status IN ("aperto") AND t.dipartimento = ?';
-  $args[] = $my_dep;
+  $where[] = 't.deleted_at IS NULL AND t.status IN ("aperto") AND t.dipartimento IN ('.$myDepPlaceholders.')';
+  $args = array_merge($args, $my_deps);
 } elseif ($view === 'tutti') {
   if ($is_admin) {
     $where[] = 't.deleted_at IS NULL AND t.status!="completato"';
   } else {
-    $where[] = 't.deleted_at IS NULL AND t.dipartimento = ? t.status!="completato"';
-    $args[] = $my_dep;
+    $where[] = 't.deleted_at IS NULL AND t.dipartimento IN ('.$myDepPlaceholders.') AND t.status!="completato"';
+    $args = array_merge($args, $my_deps);
   }
 } elseif ($view === 'completati') {
   $where[] = 't.deleted_at IS NULL AND t.status="completato"';
-  if (!$is_admin) { $where[] = 't.dipartimento = ?'; $args[] = $my_dep; }
+  if (!$is_admin) { $where[] = 't.dipartimento IN ('.$myDepPlaceholders.')'; $args = array_merge($args, $my_deps); }
 } elseif ($view === 'nonfattibili') {
   $where[] = 't.deleted_at IS NULL AND t.status="non_fattibile"';
-  if (!$is_admin) { $where[] = 't.dipartimento = ?'; $args[] = $my_dep; }
+  if (!$is_admin) { $where[] = 't.dipartimento IN ('.$myDepPlaceholders.')'; $args = array_merge($args, $my_deps); }
 } elseif ($view === 'cestino') {
   if (!$is_admin) { header('Location: ' . $base . '/tasks.php'); exit; }
   $where[] = 't.deleted_at IS NOT NULL';
@@ -76,7 +78,7 @@ function badge_status($s){
 </div>
 
 <ul class="nav nav-pills mb-3">
-  <li class="nav-item"><a class="nav-link <?= $view==='mio'?'active':'' ?>" href="<?= e($base) ?>/tasks.php?view=mio">Assegnati al mio dipartimento</a></li>
+  <li class="nav-item"><a class="nav-link <?= $view==='mio'?'active':'' ?>" href="<?= e($base) ?>/tasks.php?view=mio">Assegnati ai miei dipartimenti</a></li>
   <li class="nav-item"><a class="nav-link <?= $view==='tutti'?'active':'' ?>" href="<?= e($base) ?>/tasks.php?view=tutti">Tutti<?= $is_admin?' (admin)':'' ?></a></li>
   <li class="nav-item"><a class="nav-link <?= $view==='completati'?'active':'' ?>" href="<?= e($base) ?>/tasks.php?view=completati">Completati</a></li>
   <li class="nav-item"><a class="nav-link <?= $view==='nonfattibili'?'active':'' ?>" href="<?= e($base) ?>/tasks.php?view=nonfattibili">Non fattibili</a></li>
@@ -125,7 +127,7 @@ function badge_status($s){
         </thead>
         <tbody>
           <?php foreach($tasks as $t): ?>
-          <?php $canAct = $is_admin || ($t['dipartimento'] === $my_dep); ?>
+          <?php $canAct = $is_admin || in_array($t['dipartimento'], $my_deps, true); ?>
           <tr>
             <td>
               <?php
