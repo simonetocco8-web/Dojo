@@ -16,6 +16,12 @@ INSERT INTO users (email, password_hash, role, is_active) VALUES
 ('admin@example.com', '$2y$10$0wHjQ5e9jCzFjv9P6R4fhuZKzC2bJE4uWf0mL2gZ2Nn8Q2p3r8dGm', 'admin', 1)
 ON DUPLICATE KEY UPDATE email=email;
 
+-- Dipartimenti multipli utente: usare VARCHAR per salvare liste comma-separated
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS dipartimento VARCHAR(255) NOT NULL DEFAULT 'Amministrazione';
+ALTER TABLE users
+  MODIFY COLUMN dipartimento VARCHAR(255) NOT NULL DEFAULT 'Amministrazione';
+
 CREATE TABLE IF NOT EXISTS ewelink_tokens (
   user_id INT UNSIGNED NOT NULL PRIMARY KEY,
   access_token TEXT NOT NULL,
