@@ -10,8 +10,13 @@ $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
 
+$allowedViews = ['mio','tutti','completati','nonfattibili','cestino'];
+$returnView = $_POST['return_view'] ?? $_GET['view'] ?? 'mio';
+if (!in_array($returnView, $allowedViews, true)) $returnView = 'mio';
+$returnUrl = $base . '/tasks.php?view=' . rawurlencode($returnView);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_check($_POST['csrf'] ?? '')) {
-  header('Location: ' . $base . '/tasks.php');
+  header('Location: ' . $returnUrl);
   exit;
 }
 
@@ -21,7 +26,7 @@ $action = $_POST['action'] ?? '';
 $stmt = $pdo->prepare('SELECT * FROM tasks WHERE id=? LIMIT 1');
 $stmt->execute([$id]);
 $task = $stmt->fetch();
-if (!$task) { header('Location: ' . $base . '/tasks.php'); exit; }
+if (!$task) { header('Location: ' . $returnUrl); exit; }
 
 $st = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id=? LIMIT 1');
 $st->execute([$user['id']]);
@@ -71,5 +76,5 @@ try {
   }
 } catch (PDOException $e) {}
 
-header('Location: ' . $base . '/tasks.php');
+header('Location: ' . $returnUrl);
 exit;

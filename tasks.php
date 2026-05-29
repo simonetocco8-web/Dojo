@@ -177,6 +177,7 @@ function badge_status($s){
                     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                     <input type="hidden" name="action" value="update_due_date">
+                    <input type="hidden" name="return_view" value="<?= e($view) ?>">
                     <input type="date" name="due_date" value="<?= e($t['due_date']) ?>" class="form-control form-control-sm" required>
                     <button class="btn btn-sm btn-primary" title="Salva"><i class="bi bi-check"></i></button>
                   </form>
@@ -199,6 +200,7 @@ function badge_status($s){
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                   <input type="hidden" name="action" value="complete">
+                  <input type="hidden" name="return_view" value="<?= e($view) ?>">
                   <button class="btn btn-sm btn-outline-success" title="Completa">
                     <i class="bi bi-check2-circle"></i>
                   </button>
@@ -214,6 +216,7 @@ function badge_status($s){
                     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                     <input type="hidden" name="action" value="nonfattibile">
+                    <input type="hidden" name="return_view" value="<?= e($view) ?>">
                     <input type="text" name="status_note" class="form-control form-control-sm"
                            placeholder="Motivo..." required>
                     <button class="btn btn-sm btn-dark"><i class="bi bi-send"></i></button>
@@ -228,6 +231,7 @@ function badge_status($s){
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                   <input type="hidden" name="action" value="trash">
+                  <input type="hidden" name="return_view" value="<?= e($view) ?>">
                   <button class="btn btn-sm btn-outline-danger" title="Cestina">
                     <i class="bi bi-trash"></i>
                   </button>
@@ -238,6 +242,7 @@ function badge_status($s){
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                   <input type="hidden" name="action" value="restore">
+                  <input type="hidden" name="return_view" value="<?= e($view) ?>">
                   <button class="btn btn-sm btn-outline-secondary" title="Ripristina">
                     <i class="bi bi-arrow-counterclockwise"></i>
                   </button>
