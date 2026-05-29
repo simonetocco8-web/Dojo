@@ -222,8 +222,12 @@ include __DIR__ . '/partials/header.php';
                   $senderName = trim(($row['nome'] ?? '') . ' ' . ($row['cognome'] ?? ''));
                   $senderName = $senderName !== '' ? $senderName : ($row['email'] ?? 'Utente eliminato');
                 ?>
+                <?php
+                  $sentAtTs = strtotime((string)$row['sent_at']);
+                  $sentAtLabel = $sentAtTs ? date('d/m/Y H:i', $sentAtTs) : (string)$row['sent_at'];
+                ?>
                 <tr>
-                  <td class="text-nowrap"><?= e($row['sent_at']) ?></td>
+                  <td class="text-nowrap"><?= e($sentAtLabel) ?></td>
                   <td><?= e($senderName) ?></td>
                   <td><?= e($row['recipients']) ?></td>
                   <td><?= e($row['message']) ?></td>
