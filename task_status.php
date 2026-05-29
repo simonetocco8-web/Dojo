@@ -26,7 +26,7 @@ $st = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id=? LIMIT 1');
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
-$canAct = $is_admin || (($me['dipartimento'] ?? '') === $task['dipartimento']);
+$canAct = $is_admin || user_has_department($me, $task['dipartimento']);
 
 try {
   if ($action === 'complete' && $task['status']==='aperto' && $canAct && $task['deleted_at']===null) {

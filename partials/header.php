@@ -36,6 +36,9 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
         <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php">Transfer</a></li>
         <?php endif; ?>
+        <?php if($user && user_can_send_sms($user)): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php">Invia SMS</a></li>
+        <?php endif; ?>
         <?php if($user && $user['role']==='admin'): ?>
         <!--<li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ewelink/devices.php">eWeLink</a></li> -->
         <?php endif; ?>
