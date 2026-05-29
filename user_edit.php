@@ -34,10 +34,19 @@ if (!empty($user['deleted_at'])) {
 }
 
 $message = '';
+$departmentSchemaReady = true;
+try {
+  ensure_users_department_column_supports_multiple($pdo);
+} catch (PDOException $e) {
+  $departmentSchemaReady = false;
+  $message = 'Errore aggiornamento struttura dipartimenti utente: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+}
 $allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (!csrf_check($_POST['csrf'] ?? '')) {
+  if (!$departmentSchemaReady) {
+    // Messaggio già valorizzato dal controllo schema sopra.
+  } elseif (!csrf_check($_POST['csrf'] ?? '')) {
     $message = 'Token CSRF non valido.';
   } else {
     $email        = trim($_POST['email'] ?? '');
