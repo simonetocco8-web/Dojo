@@ -1,1 +1,27 @@
+:root{
+  --dojo-sidebar-width:260px;
+  --dojo-dark:#111827;
+  --dojo-dark-soft:#1f2937;
+}
 body{min-height:100vh}.card{border-radius:1rem}
+.dojo-logo{display:block!important;width:128px!important;max-width:128px!important;height:auto!important;max-height:52px!important;object-fit:contain}
+.dojo-layout{min-height:100vh}
+.dojo-sidebar{width:var(--dojo-sidebar-width);background:var(--dojo-dark);color:#fff;box-shadow:.5rem 0 1.5rem rgba(15,23,42,.12)}
+.dojo-sidebar .nav-link,.dojo-sidebar .dropdown-item{color:rgba(255,255,255,.82);border-radius:.75rem;display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem}
+.dojo-sidebar .nav-link:hover,.dojo-sidebar .nav-link:focus,.dojo-sidebar .dropdown-item:hover,.dojo-sidebar .dropdown-item:focus{background:var(--dojo-dark-soft);color:#fff}
+.dojo-sidebar .dropdown-menu{position:static!important;transform:none!important;background:transparent;border:0;padding:.15rem 0 .35rem 1.85rem;box-shadow:none}
+.dojo-sidebar .dropdown-item{font-size:.95rem;padding:.45rem .7rem}
+.dojo-sidebar .dropdown-toggle::after{margin-left:auto}
+.dojo-content{min-height:100vh;min-width:0}
+.dojo-main{padding-top:1.5rem;padding-bottom:1.5rem}
+.navbar .nav-link,.navbar .dropdown-item{display:flex;align-items:center;gap:.45rem}
+@media (min-width:992px){
+  body{background:#f8f9fa}
+  .dojo-layout{display:flex;align-items:stretch}
+  .dojo-sidebar{position:sticky;top:0;flex:0 0 var(--dojo-sidebar-width);height:100vh;overflow-y:auto;z-index:1}
+  .dojo-content{flex:1 1 auto;width:calc(100% - var(--dojo-sidebar-width))}
+  .dojo-main{padding:2rem}
+}
+@media (max-width:991.98px){
+  .dojo-logo{width:84px!important;max-width:84px!important;max-height:34px!important}
+}

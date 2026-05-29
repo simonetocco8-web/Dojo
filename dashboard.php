@@ -20,7 +20,9 @@ $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1')
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
-$my_dep   = $me['dipartimento'] ?? null;
+$my_deps  = user_departments($me);
+$my_dep   = $my_deps[0] ?? null;
+$myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
 $can_see_riassetti = user_is_reception_or_amministrazione($user) || user_is_housekeeping($user);
 
 // --- Prossimi 5 TASK (stato aperto) ---
@@ -35,11 +37,11 @@ if ($is_admin) {
 } else {
   $qTasks = 'SELECT id, title, priority, dipartimento, due_date
              FROM tasks
-             WHERE deleted_at IS NULL AND status = "aperto" AND dipartimento = ?
+             WHERE deleted_at IS NULL AND status = "aperto" AND dipartimento IN (' . $myDepPlaceholders . ')
              ORDER BY due_date ASC, FIELD(priority,"urgente","alta","media","bassa") ASC, id DESC
              LIMIT 5';
   $stt = $pdo->prepare($qTasks);
-  $stt->execute([$my_dep]);
+  $stt->execute($my_deps);
   $tasks = $stt->fetchAll();
 }
 
@@ -259,7 +261,7 @@ function riassetti_biancheria_short(array $row): string {
 <div class="row g-4">
   <?php
 // --- BOX: Giorni liberi prossimi 7 giorni ---
-if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
   $tz = new DateTimeZone('Europe/Rome');
   $today = (new DateTime('today', $tz))->format('Y-m-d');
   $to7   = (new DateTime('today', $tz))->modify('+7 days')->format('Y-m-d');
@@ -302,7 +304,7 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
                 <tr>
                   <td><?= (new DateTime($r['day'], $tz))->format('d/m/Y') ?></td>
                   <td><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
-                  <td><span class="badge bg-light text-dark"><?= e($r['dipartimento'] ?? '') ?></span></td>
+                  <td><span class="badge bg-light text-dark"><?= e(departments_label($r['dipartimento'] ?? '')) ?></span></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -316,7 +318,7 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
 
 <?php
 // --- BOX: Prodotti sottoscorta (Top 10) ---
-if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' || ($user['dipartimento'] ?? '') === 'Bar')) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || user_has_department($user, 'Bar'))) {
 
   $sql = "
     SELECT 
@@ -343,7 +345,7 @@ if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' 
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h6 mb-0"><i class="bi bi-exclamation-octagon me-1"></i>Sottoscorta (Top 10)</h2>
-        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/index.php">Magazzino</a>
+        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/products.php">Magazzino</a>
       </div>
 
       <?php if (empty($lowStock)): ?>
@@ -384,7 +386,7 @@ if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' 
 
 <?php
 // --- BOX: Fornitori che accettano ordini oggi ---
-if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
 
   // 0=Dom, 1=Lun, ... 6=Sab
   $tz = new DateTimeZone('Europe/Rome');
