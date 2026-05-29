@@ -12,7 +12,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 
 $message = '';
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping'];
+$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!csrf_check($_POST['csrf'] ?? '')) {
@@ -25,11 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome         = trim($_POST['nome'] ?? '');
     $cognome      = trim($_POST['cognome'] ?? '');
     $telefono     = trim($_POST['telefono'] ?? '');
-    $dipartimento = $_POST['dipartimento'] ?? 'Amministrazione';
-
-    if (!in_array($dipartimento, $allowedDeps, true)) {
-      $dipartimento = 'Amministrazione';
-    }
+    $dipartimenti = $_POST['dipartimento'] ?? [];
+    if (!is_array($dipartimenti)) { $dipartimenti = [$dipartimenti]; }
+    $dipartimenti = array_values(array_intersect($allowedDeps, $dipartimenti));
+    if (!$dipartimenti) { $dipartimenti = ['Amministrazione']; }
+    $dipartimento = implode(',', $dipartimenti);
 
     if ($email && $password && $nome && $cognome) {
       try {
@@ -87,11 +87,15 @@ include __DIR__ . '/partials/header.php';
             </div>
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
-              <select name="dipartimento" class="form-select">
+              <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
-                  <option value="<?= e($d) ?>"><?= e($d) ?></option>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_create_<?= e($d) ?>">
+                    <label class="form-check-label" for="dep_create_<?= e($d) ?>"><?= e($d) ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </select>
+              </div>
+              <div class="form-text">Puoi selezionare uno o più dipartimenti.</div>
             </div>
 
             <div class="col-md-6">

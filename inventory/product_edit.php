@@ -13,7 +13,7 @@ $pdo  = db();
 $user = current_user();
 
 // Solo Amministrazione o Admin
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 

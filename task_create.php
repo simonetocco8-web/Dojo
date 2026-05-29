@@ -10,7 +10,7 @@ $pdo  = db();
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping'];
+$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
 $allowedPri  = ['bassa','media','alta','urgente'];
 $allowedRec  = ['nessuna','giornaliera','settimanale','mensile','annuale'];
 $message = '';

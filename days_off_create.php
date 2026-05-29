@@ -9,7 +9,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
 
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 
@@ -78,7 +78,7 @@ include __DIR__ . '/partials/header.php';
           <option value="">— Seleziona —</option>
           <?php foreach ($users as $u): ?>
             <option value="<?= (int)$u['id'] ?>">
-              <?= e(trim(($u['cognome'] ?? '').' '.($u['nome'] ?? ''))) ?> (<?= e($u['dipartimento']) ?>)
+              <?= e(trim(($u['cognome'] ?? '').' '.($u['nome'] ?? ''))) ?> (<?= e(departments_label($u['dipartimento'])) ?>)
             </option>
           <?php endforeach; ?>
         </select>
