@@ -7,6 +7,7 @@ $env = require __DIR__ . '/../config/env.php';
 $user = current_user();
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $logo = $base . '/assets/dojo-logo.svg';
+$styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
 ?>
 <!doctype html>
 <html lang="it">
@@ -15,14 +16,14 @@ $logo = $base . '/assets/dojo-logo.svg';
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= isset($title) ? e($title) . ' · ' : '' ?>Dojo</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="<?= e($base) ?>/assets/style.css">
+  <link rel="stylesheet" href="<?= e($base) ?>/assets/style.css?v=<?= (int)$styleVersion ?>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
 <div class="dojo-layout">
   <aside class="dojo-sidebar d-none d-lg-flex flex-column p-3">
     <a class="navbar-brand d-flex justify-content-center mb-4" href="<?= e($base) ?>/index.php" aria-label="Dojo home">
-      <img class="dojo-logo" src="<?= e($logo) ?>" alt="Dojo">
+      <img class="dojo-logo" src="<?= e($logo) ?>" width="128" height="48" alt="Dojo">
     </a>
     <ul class="nav nav-pills flex-column gap-1">
       <?php if($user && $user['role']==='admin'): ?>
@@ -68,7 +69,7 @@ $logo = $base . '/assets/dojo-logo.svg';
   <div class="dojo-content">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-lg-none">
       <div class="container-fluid">
-        <a class="navbar-brand" href="<?= e($base) ?>/index.php" aria-label="Dojo home"><img class="dojo-logo" src="<?= e($logo) ?>" alt="Dojo"></a>
+        <a class="navbar-brand" href="<?= e($base) ?>/index.php" aria-label="Dojo home"><img class="dojo-logo" src="<?= e($logo) ?>" width="128" height="48" alt="Dojo"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor" aria-controls="navbarColor" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
