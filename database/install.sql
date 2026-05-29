@@ -67,3 +67,16 @@ CREATE TABLE IF NOT EXISTS system_settings (
   setting_value TEXT DEFAULT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS sms_history (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  sent_by INT UNSIGNED NOT NULL,
+  recipient_type ENUM('users','department') NOT NULL,
+  recipients TEXT NOT NULL,
+  message VARCHAR(160) NOT NULL,
+  sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_sms_history_sent_at (sent_at),
+  INDEX idx_sms_history_sent_by (sent_by),
+  CONSTRAINT fk_sms_history_sent_by FOREIGN KEY (sent_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

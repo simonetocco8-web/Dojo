@@ -1,6 +1,6 @@
 <?php
 
-function sms_send_internal_transfer($env, $payload) {
+function sms_send_message($env, $recipients, $message) {
   $cfg = isset($env['sms']) && is_array($env['sms']) ? $env['sms'] : array();
   if (empty($cfg['enabled'])) {
     return;
@@ -13,7 +13,6 @@ function sms_send_internal_transfer($env, $payload) {
   }
 
   $endpoint = isset($cfg['endpoint']) ? (string)$cfg['endpoint'] : 'https://sms.openapi.com/IT-messages';
-  $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
   $sender = isset($cfg['sender']) ? (string)$cfg['sender'] : 'Dojo';
   $dryRun = isset($cfg['dry_run']) ? (bool)$cfg['dry_run'] : false;
   $failOnMultipleMessages = isset($cfg['fail_on_multiple_messages']) ? (bool)$cfg['fail_on_multiple_messages'] : false;
@@ -27,25 +26,21 @@ function sms_send_internal_transfer($env, $payload) {
     $endpoint = 'https://sms.openapi.com/IT-messages';
   }
 
-  $room = isset($payload['room_number']) ? (string)$payload['room_number'] : '';
-  $direction = isset($payload['direction']) ? strtoupper((string)$payload['direction']) : '';
-  $location = isset($payload['location']) ? (string)$payload['location'] : '';
-  $date = isset($payload['date']) ? (string)$payload['date'] : '';
-  $time = isset($payload['time']) ? (string)$payload['time'] : '';
-  $recipients = array();
-  if (isset($payload['recipients']) && is_array($payload['recipients'])) {
-    $recipients = $payload['recipients'];
-  } elseif (isset($payload['recipient'])) {
-    $recipients = array($payload['recipient']);
-  } elseif ($fallbackTo !== '') {
-    $recipients = array($fallbackTo);
+  if (!is_array($recipients)) {
+    $recipients = array($recipients);
   }
   $recipients = array_values(array_unique(array_filter(array_map('trim', array_map('strval', $recipients)))));
   if (!$recipients) {
     throw new RuntimeException('Nessun destinatario SMS configurato.');
   }
 
-  $message = sprintf('Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s', $room, $direction, $location, $date, $time);
+  $message = trim((string)$message);
+  if ($message === '') {
+    throw new RuntimeException('Corpo SMS vuoto.');
+  }
+  if ((function_exists('mb_strlen') ? mb_strlen($message, 'UTF-8') : strlen($message)) > 160) {
+    throw new RuntimeException('Il corpo SMS supera i 160 caratteri.');
+  }
 
   $errors = array();
   foreach ($recipients as $recipient) {
@@ -93,5 +88,26 @@ function sms_send_internal_transfer($env, $payload) {
   if ($errors) {
     throw new RuntimeException(implode(' ; ', $errors));
   }
+}
 
+function sms_send_internal_transfer($env, $payload) {
+  $cfg = isset($env['sms']) && is_array($env['sms']) ? $env['sms'] : array();
+  $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
+
+  $room = isset($payload['room_number']) ? (string)$payload['room_number'] : '';
+  $direction = isset($payload['direction']) ? strtoupper((string)$payload['direction']) : '';
+  $location = isset($payload['location']) ? (string)$payload['location'] : '';
+  $date = isset($payload['date']) ? (string)$payload['date'] : '';
+  $time = isset($payload['time']) ? (string)$payload['time'] : '';
+  $recipients = array();
+  if (isset($payload['recipients']) && is_array($payload['recipients'])) {
+    $recipients = $payload['recipients'];
+  } elseif (isset($payload['recipient'])) {
+    $recipients = array($payload['recipient']);
+  } elseif ($fallbackTo !== '') {
+    $recipients = array($fallbackTo);
+  }
+
+  $message = sprintf('Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s', $room, $direction, $location, $date, $time);
+  sms_send_message($env, $recipients, $message);
 }
