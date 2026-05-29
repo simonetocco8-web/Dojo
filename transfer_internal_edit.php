@@ -69,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
           $upd = $pdo->prepare('UPDATE transfers_internal SET room_number = ?, direction = ?, location = ?, when_at = ? WHERE id = ? AND deleted_at IS NULL');
           $upd->execute([$room, $direction, $location, $whenAt->format('Y-m-d H:i:s'), $id]);
+          ensure_transfer_internal_sms_reminders_table($pdo);
+          $pdo->prepare('DELETE FROM transfer_internal_sms_reminders WHERE transfer_id = ?')->execute([$id]);
 
           $messages = [];
           try {

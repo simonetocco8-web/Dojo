@@ -91,3 +91,13 @@ CREATE TABLE IF NOT EXISTS task_user_assignments (
   CONSTRAINT fk_task_user_assignments_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE,
   CONSTRAINT fk_task_user_assignments_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
+  transfer_id INT UNSIGNED NOT NULL PRIMARY KEY,
+  sent_at DATETIME DEFAULT NULL,
+  last_error TEXT DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_transfer_internal_sms_reminders_transfer FOREIGN KEY (transfer_id) REFERENCES transfers_internal(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
