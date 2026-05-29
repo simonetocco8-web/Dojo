@@ -90,3 +90,28 @@ function gcal_create_event_for_internal_transfer(PDO $pdo, int $transferId): ?st
 
   return $eventId;
 }
+
+
+function gcal_delete_event_for_internal_transfer(PDO $pdo, int $transferId): void {
+  $env = require __DIR__ . '/../config/env.php';
+  $calendarId = $env['google']['calendar_id'] ?? 'primary';
+
+  $st = $pdo->prepare("SELECT google_event_id FROM transfers_internal WHERE id = ? LIMIT 1");
+  $st->execute([$transferId]);
+  $eventId = (string)$st->fetchColumn();
+  if ($eventId === '') return;
+
+  try {
+    $service = google_calendar_client();
+    $service->events->delete($calendarId, $eventId);
+  } catch (Throwable $e) {
+    error_log('GCAL transfer delete failed: '.$e->getMessage());
+  }
+
+  $pdo->prepare("UPDATE transfers_internal SET google_event_id = NULL WHERE id = ?")->execute([$transferId]);
+}
+
+function gcal_recreate_event_for_internal_transfer(PDO $pdo, int $transferId): ?string {
+  gcal_delete_event_for_internal_transfer($pdo, $transferId);
+  return gcal_create_event_for_internal_transfer($pdo, $transferId);
+}

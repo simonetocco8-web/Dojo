@@ -108,6 +108,8 @@ function sms_send_internal_transfer($env, $payload) {
     $recipients = array($fallbackTo);
   }
 
-  $message = sprintf('Nuovo transfer interno: Camera %s %s %s - Data %s Ora %s', $room, $direction, $location, $date, $time);
+  $label = isset($payload['label']) ? trim((string)$payload['label']) : 'Nuovo';
+  if ($label === '') $label = 'Nuovo';
+  $message = sprintf('%s transfer interno: Camera %s %s %s - Data %s Ora %s', $label, $room, $direction, $location, $date, $time);
   sms_send_message($env, $recipients, $message);
 }
