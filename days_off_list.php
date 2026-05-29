@@ -9,7 +9,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
 
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 
@@ -69,7 +69,7 @@ include __DIR__ . '/partials/header.php';
             <tr>
               <td><?= (new DateTime($r['day']))->format('d/m/Y') ?></td>
               <td><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
-              <td><?= e($r['dipartimento']) ?></td>
+              <td><?= e(departments_label($r['dipartimento'])) ?></td>
               <td><?= e($r['note']) ?></td>
               <td class="text-end">
                 <form method="post" action="days_off_delete.php" class="d-inline" onsubmit="return confirm('Eliminare questo giorno libero?');">

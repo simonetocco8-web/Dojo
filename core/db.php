@@ -12,3 +12,28 @@ function db(): PDO {
   ]);
   return $pdo;
 }
+
+
+function ensure_users_department_column_supports_multiple(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'users'
+      AND COLUMN_NAME = 'dipartimento'
+    LIMIT 1
+  ");
+  $col = $stmt->fetch();
+
+  if (!$col) {
+    $pdo->exec("ALTER TABLE users ADD COLUMN dipartimento VARCHAR(255) NOT NULL DEFAULT 'Amministrazione'");
+    return;
+  }
+
+  $type = strtolower((string)($col['DATA_TYPE'] ?? ''));
+  $len = (int)($col['CHARACTER_MAXIMUM_LENGTH'] ?? 0);
+
+  if ($type !== 'varchar' || $len < 255) {
+    $pdo->exec("ALTER TABLE users MODIFY COLUMN dipartimento VARCHAR(255) NOT NULL DEFAULT 'Amministrazione'");
+  }
+}
