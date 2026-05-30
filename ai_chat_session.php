@@ -30,13 +30,24 @@ if (is_file($localEnvPath)) {
     $config = array_replace($config, $localEnv['openai_chatkit']);
   }
 }
-$apiKey = trim((string)(getenv('OPENAI_API_KEY') ?: ($config['api_key'] ?? '')));
+$apiKey = trim((string)(
+  getenv('OPENAI_API_KEY')
+  ?: ($_SERVER['OPENAI_API_KEY'] ?? '')
+  ?: ($_ENV['OPENAI_API_KEY'] ?? '')
+  ?: ($config['api_key'] ?? '')
+));
 $workflowId = trim((string)($config['workflow_id'] ?? ''));
 $endpoint = trim((string)($config['session_endpoint'] ?? 'https://api.openai.com/v1/chatkit/sessions'));
 
-if ($apiKey === '' || $workflowId === '') {
+if ($apiKey === '') {
   http_response_code(500);
-  echo json_encode(['error' => 'Configurazione AI Chat incompleta']);
+  echo json_encode(['error' => 'Configurazione AI Chat incompleta: imposta OPENAI_API_KEY sul server oppure config/env.local.php.']);
+  exit;
+}
+
+if ($workflowId === '') {
+  http_response_code(500);
+  echo json_encode(['error' => 'Configurazione AI Chat incompleta: workflow_id mancante.']);
   exit;
 }
 
