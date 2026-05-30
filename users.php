@@ -69,7 +69,7 @@ include __DIR__ . '/partials/header.php';
             <td class="text-nowrap d-flex gap-2">
               <?php if(!$show_trash): ?>
                 <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/user_edit.php?id=<?= (int)$u['id'] ?>">Modifica</a>
-                <form method="post" action="<?= e($base) ?>/user_delete.php" onsubmit="return confirm('Confermi di voler eliminare questo utente?');" class="d-inline">
+                <form method="post" action="<?= e($base) ?>/user_delete.php" data-confirm-message="Confermi di voler eliminare questo utente?" class="d-inline">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
                   <button class="btn btn-sm btn-outline-danger">Elimina</button>

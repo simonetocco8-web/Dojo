@@ -85,7 +85,7 @@ include __DIR__ . '/partials/header.php';
               <td><?= e(departments_label($r['dipartimento'])) ?></td>
               <td><?= e($r['note']) ?></td>
               <td class="text-end">
-                <form method="post" action="days_off_delete.php" class="d-inline" onsubmit="return confirm('Eliminare questo giorno libero?');">
+                <form method="post" action="days_off_delete.php" class="d-inline" data-confirm-message="Eliminare questo giorno libero?">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                   <button class="btn btn-link p-0 text-danger" title="Elimina">🗑️</button>

@@ -84,7 +84,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                         <i class="bi bi-pencil-square text-primary"></i>
                       </a>
                       <form method="post" action="transfer_internal_delete.php" class="d-inline"
-                            onsubmit="return confirm('Confermi l’eliminazione di questo transfer?');">
+                            data-confirm-message="Confermi l’eliminazione di questo transfer?">
                         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                         <button type="submit" class="btn btn-link p-0" title="Elimina" aria-label="Elimina">

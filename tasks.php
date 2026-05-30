@@ -227,7 +227,7 @@ function badge_status($s){
               <?php if($is_admin && $t['deleted_at']===null): ?>
                 <!-- Cestina -->
                 <form method="post" action="<?= e($base) ?>/task_status.php" class="d-inline ms-1"
-                      onsubmit="return confirm('Spostare nel cestino questo compito?');">
+                      data-confirm-message="Spostare nel cestino questo compito?">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
                   <input type="hidden" name="action" value="trash">
