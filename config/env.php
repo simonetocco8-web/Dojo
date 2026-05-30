@@ -12,7 +12,7 @@ return [
   'app' => [
     'base_url' => '', // es. '/adminapp' se in sottocartella
     'session_name' => 'ADMINAPPSESSID',
-    'session_lifetime' => 3600,
+    'session_lifetime' => 36000,
     'csrf_key' => 'change-this-secret-key'
   ],
   'mail' => [
@@ -35,6 +35,25 @@ return [
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
   ],
+  'sms' => [
+    'enabled' => true,
+    'provider' => 'openapi',
+    'access_token' => '6a185e25847aaa113b0959c6',
+    'endpoint' => 'https://sms.openapi.com/IT-messages',
+    'to' => '+393341913800',
+    'sender' => 'Dojo',
+    'dry_run' => false,
+    'fail_on_multiple_messages' => false,
+    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
+  ],
+
+  'openai_chatkit' => [
+    'api_key' => getenv('OPENAI_API_KEY') ?: '', // imposta OPENAI_API_KEY sul server, non committare chiavi API
+    'workflow_id' => 'wf_6a1ab0fd7a6881908bab573ddb7a682e06c24f25188285f0',
+    'domain_public_key' => 'domain_pk_6a1ada350d5481909dee4821f97c99250215095942c27d8b',
+    'session_endpoint' => 'https://api.openai.com/v1/chatkit/sessions'
+  ],
+
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
     'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
