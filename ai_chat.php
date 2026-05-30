@@ -7,11 +7,8 @@ start_session();
 
 $env = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
-$chatkit = $env['openai_chatkit'] ?? [];
 $title = 'AI Chat';
 $scriptVersion = @filemtime(__DIR__ . '/assets/ai-chat.js') ?: time();
-$domainPublicKey = (string)($chatkit['domain_public_key'] ?? '');
-
 include __DIR__ . '/partials/header.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -29,7 +26,6 @@ include __DIR__ . '/partials/header.php';
       class="dojo-ai-chat"
       data-session-endpoint="<?= e($base) ?>/ai_chat_session.php"
       data-csrf="<?= e(csrf_token()) ?>"
-      data-domain-key="<?= e($domainPublicKey) ?>"
     ></openai-chatkit>
   </div>
 </div>

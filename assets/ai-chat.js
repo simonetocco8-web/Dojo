@@ -14,8 +14,6 @@
 
     var endpoint = chat.dataset.sessionEndpoint || 'ai_chat_session.php';
     var csrf = chat.dataset.csrf || '';
-    var domainKey = chat.dataset.domainKey || '';
-
     if (window.customElements && !customElements.get('openai-chatkit')) {
       await Promise.race([
         customElements.whenDefined('openai-chatkit'),
@@ -34,7 +32,6 @@
 
     chat.setOptions({
       api: {
-        domainKey: domainKey,
         async getClientSecret(currentClientSecret) {
           var response = await fetch(endpoint, {
             method: 'POST',
