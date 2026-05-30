@@ -25,3 +25,6 @@ body{min-height:100vh}.card{border-radius:1rem}
 @media (max-width:991.98px){
   .dojo-logo{width:84px!important;max-width:84px!important;max-height:34px!important}
 }
+.dojo-ai-chat-card { min-height: calc(100vh - 190px); }
+.dojo-ai-chat { display: block; width: 100%; height: calc(100vh - 220px); min-height: 620px; }
+@media (max-width: 767.98px) { .dojo-ai-chat { height: calc(100vh - 190px); min-height: 520px; } }

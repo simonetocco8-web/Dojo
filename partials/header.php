@@ -51,6 +51,9 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <?php if($user && user_can_send_sms($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
         <?php endif; ?>
+        <?php if($user): ?>
+        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
+        <?php endif; ?>
         <?php if ($user && user_is_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
         <?php endif; ?>
@@ -102,6 +105,9 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <?php endif; ?>
             <?php if($user && user_can_send_sms($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/send_sms.php"><i class="bi bi-chat-dots"></i><span>Invia SMS</span></a></li>
+            <?php endif; ?>
+            <?php if($user): ?>
+            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
             <?php endif; ?>
             <?php if ($user && user_is_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
