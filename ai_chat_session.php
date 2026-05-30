@@ -23,7 +23,14 @@ if (!csrf_check($csrf)) {
 $env = require __DIR__ . '/config/env.php';
 $user = current_user();
 $config = $env['openai_chatkit'] ?? [];
-$apiKey = trim((string)($config['api_key'] ?? ''));
+$localEnvPath = __DIR__ . '/config/env.local.php';
+if (is_file($localEnvPath)) {
+  $localEnv = require $localEnvPath;
+  if (is_array($localEnv) && isset($localEnv['openai_chatkit']) && is_array($localEnv['openai_chatkit'])) {
+    $config = array_replace($config, $localEnv['openai_chatkit']);
+  }
+}
+$apiKey = trim((string)(getenv('OPENAI_API_KEY') ?: ($config['api_key'] ?? '')));
 $workflowId = trim((string)($config['workflow_id'] ?? ''));
 $endpoint = trim((string)($config['session_endpoint'] ?? 'https://api.openai.com/v1/chatkit/sessions'));
 
@@ -34,13 +41,15 @@ if ($apiKey === '' || $workflowId === '') {
 }
 
 $payload = [
-  'workflow' => ['id' => $workflowId],
-  'user' => 'dojo-user-' . (int)($user['id'] ?? 0),
-  'state_variables' => [
-    'dojo_user_id' => (int)($user['id'] ?? 0),
-    'dojo_user_email' => (string)($user['email'] ?? ''),
-    'dojo_user_name' => trim((string)($user['nome'] ?? '') . ' ' . (string)($user['cognome'] ?? '')),
+  'workflow' => [
+    'id' => $workflowId,
+    'state_variables' => [
+      'dojo_user_id' => (int)($user['id'] ?? 0),
+      'dojo_user_email' => (string)($user['email'] ?? ''),
+      'dojo_user_name' => trim((string)($user['nome'] ?? '') . ' ' . (string)($user['cognome'] ?? '')),
+    ],
   ],
+  'user' => 'dojo-user-' . (int)($user['id'] ?? 0),
 ];
 
 $ch = curl_init($endpoint);

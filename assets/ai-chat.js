@@ -30,24 +30,35 @@
       return;
     }
 
+    async function fetchClientSecret(currentClientSecret) {
+      var response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrf,
+        },
+        body: JSON.stringify({ current_client_secret: currentClientSecret || null }),
+        credentials: 'same-origin',
+      });
+
+      var data = await response.json().catch(function () { return {}; });
+      if (!response.ok || !data.client_secret) {
+        throw new Error(data.error || 'Impossibile avviare la sessione AI Chat.');
+      }
+      return data.client_secret;
+    }
+
+    var initialClientSecret = await fetchClientSecret(null);
+
     chat.setOptions({
       api: {
         async getClientSecret(currentClientSecret) {
-          var response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': csrf,
-            },
-            body: JSON.stringify({ current_client_secret: currentClientSecret || null }),
-            credentials: 'same-origin',
-          });
-
-          var data = await response.json().catch(function () { return {}; });
-          if (!response.ok || !data.client_secret) {
-            throw new Error(data.error || 'Impossibile avviare la sessione AI Chat.');
+          if (!currentClientSecret && initialClientSecret) {
+            var clientSecret = initialClientSecret;
+            initialClientSecret = null;
+            return clientSecret;
           }
-          return data.client_secret;
+          return fetchClientSecret(currentClientSecret || null);
         },
       },
       locale: 'it-IT',
