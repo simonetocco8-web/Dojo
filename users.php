@@ -58,7 +58,7 @@ include __DIR__ . '/partials/header.php';
             <td><?= e($u['cognome'] ?? '') ?></td>
             <td><?= e($u['email']) ?></td>
             <td><?= e($u['telefono'] ?? '') ?></td>
-            <td><?= e($u['dipartimento'] ?? '') ?></td>
+            <td><?= department_badges($u['dipartimento'] ?? '') ?></td>
             <td><span class="badge bg-secondary"><?= e($u['role']) ?></span></td>
             <td><?= !empty($u['is_active']) ? '✔' : '—' ?></td>
             <?php if($show_trash): ?>
@@ -69,7 +69,7 @@ include __DIR__ . '/partials/header.php';
             <td class="text-nowrap d-flex gap-2">
               <?php if(!$show_trash): ?>
                 <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/user_edit.php?id=<?= (int)$u['id'] ?>">Modifica</a>
-                <form method="post" action="<?= e($base) ?>/user_delete.php" onsubmit="return confirm('Confermi di voler eliminare questo utente?');" class="d-inline">
+                <form method="post" action="<?= e($base) ?>/user_delete.php" data-confirm-message="Confermi di voler eliminare questo utente?" class="d-inline">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$u['id'] ?>">
                   <button class="btn btn-sm btn-outline-danger">Elimina</button>
