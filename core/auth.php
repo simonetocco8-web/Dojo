@@ -3,9 +3,16 @@ require_once __DIR__ . '/db.php';
 
 function start_session() {
   if (session_status() === PHP_SESSION_NONE) {
-    if (session_name() !== 'APPSESSID') session_name('APPSESSID');
+    $env = require __DIR__ . '/../config/env.php';
+    $sessionName = $env['app']['session_name'] ?? 'APPSESSID';
+    $sessionLifetime = (int)($env['app']['session_lifetime'] ?? 36000);
+    if ($sessionLifetime <= 0) $sessionLifetime = 36000;
+
+    if (session_name() !== $sessionName) session_name($sessionName);
+    ini_set('session.gc_maxlifetime', (string)$sessionLifetime);
+    ini_set('session.cookie_lifetime', (string)$sessionLifetime);
     session_set_cookie_params([
-      'lifetime' => 0,
+      'lifetime' => $sessionLifetime,
       'path'     => '/',
       'domain'   => '',
       'secure'   => !empty($_SERVER['HTTPS']),

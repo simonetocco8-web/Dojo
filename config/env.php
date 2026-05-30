@@ -12,7 +12,7 @@ return [
   'app' => [
     'base_url' => '', // es. '/adminapp' se in sottocartella
     'session_name' => 'ADMINAPPSESSID',
-    'session_lifetime' => 3600,
+    'session_lifetime' => 36000,
     'csrf_key' => 'change-this-secret-key'
   ],
   'mail' => [
