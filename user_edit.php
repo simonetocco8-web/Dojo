@@ -22,22 +22,31 @@ if ($id <= 0) {
 $stmt = $pdo->prepare('SELECT id, email, role, is_active, nome, cognome, telefono, dipartimento, deleted_at
                        FROM users WHERE id = ? LIMIT 1');
 $stmt->execute([$id]);
-$user = $stmt->fetch();
+$editUser = $stmt->fetch();
 
-if (!$user) {
+if (!$editUser) {
   header('Location: ' . $base . '/users.php');
   exit;
 }
-if (!empty($user['deleted_at'])) {
+if (!empty($editUser['deleted_at'])) {
   header('Location: ' . $base . '/users.php?trash=1');
   exit;
 }
 
 $message = '';
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping'];
+$departmentSchemaReady = true;
+try {
+  ensure_users_department_column_supports_multiple($pdo);
+} catch (PDOException $e) {
+  $departmentSchemaReady = false;
+  $message = 'Errore aggiornamento struttura dipartimenti utente: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+}
+$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if (!csrf_check($_POST['csrf'] ?? '')) {
+  if (!$departmentSchemaReady) {
+    // Messaggio già valorizzato dal controllo schema sopra.
+  } elseif (!csrf_check($_POST['csrf'] ?? '')) {
     $message = 'Token CSRF non valido.';
   } else {
     $email        = trim($_POST['email'] ?? '');
@@ -46,13 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome         = trim($_POST['nome'] ?? '');
     $cognome      = trim($_POST['cognome'] ?? '');
     $telefono     = trim($_POST['telefono'] ?? '');
-    $dipartimento = $_POST['dipartimento'] ?? 'Amministrazione';
+    $dipartimenti = $_POST['dipartimento'] ?? [];
+    if (!is_array($dipartimenti)) { $dipartimenti = [$dipartimenti]; }
+    $dipartimenti = array_values(array_intersect($allowedDeps, $dipartimenti));
+    if (!$dipartimenti) { $dipartimenti = ['Amministrazione']; }
+    $dipartimento = implode(',', $dipartimenti);
     $new_password = $_POST['password'] ?? '';
-
-    // Normalizza dipartimento
-    if (!in_array($dipartimento, $allowedDeps, true)) {
-      $dipartimento = 'Amministrazione';
-    }
 
     if ($email && $nome && $cognome) {
       try {
@@ -95,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('SELECT id, email, role, is_active, nome, cognome, telefono, dipartimento, deleted_at
                                    FROM users WHERE id = ? LIMIT 1');
             $stmt->execute([$id]);
-            $user = $stmt->fetch();
+            $editUser = $stmt->fetch();
             $message = 'Utente aggiornato con successo.';
           }
         }
@@ -123,7 +131,7 @@ include __DIR__ . '/partials/header.php';
   <div class="col-12 col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h5 mb-3">Modifica utente #<?= (int)$user['id'] ?></h1>
+        <h1 class="h5 mb-3">Modifica utente #<?= (int)$editUser['id'] ?></h1>
 
         <?php if($message): ?>
           <div class="alert alert-info"><?= e($message) ?></div>
@@ -131,34 +139,39 @@ include __DIR__ . '/partials/header.php';
 
         <form method="post">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-          <input type="hidden" name="id" value="<?= (int)$user['id'] ?>">
+          <input type="hidden" name="id" value="<?= (int)$editUser['id'] ?>">
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Nome</label><?= e($user['nome']) ?>
-              <input type="text" name="nome" class="form-control" value="<?= e($user['nome']) ?>" required>
+              <label class="form-label">Nome</label><?= e($editUser['nome']) ?>
+              <input type="text" name="nome" class="form-control" value="<?= e($editUser['nome']) ?>" required>
             </div>
             <div class="col-md-6">
               <label class="form-label">Cognome</label>
-              <input type="text" name="cognome" class="form-control" value="<?= e($user['cognome']) ?>" required>
+              <input type="text" name="cognome" class="form-control" value="<?= e($editUser['cognome']) ?>" required>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Telefono</label>
-              <input type="text" name="telefono" class="form-control" value="<?= e($user['telefono']) ?>">
+              <input type="text" name="telefono" class="form-control" value="<?= e($editUser['telefono']) ?>">
             </div>
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
-              <select name="dipartimento" class="form-select">
+              <?php $userDeps = user_departments($editUser); ?>
+              <div class="border rounded p-2">
                 <?php foreach($allowedDeps as $d): ?>
-                  <option value="<?= e($d) ?>" <?= $user['dipartimento']===$d ? 'selected' : '' ?>><?= e($d) ?></option>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_edit_<?= e($d) ?>" <?= in_array($d, $userDeps, true) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="dep_edit_<?= e($d) ?>"><?= e($d) ?></label>
+                  </div>
                 <?php endforeach; ?>
-              </select>
+              </div>
+              <div class="form-text">Puoi selezionare uno o più dipartimenti.</div>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Email</label>
-              <input type="email" name="email" class="form-control" value="<?= e($user['email']) ?>" required>
+              <input type="email" name="email" class="form-control" value="<?= e($editUser['email']) ?>" required>
             </div>
             <div class="col-md-6">
               <label class="form-label">Nuova password (opzionale)</label>
@@ -168,13 +181,13 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-6">
               <label class="form-label">Ruolo</label>
               <select name="role" class="form-select">
-                <option value="editor" <?= $user['role']==='editor' ? 'selected' : '' ?>>Editor</option>
-                <option value="admin"  <?= $user['role']==='admin'  ? 'selected' : '' ?>>Admin</option>
+                <option value="editor" <?= $editUser['role']==='editor' ? 'selected' : '' ?>>Editor</option>
+                <option value="admin"  <?= $editUser['role']==='admin'  ? 'selected' : '' ?>>Admin</option>
               </select>
             </div>
             <div class="col-md-6 d-flex align-items-center">
               <div class="form-check mt-4">
-                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" <?= $user['is_active'] ? 'checked' : '' ?>>
+                <input class="form-check-input" type="checkbox" name="is_active" id="is_active" <?= $editUser['is_active'] ? 'checked' : '' ?>>
                 <label class="form-check-label" for="is_active">Attivo</label>
               </div>
             </div>
