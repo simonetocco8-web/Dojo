@@ -12,7 +12,7 @@ return [
   'app' => [
     'base_url' => '', // es. '/adminapp' se in sottocartella
     'session_name' => 'ADMINAPPSESSID',
-    'session_lifetime' => 3600,
+    'session_lifetime' => 36000,
     'csrf_key' => 'change-this-secret-key'
   ],
   'mail' => [
@@ -35,6 +35,18 @@ return [
     // Scopes consigliati: device lettura/scrittura
     'scope' => 'userinfo:read device:read device:write'
   ],
+  'sms' => [
+    'enabled' => true,
+    'provider' => 'openapi',
+    'access_token' => '6a185e25847aaa113b0959c6',
+    'endpoint' => 'https://sms.openapi.com/IT-messages',
+    'to' => '+393341913800',
+    'sender' => 'Dojo',
+    'dry_run' => false,
+    'fail_on_multiple_messages' => false,
+    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
+  ],
+
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
     'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
