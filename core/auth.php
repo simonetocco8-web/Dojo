@@ -34,8 +34,43 @@ function current_user() {
 
 
 
-function available_departments() {
+function default_departments() {
   return array('Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista','Magazziniere Tizzo','Magazziniere Tramonto');
+}
+
+function normalize_departments_list($departments) {
+  if (!is_array($departments)) return array();
+  $items = array();
+  foreach ($departments as $department) {
+    $department = trim((string)$department);
+    if ($department !== '' && !in_array($department, $items, true)) {
+      $items[] = $department;
+    }
+  }
+  return $items;
+}
+
+function available_departments() {
+  $defaults = default_departments();
+  try {
+    $pdo = db();
+    if (function_exists('ensure_system_settings_table')) {
+      ensure_system_settings_table($pdo);
+    }
+    $stmt = $pdo->prepare("SELECT setting_value FROM system_settings WHERE setting_key = 'departments' LIMIT 1");
+    $stmt->execute();
+    $raw = $stmt->fetchColumn();
+    if ($raw !== false && trim((string)$raw) !== '') {
+      $decoded = json_decode((string)$raw, true);
+      if (json_last_error() === JSON_ERROR_NONE) {
+        $configured = normalize_departments_list($decoded);
+        if ($configured) return $configured;
+      }
+    }
+  } catch (Throwable $exception) {
+    return $defaults;
+  }
+  return $defaults;
 }
 
 function user_departments($user = null) {

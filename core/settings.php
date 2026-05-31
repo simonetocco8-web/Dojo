@@ -24,6 +24,8 @@ function get_settings(array $keys, ?PDO $pdo = null): array {
     }
   }
 
+  ensure_system_settings_table($pdo);
+
   $placeholders = implode(',', array_fill(0, count($keys), '?'));
   $stmt = $pdo->prepare('SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN (' . $placeholders . ')');
   $stmt->execute($keys);
@@ -57,6 +59,7 @@ function set_setting(string $key, ?string $value, ?PDO $pdo = null): void {
   if ($pdo === null) {
     $pdo = db();
   }
+  ensure_system_settings_table($pdo);
 
   $stmt = $pdo->prepare('INSERT INTO system_settings (setting_key, setting_value, updated_at) VALUES (:key, :value, NOW())
       ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = VALUES(updated_at)');

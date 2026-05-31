@@ -97,10 +97,10 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-6">
               <label class="form-label">Dipartimento</label>
               <div class="border rounded p-2">
-                <?php foreach($allowedDeps as $d): ?>
+                <?php foreach($allowedDeps as $idx => $d): $depId = 'dep_create_' . (int)$idx; ?>
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_create_<?= e($d) ?>">
-                    <label class="form-check-label" for="dep_create_<?= e($d) ?>"><?= e($d) ?></label>
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="<?= e($depId) ?>">
+                    <label class="form-check-label" for="<?= e($depId) ?>"><?= e($d) ?></label>
                   </div>
                 <?php endforeach; ?>
               </div>

@@ -14,6 +14,17 @@ function db(): PDO {
 }
 
 
+function ensure_system_settings_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS system_settings (
+      setting_key VARCHAR(190) NOT NULL PRIMARY KEY,
+      setting_value TEXT DEFAULT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
+
+
 function ensure_users_department_column_supports_multiple(PDO $pdo): void {
   $stmt = $pdo->query("
     SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH

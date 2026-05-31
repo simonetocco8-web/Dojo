@@ -159,10 +159,10 @@ include __DIR__ . '/partials/header.php';
               <label class="form-label">Dipartimento</label>
               <?php $userDeps = user_departments($editUser); ?>
               <div class="border rounded p-2">
-                <?php foreach($allowedDeps as $d): ?>
+                <?php foreach($allowedDeps as $idx => $d): $depId = 'dep_edit_' . (int)$idx; ?>
                   <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="dep_edit_<?= e($d) ?>" <?= in_array($d, $userDeps, true) ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="dep_edit_<?= e($d) ?>"><?= e($d) ?></label>
+                    <input class="form-check-input" type="checkbox" name="dipartimento[]" value="<?= e($d) ?>" id="<?= e($depId) ?>" <?= in_array($d, $userDeps, true) ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="<?= e($depId) ?>"><?= e($d) ?></label>
                   </div>
                 <?php endforeach; ?>
               </div>

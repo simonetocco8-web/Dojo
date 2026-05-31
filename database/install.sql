@@ -68,6 +68,9 @@ CREATE TABLE IF NOT EXISTS system_settings (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT IGNORE INTO system_settings (setting_key, setting_value)
+VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
+
 
 CREATE TABLE IF NOT EXISTS sms_history (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
