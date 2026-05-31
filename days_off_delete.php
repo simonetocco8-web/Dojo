@@ -11,7 +11,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
 
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit('Metodo non consentito.'); }

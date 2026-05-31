@@ -14,34 +14,41 @@ $user  = current_user();
 $seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+ensure_task_user_assignments_table($pdo);
+ensure_products_active_column($pdo);
 
 // Ruolo e dipartimento
 $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1');
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
-$my_dep   = $me['dipartimento'] ?? null;
+$my_deps  = user_departments($me);
+$my_dep   = $my_deps[0] ?? null;
+$myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
 $can_see_riassetti = user_is_reception_or_amministrazione($user) || user_is_housekeeping($user);
 
 // --- Prossimi 5 TASK (stato aperto) ---
-// Admin: tutti; Non admin: solo del proprio dipartimento
-if ($is_admin) {
-  $qTasks = 'SELECT id, title, priority, dipartimento, due_date
-             FROM tasks
-             WHERE deleted_at IS NULL AND status = "aperto"
-             ORDER BY due_date ASC, FIELD(priority,"urgente","alta","media","bassa") ASC, id DESC
-             LIMIT 5';
-  $tasks = $pdo->query($qTasks)->fetchAll();
-} else {
-  $qTasks = 'SELECT id, title, priority, dipartimento, due_date
-             FROM tasks
-             WHERE deleted_at IS NULL AND status = "aperto" AND dipartimento = ?
-             ORDER BY due_date ASC, FIELD(priority,"urgente","alta","media","bassa") ASC, id DESC
-             LIMIT 5';
-  $stt = $pdo->prepare($qTasks);
-  $stt->execute([$my_dep]);
-  $tasks = $stt->fetchAll();
+// Admin: tutti; Non admin: task assegnati direttamente o al proprio dipartimento.
+$taskArgs = [$user['id']];
+$taskWhere = 't.deleted_at IS NULL AND t.status = "aperto"';
+if (!$is_admin) {
+  $myTaskCondition = '((NOT EXISTS (SELECT 1 FROM task_user_assignments tv WHERE tv.task_id = t.id) AND t.dipartimento IN ('.$myDepPlaceholders.')) OR tua_me.user_id IS NOT NULL)';
+  $taskWhere .= ' AND (' . $myTaskCondition . ')';
+  $taskArgs = array_merge($taskArgs, $my_deps);
 }
+$qTasks = "SELECT t.id, t.title, t.priority, t.dipartimento, t.due_date,
+                  (SELECT GROUP_CONCAT(TRIM(CONCAT(COALESCE(au.cognome, ''), ' ', COALESCE(au.nome, ''))) ORDER BY au.cognome, au.nome SEPARATOR ', ')
+                   FROM task_user_assignments tua_names
+                   JOIN users au ON au.id = tua_names.user_id
+                   WHERE tua_names.task_id = t.id) AS assigned_user_names
+           FROM tasks t
+           LEFT JOIN task_user_assignments tua_me ON tua_me.task_id = t.id AND tua_me.user_id = ?
+           WHERE $taskWhere
+           ORDER BY t.due_date ASC, FIELD(t.priority,'urgente','alta','media','bassa') ASC, t.id DESC
+           LIMIT 5";
+$stt = $pdo->prepare($qTasks);
+$stt->execute($taskArgs);
+$tasks = $stt->fetchAll();
 
 $tin = [];
 $tex = [];
@@ -126,14 +133,26 @@ function riassetti_biancheria_short(array $row): string {
         <?php else: ?>
           <ul class="list-group list-group-flush">
             <?php foreach($tasks as $t): ?>
-              <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+              <?php $taskRecipientLabel = !empty($t['assigned_user_names']) ? $t['assigned_user_names'] : $t['dipartimento']; ?>
+              <li class="list-group-item px-0 d-flex justify-content-between align-items-start gap-2">
                 <div class="me-2">
                   <div class="fw-semibold"><?= e($t['title']) ?></div>
                   <div class="small text-muted">
-                    Scad.: <?= it_date($t['due_date']) ?> · Dip.: <?= e($t['dipartimento']) ?>
+                    Scad.: <?= it_date($t['due_date']) ?> · Dest.: <?= e($taskRecipientLabel) ?>
                   </div>
                 </div>
-                <div><?= badge_priority($t['priority']) ?></div>
+                <div class="text-end">
+                  <div class="mb-1"><?= badge_priority($t['priority']) ?></div>
+                  <form method="post" action="<?= e($base) ?>/task_status.php" class="d-inline">
+                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                    <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                    <input type="hidden" name="action" value="complete">
+                    <input type="hidden" name="return_to" value="dashboard">
+                    <button class="btn btn-sm btn-outline-success" title="Completa" aria-label="Completa task">
+                      <i class="bi bi-check2-circle"></i>
+                    </button>
+                  </form>
+                </div>
               </li>
             <?php endforeach; ?>
           </ul>
@@ -259,7 +278,7 @@ function riassetti_biancheria_short(array $row): string {
 <div class="row g-4">
   <?php
 // --- BOX: Giorni liberi prossimi 7 giorni ---
-if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
   $tz = new DateTimeZone('Europe/Rome');
   $today = (new DateTime('today', $tz))->format('Y-m-d');
   $to7   = (new DateTime('today', $tz))->modify('+7 days')->format('Y-m-d');
@@ -302,7 +321,7 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
                 <tr>
                   <td><?= (new DateTime($r['day'], $tz))->format('d/m/Y') ?></td>
                   <td><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
-                  <td><span class="badge bg-light text-dark"><?= e($r['dipartimento'] ?? '') ?></span></td>
+                  <td><span class="badge bg-light text-dark"><?= e(departments_label($r['dipartimento'] ?? '')) ?></span></td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -316,7 +335,7 @@ if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'
 
 <?php
 // --- BOX: Prodotti sottoscorta (Top 10) ---
-if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' || ($user['dipartimento'] ?? '') === 'Bar')) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || user_has_department($user, 'Bar'))) {
 
   $sql = "
     SELECT 
@@ -329,7 +348,7 @@ if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' 
       COALESCE(SUM(CASE WHEN sl.warehouse='Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
     FROM products p
     LEFT JOIN stock_levels sl ON sl.product_id = p.id
-    /* Se hai un flag attivo/inattivo, puoi aggiungere ad es.: WHERE p.active = 1 */
+    WHERE COALESCE(p.is_active, 1) = 1
     GROUP BY p.id, p.title, p.category, p.min_qty
     HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty
     ORDER BY total_qty ASC, p.title ASC
@@ -343,7 +362,7 @@ if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' 
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="h6 mb-0"><i class="bi bi-exclamation-octagon me-1"></i>Sottoscorta (Top 10)</h2>
-        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/index.php">Magazzino</a>
+        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/products.php">Magazzino</a>
       </div>
 
       <?php if (empty($lowStock)): ?>
@@ -384,7 +403,7 @@ if ($user && (is_admin() || ($user['dipartimento'] ?? '') === 'Amministrazione' 
 
 <?php
 // --- BOX: Fornitori che accettano ordini oggi ---
-if ($user && (is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
 
   // 0=Dom, 1=Lun, ... 6=Sab
   $tz = new DateTimeZone('Europe/Rome');
