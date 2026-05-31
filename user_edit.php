@@ -41,7 +41,7 @@ try {
   $departmentSchemaReady = false;
   $message = 'Errore aggiornamento struttura dipartimenti utente: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
 }
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
+$allowedDeps = available_departments();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!$departmentSchemaReady) {

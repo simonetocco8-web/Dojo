@@ -13,7 +13,7 @@ if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
 ensure_task_user_assignments_table($pdo);
 
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
+$allowedDeps = available_departments();
 $allowedPri  = ['bassa','media','alta','urgente'];
 $allowedRec  = ['nessuna','giornaliera','settimanale','mensile','annuale'];
 $message = '';

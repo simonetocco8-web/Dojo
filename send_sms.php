@@ -24,7 +24,7 @@ if (!$user || !user_can_send_sms($user)) {
 
 ensure_sms_history_table($pdo);
 
-$allowedDeps = ['Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista'];
+$allowedDeps = available_departments();
 $message = '';
 $messageType = 'info';
 

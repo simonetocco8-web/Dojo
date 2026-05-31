@@ -33,6 +33,11 @@ function current_user() {
 }
 
 
+
+function available_departments() {
+  return array('Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista','Magazziniere Tizzo','Magazziniere Tramonto');
+}
+
 function user_departments($user = null) {
   if ($user === null) $user = current_user();
   if (!$user) return array();
