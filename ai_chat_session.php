@@ -37,6 +37,7 @@ $apiKey = trim((string)(
   ?: ($config['api_key'] ?? '')
 ));
 $workflowId = trim((string)($config['workflow_id'] ?? ''));
+$workflowVersion = trim((string)(getenv('OPENAI_CHATKIT_WORKFLOW_VERSION') ?: ($config['workflow_version'] ?? '')));
 $endpoint = trim((string)($config['session_endpoint'] ?? 'https://api.openai.com/v1/chatkit/sessions'));
 
 if ($apiKey === '') {
@@ -51,15 +52,20 @@ if ($workflowId === '') {
   exit;
 }
 
-$payload = [
-  'workflow' => [
-    'id' => $workflowId,
-    'state_variables' => [
-      'dojo_user_id' => (int)($user['id'] ?? 0),
-      'dojo_user_email' => (string)($user['email'] ?? ''),
-      'dojo_user_name' => trim((string)($user['nome'] ?? '') . ' ' . (string)($user['cognome'] ?? '')),
-    ],
+$workflow = [
+  'id' => $workflowId,
+  'state_variables' => [
+    'dojo_user_id' => (int)($user['id'] ?? 0),
+    'dojo_user_email' => (string)($user['email'] ?? ''),
+    'dojo_user_name' => trim((string)($user['nome'] ?? '') . ' ' . (string)($user['cognome'] ?? '')),
   ],
+];
+if ($workflowVersion !== '') {
+  $workflow['version'] = $workflowVersion;
+}
+
+$payload = [
+  'workflow' => $workflow,
   'user' => 'dojo-user-' . (int)($user['id'] ?? 0),
 ];
 
@@ -106,4 +112,7 @@ if ($clientSecret === '') {
   exit;
 }
 
-echo json_encode(['client_secret' => $clientSecret]);
+echo json_encode([
+  'client_secret' => $clientSecret,
+  'workflow' => $decoded['workflow'] ?? null,
+]);
