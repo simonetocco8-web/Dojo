@@ -58,15 +58,18 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                 <tbody>
                   <?php foreach($rows as $r): ?>
                   <tr>
-                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('d/m/y'); ?></td>
+                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('d/m/Y'); ?></td>
                     <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('H:i'); ?></td>
                     <td><?= e($r['room_number']) ?></td>
                     <td><?= e(strtoupper($r['direction'])) ?></td>
                     <td><?= e($r['location']) ?></td>
                     <td class="small text-muted"><?= e($r['created_by_email']) ?></td>
                     <td>
+                      <a class="btn btn-link p-0 me-2" href="<?= e($base) ?>/transfer_internal_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica" aria-label="Modifica">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                      </a>
                       <form method="post" action="transfer_internal_delete.php" class="d-inline"
-                            onsubmit="return confirm('Confermi l’eliminazione di questo transfer?');">
+                            data-confirm-message="Confermi l’eliminazione di questo transfer?">
                         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                         <button type="submit" class="btn btn-link p-0" title="Elimina" aria-label="Elimina">
