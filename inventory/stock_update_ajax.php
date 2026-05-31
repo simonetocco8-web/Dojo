@@ -24,7 +24,7 @@ if ($origin && $origin !== $host) {
 
 // Permessi
 $user = current_user();
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione') || (($user['dipartimento'] ?? '') === 'Bar'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione') || user_has_department($user, 'Bar'))) {
   fail(403, 'Permesso negato');
 }
 
