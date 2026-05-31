@@ -12,6 +12,7 @@ $rows = $pdo->query("
       COALESCE(SUM(s.qty), 0) AS tot_qty
     FROM products p
     LEFT JOIN stock_levels s ON s.product_id = p.id
+    WHERE COALESCE(p.is_active, 1) = 1
     GROUP BY p.id
   ) t
   WHERE t.tot_qty < t.min_qty
@@ -24,6 +25,7 @@ $rows = $pdo->query("
   <div class="d-flex gap-2">
     <?php if (is_amministrazione()): ?>
       <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/inventory/products.php">Prodotti</a>
+      <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/inventory/products_inactive.php">Non Attivi</a>
       <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/inventory/carico.php">Carico</a>
       <a class="btn btn-sm btn-outline-success" href="<?= e($base) ?>/inventory/scarico.php">Scarico</a>
       <a class="btn btn-sm btn-outline-warning" href="<?= e($base) ?>/inventory/allineamento.php">Allineamento</a>

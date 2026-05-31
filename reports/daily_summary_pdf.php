@@ -344,7 +344,7 @@ function generate_daily_summary_pdf(
     <?php foreach ($daysOff as $row): ?>
       <tr>
         <td><?= e(trim(($row['cognome'] ?? '') . ' ' . ($row['nome'] ?? ''))) ?></td>
-        <td><?= e($row['dipartimento'] ?? '') ?></td>
+        <td><?= e(departments_label($row['dipartimento'] ?? '')) ?></td>
         <td><?= nl2br(e($row['note'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>
@@ -449,7 +449,7 @@ function generate_daily_summary_pdf(
 function fetch_daily_summary_recipients(PDO $pdo): array
 {
     $stmt = $pdo->prepare(
-        "SELECT email\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND dipartimento IN ('Amministrazione','Reception')"
+        "SELECT email\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND (FIND_IN_SET('Amministrazione', REPLACE(dipartimento, ' ', '')) > 0 OR FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0)"
     );
     $stmt->execute();
 
