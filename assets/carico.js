@@ -1,98 +1,229 @@
+(function(){
+  function esc(s){
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function num(v){
+    var n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+  function formatQty(v){
+    return (num(v) + 0).toString();
+  }
 
-function escAttr(s){
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#39;');
-}
-let rowCounter = 0;
+  var items = [];
+  var pendingProduct = null;
+  var debounce = null;
+  var warehouseInput = document.getElementById('caricoWarehouse');
+  var warehouseStep = document.getElementById('warehouseStep');
+  var productStep = document.getElementById('productStep');
+  var selectedWarehouseLabel = document.getElementById('selectedWarehouseLabel');
+  var searchInput = document.getElementById('caricoSearch');
+  var resultsBox = document.getElementById('caricoResults');
+  var cart = document.getElementById('caricoCart');
+  var cartEmpty = document.getElementById('caricoCartEmpty');
+  var hiddenItems = document.getElementById('caricoHiddenItems');
+  var submitBtn = document.getElementById('submitCaricoBtn');
+  var itemsCount = document.getElementById('itemsCount');
+  var qtyModalEl = document.getElementById('qtyModal');
+  var qtyModal = qtyModalEl && window.bootstrap ? new bootstrap.Modal(qtyModalEl) : null;
+  var qtyInput = document.getElementById('qtyInput');
+  var qtyProductTitle = document.getElementById('qtyProductTitle');
+  var qtyProductStock = document.getElementById('qtyProductStock');
 
-function invAddRow(){
-  const id = ++rowCounter;
-  const wrap = document.getElementById('items');
-  const div = document.createElement('div');
-  div.className = 'row g-2 align-items-end mb-2 position-relative';
-  div.innerHTML = `
-    <div class="col-md-6">
-      <label class="form-label">Prodotto (Titolo o EAN)</label>
-      <input id="input_${id}" type="text" class="form-control" placeholder="Cerca titolo o inserisci EAN">
-      <input type="hidden" name="items[${id}][product_id]" id="pid_${id}">
-      <div class="small text-muted" id="stock_${id}"></div>
-      <div class="list-group position-absolute w-75 z-3 bg-white border" id="ac_${id}" style="max-height:200px; overflow:auto;"></div>
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">Q.tà</label>
-      <input type="number" step="0.001" name="items[${id}][qty]" class="form-control" required>
-    </div>
-  `;
-  wrap.appendChild(div);
+  if (!warehouseInput || !warehouseStep || !productStep) return;
 
-  const input = div.querySelector('input.form-control');
-  input.addEventListener('input', (e)=> invAutocomplete(id, e.target.value));
+  function selectedWarehouse(){ return warehouseInput.value || ''; }
 
-  const box = document.getElementById('ac_'+id);
-  box.addEventListener('click', (ev)=>{
-    const btn = ev.target.closest('button[data-pid]');
-    if (!btn) return;
-    invPick(id, parseInt(btn.dataset.pid), btn.dataset.title, parseFloat(btn.dataset.stock)||0);
+  function goToProducts(warehouse){
+    warehouseInput.value = warehouse;
+    selectedWarehouseLabel.textContent = warehouse;
+    warehouseStep.classList.add('d-none');
+    productStep.classList.remove('d-none');
+    document.querySelectorAll('.warehouse-choice').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.warehouse === warehouse);
+    });
+    setTimeout(function(){ if (searchInput) searchInput.focus(); }, 100);
+  }
+
+  function goToWarehouse(){
+    productStep.classList.add('d-none');
+    warehouseStep.classList.remove('d-none');
+    if (searchInput) searchInput.value = '';
+    if (resultsBox) resultsBox.innerHTML = '';
+  }
+
+  function renderCart(){
+    hiddenItems.innerHTML = '';
+    cart.innerHTML = '';
+    items.forEach(function(item, index){
+      var row = document.createElement('div');
+      row.className = 'list-group-item d-flex justify-content-between align-items-start gap-3';
+      row.innerHTML = '<div class="flex-grow-1">'
+        + '<div class="fw-semibold">' + esc(item.title) + '</div>'
+        + '<div class="small text-muted">Giacenza ' + esc(selectedWarehouse()) + ': ' + esc(formatQty(item.stock)) + ' · Q.tà: <strong>' + esc(formatQty(item.qty)) + '</strong></div>'
+        + '</div>'
+        + '<button type="button" class="btn btn-sm btn-outline-danger" data-remove="' + index + '" aria-label="Rimuovi prodotto"><i class="bi bi-trash"></i></button>';
+      cart.appendChild(row);
+
+      var pid = document.createElement('input');
+      pid.type = 'hidden';
+      pid.name = 'items[' + index + '][product_id]';
+      pid.value = item.id;
+      hiddenItems.appendChild(pid);
+      var qty = document.createElement('input');
+      qty.type = 'hidden';
+      qty.name = 'items[' + index + '][qty]';
+      qty.value = item.qty;
+      hiddenItems.appendChild(qty);
+    });
+    cartEmpty.classList.toggle('d-none', items.length > 0);
+    submitBtn.disabled = items.length === 0;
+    itemsCount.textContent = items.length === 1 ? '1 prodotto' : items.length + ' prodotti';
+  }
+
+  function addItem(product, qty){
+    var existing = items.find(function(item){ return item.id === product.id; });
+    if (existing) {
+      existing.qty = num(existing.qty) + num(qty);
+    } else {
+      items.push({ id: product.id, title: product.title, stock: product.stock, qty: qty });
+    }
+    renderCart();
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    if (resultsBox) resultsBox.innerHTML = '';
+  }
+
+  function openQtyModal(product){
+    pendingProduct = product;
+    qtyProductTitle.textContent = product.title;
+    qtyProductStock.textContent = 'Giacenza attuale in ' + selectedWarehouse() + ': ' + formatQty(product.stock);
+    qtyInput.value = '';
+    if (qtyModal) {
+      qtyModal.show();
+      qtyModalEl.addEventListener('shown.bs.modal', function onShown(){
+        qtyModalEl.removeEventListener('shown.bs.modal', onShown);
+        qtyInput.focus();
+      });
+    } else {
+      var q = prompt('Quantità da caricare per ' + product.title);
+      if (q !== null && num(q) > 0) addItem(product, num(q));
+    }
+  }
+
+  function searchProducts(q){
+    var warehouse = selectedWarehouse();
+    if (!q || q.length < 2 || !warehouse) {
+      resultsBox.innerHTML = '';
+      return;
+    }
+    fetch('product_search.php?q=' + encodeURIComponent(q) + '&warehouse=' + encodeURIComponent(warehouse), {credentials:'same-origin'})
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data){
+        if (!Array.isArray(data) || data.length === 0) {
+          resultsBox.innerHTML = '<div class="list-group-item small text-muted">Nessun risultato</div>';
+          return;
+        }
+        resultsBox.innerHTML = data.map(function(r){
+          var stock = r.stock == null ? 0 : r.stock;
+          return '<button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-2"'
+            + ' data-pid="' + esc(r.id) + '" data-title="' + esc(r.title) + '" data-stock="' + esc(stock) + '">'
+            + '<span class="text-start">' + esc(r.title) + '</span>'
+            + '<span class="badge text-bg-light flex-shrink-0">' + esc(formatQty(stock)) + '</span>'
+            + '</button>';
+        }).join('');
+      })
+      .catch(function(){
+        resultsBox.innerHTML = '<div class="list-group-item small text-danger">Errore durante la ricerca</div>';
+      });
+  }
+
+  document.querySelectorAll('.warehouse-choice').forEach(function(btn){
+    btn.addEventListener('click', function(){ goToProducts(btn.dataset.warehouse); });
   });
-}
 
-async function invAutocomplete(id, q){
-  const box = document.getElementById('ac_'+id);
-  if (!q || q.length<2) { box.innerHTML=''; return; }
-  try {
-    const res = await fetch('product_search.php?q='+encodeURIComponent(q), {credentials:'same-origin'});
-    if (!res.ok){ box.innerHTML='<div class="small text-danger p-2">Errore '+res.status+'</div>'; return; }
-    const data = await res.json();
-    if (!Array.isArray(data) || data.length===0){ box.innerHTML='<div class="list-group-item small text-muted">Nessun risultato</div>'; return; }
-    box.innerHTML = data.map(r => `
-      <button type="button" class="list-group-item list-group-item-action"
-        data-pid="${r.id}" data-title="${r.title || ''}" data-stock="${(r.stock != null ? r.stock : 0)}">
-        ${escAttr(r.title)} <span class="badge bg-light text-dark">Giacenza tot: ${(r.stock != null ? r.stock : 0)}</span>
-      </button>
-    `).join('');
-  } catch(e){
-    box.innerHTML='<div class="small text-danger p-2">Errore rete</div>';
-    console.error(e);
-  }
-}
-
-function invPick(id, pid, title, stock){
-  document.getElementById('pid_'+id).value = pid;
-  document.getElementById('ac_'+id).innerHTML='';
-  document.getElementById('stock_'+id).innerText = 'Giacenza attuale: '+stock;
-  const inp = document.getElementById('input_'+id) || document.getElementById('prod_input_'+id);
-  if (inp) { inp.value = title; inp.focus(); }
-}
-
-window.invAddRow = invAddRow;
-window.invAutocomplete = invAutocomplete;
-window.invPick = invPick;
-
-function initInventoryRows(){
-  const wrap = document.getElementById('items');
-  if (!wrap) return false;
-
-  const addBtn = document.getElementById('btnAddCaricoProductRow');
-  if (addBtn && !addBtn.dataset.bound) {
-    addBtn.addEventListener('click', () => invAddRow());
-    addBtn.dataset.bound = '1';
+  var changeWarehouseBtn = document.getElementById('changeWarehouseBtn');
+  if (changeWarehouseBtn) {
+    changeWarehouseBtn.addEventListener('click', function(){
+      if (items.length && !confirm('Cambiando magazzino verrà svuotata la lista prodotti. Continuare?')) return;
+      items = [];
+      renderCart();
+      warehouseInput.value = '';
+      goToWarehouse();
+    });
   }
 
-  if (!wrap.dataset.initialized) {
-    invAddRow();
-    wrap.dataset.initialized = '1';
+  if (searchInput) {
+    searchInput.addEventListener('input', function(){
+      clearTimeout(debounce);
+      var q = searchInput.value.trim();
+      debounce = setTimeout(function(){ searchProducts(q); }, 180);
+    });
   }
 
-  return true;
-}
-
-(function bootInventoryRows(attempt){
-  if (initInventoryRows()) return;
-  if (attempt < 20) {
-    window.setTimeout(() => bootInventoryRows(attempt + 1), 50);
+  if (resultsBox) {
+    resultsBox.addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-pid]');
+      if (!btn) return;
+      openQtyModal({ id: parseInt(btn.dataset.pid, 10), title: btn.dataset.title || '', stock: num(btn.dataset.stock) });
+    });
   }
-})(0);
+
+  var confirmQtyBtn = document.getElementById('confirmQtyBtn');
+  if (confirmQtyBtn) {
+    confirmQtyBtn.addEventListener('click', function(){
+      var qty = num(qtyInput.value);
+      if (!pendingProduct || qty <= 0) {
+        qtyInput.classList.add('is-invalid');
+        qtyInput.focus();
+        return;
+      }
+      qtyInput.classList.remove('is-invalid');
+      addItem(pendingProduct, qty);
+      pendingProduct = null;
+      if (qtyModal) qtyModal.hide();
+    });
+  }
+
+  if (qtyInput) {
+    qtyInput.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        confirmQtyBtn.click();
+      }
+    });
+  }
+
+  if (cart) {
+    cart.addEventListener('click', function(ev){
+      var btn = ev.target.closest('button[data-remove]');
+      if (!btn) return;
+      items.splice(parseInt(btn.dataset.remove, 10), 1);
+      renderCart();
+    });
+  }
+
+  var form = document.getElementById('caricoForm');
+  if (form) {
+    form.addEventListener('submit', function(ev){
+      if (!selectedWarehouse()) {
+        ev.preventDefault();
+        goToWarehouse();
+        return;
+      }
+      if (items.length === 0) {
+        ev.preventDefault();
+        alert('Aggiungi almeno un prodotto prima di inviare il carico.');
+      }
+    });
+  }
+
+  renderCart();
+  if (warehouseInput.value) goToProducts(warehouseInput.value);
+})();
