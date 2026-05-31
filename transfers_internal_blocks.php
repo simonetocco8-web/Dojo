@@ -95,7 +95,7 @@ include __DIR__ . '/partials/header.php';
                 <td><?= $r['deleted_at'] ? '<span class="badge bg-secondary">Cestinato</span>' : '<span class="badge bg-success">Attivo</span>' ?></td>
                 <td class="text-nowrap">
                   <?php if($is_admin && !$r['deleted_at']): ?>
-                    <form method="post" class="d-inline" onsubmit="return confirm('Cestinare questo periodo?');">
+                    <form method="post" class="d-inline" data-confirm-message="Cestinare questo periodo?">
                       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
