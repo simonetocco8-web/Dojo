@@ -14,7 +14,7 @@ $st = $pdo->prepare("
   SELECT p.id, p.title,
     COALESCE((SELECT SUM(qty) FROM stock_levels WHERE product_id=p.id),0) AS stock
   FROM products p
-  WHERE p.title LIKE ? OR p.ean13 = ?
+  WHERE COALESCE(p.is_active, 1) = 1 AND (p.title LIKE ? OR p.ean13 = ?)
   ORDER BY p.title ASC
   LIMIT 20
 ");

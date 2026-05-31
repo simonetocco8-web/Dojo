@@ -113,7 +113,7 @@ include __DIR__ . '/partials/header.php';
                   </form>
                 </div>
               <?php else: ?>
-                <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline" onsubmit="return confirm('Rimuovere Prenotato e Compagnia?');">
+                <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline" data-confirm-message="Rimuovere Prenotato e Compagnia?">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                   <input type="hidden" name="action" value="unset_booked">
@@ -146,7 +146,7 @@ include __DIR__ . '/partials/header.php';
                 <div class="form-text">Lascia vuoto e salva per cancellare il Pickup.</div>
               </div>
 
-              <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline ms-1">
+              <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline ms-1" data-confirm-message="Confermi di voler annullare o ripristinare questo transfer?">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="toggle_cancel">
@@ -155,7 +155,7 @@ include __DIR__ . '/partials/header.php';
                 </button>
               </form>
 
-              <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline ms-1" onsubmit="return confirm('Eliminare questo transfer?');">
+              <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline ms-1" data-confirm-message="Eliminare questo transfer?">
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                 <input type="hidden" name="action" value="delete">

@@ -9,7 +9,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
 
-if (!$user || !(is_admin() || (($user['dipartimento'] ?? '') === 'Amministrazione'))) {
+if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
 }
 
@@ -69,7 +69,7 @@ include __DIR__ . '/../partials/header.php';
           <td><?= render_days_badges($del) ?></td>
           <td class="text-end">
             <a class="btn btn-link btn-sm" href="supplier_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">✏️</a>
-            <form class="d-inline" method="post" action="supplier_delete.php" onsubmit="return confirm('Eliminare questo fornitore?');">
+            <form class="d-inline" method="post" action="supplier_delete.php" data-confirm-message="Eliminare questo fornitore?">
               <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
               <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
               <button class="btn btn-link btn-sm text-danger" title="Elimina">🗑️</button>
