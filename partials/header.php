@@ -7,6 +7,7 @@ $env = require __DIR__ . '/../config/env.php';
 $user = current_user();
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $logo = $base . '/assets/dojo-logo.svg';
+$favicon = $base . '/assets/favicon.svg';
 $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
 ?>
 <!doctype html>
@@ -15,6 +16,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= isset($title) ? e($title) . ' · ' : '' ?>Dojo</title>
+  <link rel="icon" type="image/svg+xml" href="<?= e($favicon) ?>">
+  <link rel="shortcut icon" type="image/svg+xml" href="<?= e($favicon) ?>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="<?= e($base) ?>/assets/style.css?v=<?= (int)$styleVersion ?>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
