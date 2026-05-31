@@ -101,3 +101,8 @@ CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_transfer_internal_sms_reminders_transfer FOREIGN KEY (transfer_id) REFERENCES transfers_internal(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- Prodotti disattivabili: i prodotti non attivi non sono mostrati nella lista principale
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;

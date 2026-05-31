@@ -38,6 +38,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
           <a class="nav-link dropdown-toggle" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
           <ul class="dropdown-menu" aria-labelledby="magazzinoSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
@@ -93,6 +94,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
               <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
               <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>

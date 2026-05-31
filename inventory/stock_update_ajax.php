@@ -66,7 +66,7 @@ if (!in_array($warehouse, $WAREHOUSES, true)) fail(400, 'warehouse non valida');
 $pdo = db();
 
 // verifica prodotto
-$st = $pdo->prepare("SELECT id, min_qty FROM products WHERE id=?");
+$st = $pdo->prepare("SELECT id, min_qty FROM products WHERE id=? AND COALESCE(is_active, 1) = 1");
 $st->execute([$product_id]);
 $prod = $st->fetch(PDO::FETCH_ASSOC);
 if (!$prod) fail(404, 'Prodotto non trovato');

@@ -11,6 +11,7 @@ $csrf = csrf_token();
 $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_products_active_column($pdo);
 $user = current_user();
 
 // Permessi (adatta se vuoi renderla visibile ad altri reparti in sola lettura)
@@ -33,8 +34,9 @@ $perPage   = 20;
 $offset    = ($page - 1) * $perPage;
 
 // Costruzione condizioni dinamiche (sia per COUNT che per SELECT)
-$where = [];
+$where = ["p.is_active = 1"];
 $params = [];
+$msg = (string)($_GET['msg'] ?? '');
 
 // Filtro nome (LIKE)
 if ($q !== '') {
@@ -124,9 +126,19 @@ include __DIR__ . '/../partials/header.php';
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h5 mb-0">Prodotti</h1>
   <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="products_inactive.php">Non Attivi</a>
     <a class="btn btn-primary btn-sm" href="product_create.php">Nuovo</a>
   </div>
 </div>
+
+
+<?php if ($msg === 'deactivated'): ?>
+  <div class="alert alert-success">Prodotto disattivato.</div>
+<?php elseif ($msg === 'deleted'): ?>
+  <div class="alert alert-success">Prodotto eliminato definitivamente.</div>
+<?php elseif ($msg === 'error'): ?>
+  <div class="alert alert-danger">Operazione non completata. Controlla il log errori.</div>
+<?php endif; ?>
 
 <!-- FILTRI -->
 <form class="card mb-3" method="get">
@@ -186,7 +198,7 @@ include __DIR__ . '/../partials/header.php';
             <th class="text-center" style="width:110px;">Tizzo</th>
             <th class="text-center" style="width:120px;">Tramonto</th>
             <th style="width:180px;">Fornitore</th>
-            <th class="text-end" style="width:90px;">Azioni</th>
+            <th class="text-end" style="width:170px;">Azioni</th>
           </tr>
         </thead>
         <tbody>
@@ -229,8 +241,20 @@ include __DIR__ . '/../partials/header.php';
                 </td>
 
               <td><?= $r['supplier_name'] ? e($r['supplier_name']) : '<span class="text-muted">—</span>' ?></td>
-              <td class="text-end">
+              <td class="text-end text-nowrap">
                 <a class="btn btn-link btn-sm" href="product_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">✏️</a>
+                <form method="post" action="<?= e($base) ?>/inventory/product_action.php" class="d-inline" data-confirm-message="Disattivare questo prodotto? Non sarà più visibile nella lista principale.">
+                  <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+                  <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                  <input type="hidden" name="action" value="deactivate">
+                  <button class="btn btn-link btn-sm text-warning" title="Disattiva" aria-label="Disattiva"><i class="bi bi-pause-circle"></i></button>
+                </form>
+                <form method="post" action="<?= e($base) ?>/inventory/product_action.php" class="d-inline" data-confirm-message="Eliminare definitivamente questo prodotto dal sistema?">
+                  <input type="hidden" name="csrf" value="<?= e($csrf) ?>">
+                  <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                  <input type="hidden" name="action" value="delete">
+                  <button class="btn btn-link btn-sm text-danger" title="Elimina definitivamente" aria-label="Elimina definitivamente"><i class="bi bi-trash"></i></button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>
