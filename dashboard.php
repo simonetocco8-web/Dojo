@@ -15,6 +15,7 @@ $seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
+ensure_products_active_column($pdo);
 
 // Ruolo e dipartimento
 $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1');
@@ -347,7 +348,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
       COALESCE(SUM(CASE WHEN sl.warehouse='Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
     FROM products p
     LEFT JOIN stock_levels sl ON sl.product_id = p.id
-    /* Se hai un flag attivo/inattivo, puoi aggiungere ad es.: WHERE p.active = 1 */
+    WHERE COALESCE(p.is_active, 1) = 1
     GROUP BY p.id, p.title, p.category, p.min_qty
     HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty
     ORDER BY total_qty ASC, p.title ASC
