@@ -55,9 +55,14 @@ if ($msgKey === 'saved') {
   $alert = 'Riassetto salvato con successo.';
 } elseif ($msgKey === 'completed') {
   $alert = 'Riassetto aggiornato.';
+} elseif ($msgKey === 'deleted') {
+  $alert = 'Riassetto eliminato.';
 }
 $warnKey = $_GET['warn'] ?? '';
 $warnAlert = $warnKey === 'calendar' ? 'Attenzione: evento non sincronizzato su Google Calendar.' : '';
+if ($msgKey === 'delete_error') {
+  $warnAlert = 'Riassetto non eliminato. Riprova o contatta l’assistenza.';
+}
 
 function format_biancheria(array $row): string {
   $parts = [];
@@ -169,6 +174,14 @@ include __DIR__ . '/partials/header.php';
                     <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/riassetti_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">
                       <i class="bi bi-pencil"></i>
                     </a>
+                    <form method="post" action="<?= e($base) ?>/riassetti_delete.php" class="d-inline" data-confirm-message="Eliminare questo riassetto? L’operazione non può essere annullata.">
+                      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                      <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                      <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? ($base . '/riassetti.php')) ?>">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
                   <?php endif; ?>
                   <?php if ($canView): ?>
                     <form method="post" action="<?= e($base) ?>/riassetti_status.php" class="d-inline">
