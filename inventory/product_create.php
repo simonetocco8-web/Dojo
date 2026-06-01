@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         $stmt = $pdo->prepare("\n          INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)\n          VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        ");
         try {
           $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
-          header('Location: ' . ($base ? $base.'/' : '') . 'inventory/products.php');
+          header('Location: products.php');
           exit;
         } catch (PDOException $e) {
           $sqlstate = $e->getCode();

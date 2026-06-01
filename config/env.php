@@ -24,10 +24,10 @@ return [
     'charset' => $envValue('DB_CHARSET', 'utf8mb4')
   ],
   'app' => [
-    'base_url' => $envValue('APP_BASE_URL', ''), // es. '/adminapp' se in sottocartella
-    'session_name' => $envValue('APP_SESSION_NAME', 'ADMINAPPSESSID'),
-    'session_lifetime' => $envInt('APP_SESSION_LIFETIME', 36000),
-    'csrf_key' => $envValue('APP_CSRF_KEY', 'change-this-secret-key')
+    'base_url' => '', // es. '/adminapp' se in sottocartella
+    'session_name' => 'ADMINAPPSESSID',
+    'session_lifetime' => 36000,
+    'csrf_key' => 'change-this-secret-key'
   ],
   'mail' => [
     'from' => $envValue('MAIL_FROM', 'dojo@villaggiotramonto.it'),
@@ -50,23 +50,23 @@ return [
     'scope' => $envValue('EWELINK_SCOPE', 'userinfo:read device:read device:write')
   ],
   'sms' => [
-    'enabled' => $envBool('SMS_ENABLED', true),
-    'provider' => $envValue('SMS_PROVIDER', 'openapi'),
-    'access_token' => $envValue('SMS_ACCESS_TOKEN', ''),
-    'endpoint' => $envValue('SMS_ENDPOINT', 'https://sms.openapi.com/IT-messages'),
-    'to' => $envValue('SMS_TO', ''),
-    'sender' => $envValue('SMS_SENDER', 'Dojo'),
-    'dry_run' => $envBool('SMS_DRY_RUN', false),
-    'fail_on_multiple_messages' => $envBool('SMS_FAIL_ON_MULTIPLE_MESSAGES', false),
-    'auth_mode' => $envValue('SMS_AUTH_MODE', 'bearer') // OpenAPI SMS v2 usa Authorization: Bearer <token>
+    'enabled' => true,
+    'provider' => 'openapi',
+    'access_token' => '6a185e25847aaa113b0959c6',
+    'endpoint' => 'https://sms.openapi.com/IT-messages',
+    'to' => '+393341913800',
+    'sender' => 'Dojo',
+    'dry_run' => false,
+    'fail_on_multiple_messages' => false,
+    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
   ],
 
   'openai_chatkit' => [
-    'api_key' => $envValue('OPENAI_API_KEY', ''), // imposta OPENAI_API_KEY sul server, non committare chiavi API
-    'workflow_id' => $envValue('OPENAI_CHATKIT_WORKFLOW_ID', ''),
-    'workflow_version' => $envValue('OPENAI_CHATKIT_WORKFLOW_VERSION', ''), // opzionale: lascia vuoto per usare l'ultima versione pubblicata/deployata
-    'domain_public_key' => $envValue('OPENAI_CHATKIT_DOMAIN_PUBLIC_KEY', ''),
-    'session_endpoint' => $envValue('OPENAI_CHATKIT_SESSION_ENDPOINT', 'https://api.openai.com/v1/chatkit/sessions')
+    'api_key' => getenv('OPENAI_API_KEY') ?: '', // imposta OPENAI_API_KEY sul server, non committare chiavi API
+    'workflow_id' => 'wf_6a1ab0fd7a6881908bab573ddb7a682e06c24f25188285f0',
+    'workflow_version' => getenv('OPENAI_CHATKIT_WORKFLOW_VERSION') ?: '', // opzionale: lascia vuoto per usare l'ultima versione pubblicata/deployata
+    'domain_public_key' => 'domain_pk_6a1ada350d5481909dee4821f97c99250215095942c27d8b',
+    'session_endpoint' => 'https://api.openai.com/v1/chatkit/sessions'
   ],
 
   'google' => [
