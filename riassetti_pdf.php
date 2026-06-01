@@ -16,18 +16,31 @@ if (!(user_is_reception_or_amministrazione($user) || user_is_housekeeping($user)
   exit;
 }
 
-$date = trim($_GET['date'] ?? '');
-if ($date === '' || !DateTime::createFromFormat('Y-m-d', $date)) {
-  http_response_code(400);
-  echo 'Data non valida.';
-  exit;
+function normalize_pdf_date(string $date): string {
+  $date = trim($date);
+  if ($date === '') return '';
+  $dt = DateTime::createFromFormat('Y-m-d', $date);
+  return $dt ? $dt->format('Y-m-d') : '';
 }
 
-$stmt = $pdo->prepare('SELECT * FROM riassetti WHERE data_riassetto = ? ORDER BY room ASC, id ASC');
-$stmt->execute([$date]);
+$dateFrom = normalize_pdf_date($_GET['date_from'] ?? ($_GET['date'] ?? ''));
+$dateTo = normalize_pdf_date($_GET['date_to'] ?? ($_GET['date'] ?? ''));
+if ($dateFrom === '' || $dateTo === '') {
+  http_response_code(400);
+  echo 'Range date non valido.';
+  exit;
+}
+if ($dateFrom > $dateTo) {
+  [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
+}
+
+$stmt = $pdo->prepare('SELECT * FROM riassetti WHERE data_riassetto BETWEEN ? AND ? ORDER BY data_riassetto ASC, room ASC, id ASC');
+$stmt->execute([$dateFrom, $dateTo]);
 $rows = $stmt->fetchAll();
 
-$displayDate = DateTime::createFromFormat('Y-m-d', $date)->format('d/m/Y');
+$displayFrom = DateTime::createFromFormat('Y-m-d', $dateFrom)->format('d/m/Y');
+$displayTo = DateTime::createFromFormat('Y-m-d', $dateTo)->format('d/m/Y');
+$displayRange = $dateFrom === $dateTo ? $displayFrom : ($displayFrom . ' - ' . $displayTo);
 
 function riassetto_linen_summary(array $row): string {
   $parts = [];
@@ -53,13 +66,14 @@ ob_start();
   </style>
 </head>
 <body>
-  <h1>Riassetti del <?= e($displayDate) ?></h1>
+  <h1>Riassetti dal/al <?= e($displayRange) ?></h1>
   <?php if ($rows): ?>
     <table>
       <thead>
         <tr>
+          <th style="width: 12%;">Data</th>
           <th style="width: 12%;">Camera</th>
-          <th style="width: 30%;">Biancheria</th>
+          <th style="width: 28%;">Biancheria</th>
           <th style="width: 15%;">Pulizia extra</th>
           <th>Note</th>
         </tr>
@@ -67,6 +81,7 @@ ob_start();
       <tbody>
         <?php foreach ($rows as $row): ?>
         <tr>
+          <td><?= e(DateTime::createFromFormat('Y-m-d', $row['data_riassetto'])->format('d/m/Y')) ?></td>
           <td><?= e($row['room']) ?></td>
           <td><?= e(riassetto_linen_summary($row)) ?></td>
           <td><?= !empty($row['pulizia_extra']) ? 'Sì' : 'No' ?></td>
@@ -76,7 +91,7 @@ ob_start();
       </tbody>
     </table>
   <?php else: ?>
-    <p>Nessun riassetto programmato per questa data.</p>
+    <p>Nessun riassetto programmato nel range selezionato.</p>
   <?php endif; ?>
 </body>
 </html>
@@ -95,5 +110,5 @@ $dompdf = new \Dompdf\Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
-$dompdf->stream('riassetti_' . DateTime::createFromFormat('Y-m-d', $date)->format('Ymd') . '.pdf', ['Attachment' => true]);
+$dompdf->stream('riassetti_' . DateTime::createFromFormat('Y-m-d', $dateFrom)->format('Ymd') . '_' . DateTime::createFromFormat('Y-m-d', $dateTo)->format('Ymd') . '.pdf', ['Attachment' => true]);
 exit;
