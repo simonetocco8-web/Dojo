@@ -22,6 +22,17 @@ $form = [
 
 $suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+
+function inventory_products_redirect_url(): string {
+  $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/inventory/product_create.php'));
+  $scriptDir = rtrim($scriptDir, '/');
+  $scriptDir = preg_replace('#(/inventory)(?:/inventory)+$#', '$1', $scriptDir) ?: '/inventory';
+  if ($scriptDir === '' || $scriptDir === '.') {
+    $scriptDir = '/inventory';
+  }
+  return $scriptDir . '/products.php';
+}
+
 function supplier_options(array $suppliers, ?int $selectedId = null): string {
   $html = '<option value="">— Nessuno —</option>';
   foreach ($suppliers as $s) {
@@ -113,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         $stmt = $pdo->prepare("\n          INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)\n          VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        ");
         try {
           $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
-          header('Location: products.php');
+          header('Location: ' . inventory_products_redirect_url());
           exit;
         } catch (PDOException $e) {
           $sqlstate = $e->getCode();
