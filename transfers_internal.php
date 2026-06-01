@@ -17,7 +17,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      FROM transfers_internal t
                      JOIN users u ON u.id = t.created_by
                      WHERE t.deleted_at IS NULL
-                     ORDER BY t.when_at ASC, t.id DESC')->fetchAll();
+                     ORDER BY t.when_at DESC, t.id DESC')->fetchAll();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
