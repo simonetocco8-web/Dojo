@@ -19,21 +19,28 @@ if (!$canView) {
   exit;
 }
 
-$dateFilter = trim($_GET['date'] ?? '');
-if ($dateFilter !== '') {
-  $dt = DateTime::createFromFormat('Y-m-d', $dateFilter);
-  if (!$dt) {
-    $dateFilter = '';
-  } else {
-    $dateFilter = $dt->format('Y-m-d');
-  }
+function normalize_riassetti_date(string $date): string {
+  $date = trim($date);
+  if ($date === '') return '';
+  $dt = DateTime::createFromFormat('Y-m-d', $date);
+  return $dt ? $dt->format('Y-m-d') : '';
+}
+
+$dateFrom = normalize_riassetti_date($_GET['date_from'] ?? ($_GET['date'] ?? ''));
+$dateTo = normalize_riassetti_date($_GET['date_to'] ?? ($_GET['date'] ?? ''));
+if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+  [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
 }
 
 $where = [];
 $params = [];
-if ($dateFilter !== '') {
-  $where[] = 'r.data_riassetto = ?';
-  $params[] = $dateFilter;
+if ($dateFrom !== '') {
+  $where[] = 'r.data_riassetto >= ?';
+  $params[] = $dateFrom;
+}
+if ($dateTo !== '') {
+  $where[] = 'r.data_riassetto <= ?';
+  $params[] = $dateTo;
 }
 
 $sql = 'SELECT r.*, uc.email AS created_by_email, ucomp.email AS completed_by_email
@@ -55,9 +62,14 @@ if ($msgKey === 'saved') {
   $alert = 'Riassetto salvato con successo.';
 } elseif ($msgKey === 'completed') {
   $alert = 'Riassetto aggiornato.';
+} elseif ($msgKey === 'deleted') {
+  $alert = 'Riassetto eliminato.';
 }
 $warnKey = $_GET['warn'] ?? '';
 $warnAlert = $warnKey === 'calendar' ? 'Attenzione: evento non sincronizzato su Google Calendar.' : '';
+if ($msgKey === 'delete_error') {
+  $warnAlert = 'Riassetto non eliminato. Riprova o contatta l’assistenza.';
+}
 
 function format_biancheria(array $row): string {
   $parts = [];
@@ -91,15 +103,21 @@ include __DIR__ . '/partials/header.php';
       <div class="col">
         <form class="row g-2 align-items-center" method="get">
           <div class="col-auto">
-            <label for="date" class="col-form-label col-form-label-sm">Data</label>
+            <label for="date_from" class="col-form-label col-form-label-sm">Dal</label>
           </div>
           <div class="col-auto">
-            <input type="date" id="date" name="date" value="<?= e($dateFilter) ?>" class="form-control form-control-sm">
+            <input type="date" id="date_from" name="date_from" value="<?= e($dateFrom) ?>" class="form-control form-control-sm">
+          </div>
+          <div class="col-auto">
+            <label for="date_to" class="col-form-label col-form-label-sm">Al</label>
+          </div>
+          <div class="col-auto">
+            <input type="date" id="date_to" name="date_to" value="<?= e($dateTo) ?>" class="form-control form-control-sm">
           </div>
           <div class="col-auto">
             <button type="submit" class="btn btn-sm btn-outline-primary">Filtra</button>
           </div>
-          <?php if ($dateFilter !== ''): ?>
+          <?php if ($dateFrom !== '' || $dateTo !== ''): ?>
           <div class="col-auto">
             <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/riassetti.php">Pulisci</a>
           </div>
@@ -107,8 +125,11 @@ include __DIR__ . '/partials/header.php';
         </form>
       </div>
       <div class="col-auto">
-        <form class="d-flex gap-2" method="get" action="<?= e($base) ?>/riassetti_pdf.php" target="_blank">
-          <input type="date" name="date" value="<?= e($dateFilter) ?>" class="form-control form-control-sm" required>
+        <form class="d-flex flex-wrap gap-2 align-items-center" method="get" action="<?= e($base) ?>/riassetti_pdf.php" target="_blank">
+          <span class="small text-muted">PDF dal</span>
+          <input type="date" name="date_from" value="<?= e($dateFrom) ?>" class="form-control form-control-sm" required>
+          <span class="small text-muted">al</span>
+          <input type="date" name="date_to" value="<?= e($dateTo) ?>" class="form-control form-control-sm" required>
           <button type="submit" class="btn btn-sm btn-outline-success">Genera PDF</button>
         </form>
       </div>
@@ -169,6 +190,14 @@ include __DIR__ . '/partials/header.php';
                     <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/riassetti_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">
                       <i class="bi bi-pencil"></i>
                     </a>
+                    <form method="post" action="<?= e($base) ?>/riassetti_delete.php" class="d-inline" data-confirm-message="Eliminare questo riassetto? L’operazione non può essere annullata.">
+                      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                      <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                      <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? ($base . '/riassetti.php')) ?>">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
                   <?php endif; ?>
                   <?php if ($canView): ?>
                     <form method="post" action="<?= e($base) ?>/riassetti_status.php" class="d-inline">
