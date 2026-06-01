@@ -1,66 +1,80 @@
 <?php
 // config/env.php
+// I segreti non devono essere committati: impostali come variabili d'ambiente sul server.
+$envValue = static function (string $key, string $default = ''): string {
+  $value = getenv($key);
+  return $value === false ? $default : $value;
+};
+$envBool = static function (string $key, bool $default = false) use ($envValue): bool {
+  $value = $envValue($key, $default ? '1' : '0');
+  return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+};
+$envInt = static function (string $key, int $default = 0) use ($envValue): int {
+  $value = $envValue($key, (string)$default);
+  return is_numeric($value) ? (int)$value : $default;
+};
+
 return [
   'db' => [
-    'host' => '127.0.0.1',
-    'port' => 3306,
-    'name' => 'bwlxtuul_dojo',
-    'user' => 'bwlxtuul_dojo',
-    'pass' => 'Wso-T{^L,V4D;!A(',
-    'charset' => 'utf8mb4'
+    'host' => $envValue('DB_HOST', '127.0.0.1'),
+    'port' => $envInt('DB_PORT', 3306),
+    'name' => $envValue('DB_NAME', ''),
+    'user' => $envValue('DB_USER', ''),
+    'pass' => $envValue('DB_PASS', ''),
+    'charset' => $envValue('DB_CHARSET', 'utf8mb4')
   ],
   'app' => [
-    'base_url' => '', // es. '/adminapp' se in sottocartella
-    'session_name' => 'ADMINAPPSESSID',
-    'session_lifetime' => 36000,
-    'csrf_key' => 'change-this-secret-key'
+    'base_url' => $envValue('APP_BASE_URL', ''), // es. '/adminapp' se in sottocartella
+    'session_name' => $envValue('APP_SESSION_NAME', 'ADMINAPPSESSID'),
+    'session_lifetime' => $envInt('APP_SESSION_LIFETIME', 36000),
+    'csrf_key' => $envValue('APP_CSRF_KEY', 'change-this-secret-key')
   ],
   'mail' => [
-    'from' => 'dojo@villaggiotramonto.it',
-    'from_name' => 'Dojo Villaggio Tramonto',
-    'smtp' => false,
-    'smtp_host' => '',
-    'smtp_port' => 587,
-    'smtp_user' => '',
-    'smtp_pass' => ''
+    'from' => $envValue('MAIL_FROM', 'dojo@villaggiotramonto.it'),
+    'from_name' => $envValue('MAIL_FROM_NAME', 'Dojo Villaggio Tramonto'),
+    'smtp' => $envBool('MAIL_SMTP', false),
+    'smtp_host' => $envValue('MAIL_SMTP_HOST', ''),
+    'smtp_port' => $envInt('MAIL_SMTP_PORT', 587),
+    'smtp_user' => $envValue('MAIL_SMTP_USER', ''),
+    'smtp_pass' => $envValue('MAIL_SMTP_PASS', '')
   ],
   'ewelink' => [
-    'client_id' => 'mycTWeG1Fm3hO2iYW3QoOjbmmCiULMsQ',
-    'client_secret' => 'y4SwpC6cFcvEG5Kp3LMHP9JD2NXJxKGk',
+    'client_id' => $envValue('EWELINK_CLIENT_ID', ''),
+    'client_secret' => $envValue('EWELINK_CLIENT_SECRET', ''),
     // URL pubblico verso ewelink/callback.php
-    'redirect_uri' => '',
+    'redirect_uri' => $envValue('EWELINK_REDIRECT_URI', ''),
     // Endpoint di default (puoi sovrascriverli se usi una regione diversa)
-    'auth_base' => 'https://eu-apia.coolkit.cc',
-    'api_base' => 'https://eu-apia.coolkit.cc',
+    'auth_base' => $envValue('EWELINK_AUTH_BASE', 'https://eu-apia.coolkit.cc'),
+    'api_base' => $envValue('EWELINK_API_BASE', 'https://eu-apia.coolkit.cc'),
     // Scopes consigliati: device lettura/scrittura
-    'scope' => 'userinfo:read device:read device:write'
+    'scope' => $envValue('EWELINK_SCOPE', 'userinfo:read device:read device:write')
   ],
   'sms' => [
-    'enabled' => true,
-    'provider' => 'openapi',
-    'access_token' => '6a185e25847aaa113b0959c6',
-    'endpoint' => 'https://sms.openapi.com/IT-messages',
-    'to' => '+393341913800',
-    'sender' => 'Dojo',
-    'dry_run' => false,
-    'fail_on_multiple_messages' => false,
-    'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
+    'enabled' => $envBool('SMS_ENABLED', true),
+    'provider' => $envValue('SMS_PROVIDER', 'openapi'),
+    'access_token' => $envValue('SMS_ACCESS_TOKEN', ''),
+    'endpoint' => $envValue('SMS_ENDPOINT', 'https://sms.openapi.com/IT-messages'),
+    'to' => $envValue('SMS_TO', ''),
+    'sender' => $envValue('SMS_SENDER', 'Dojo'),
+    'dry_run' => $envBool('SMS_DRY_RUN', false),
+    'fail_on_multiple_messages' => $envBool('SMS_FAIL_ON_MULTIPLE_MESSAGES', false),
+    'auth_mode' => $envValue('SMS_AUTH_MODE', 'bearer') // OpenAPI SMS v2 usa Authorization: Bearer <token>
   ],
 
   'openai_chatkit' => [
-    'api_key' => getenv('OPENAI_API_KEY') ?: '', // imposta OPENAI_API_KEY sul server, non committare chiavi API
-    'workflow_id' => 'wf_6a1ab0fd7a6881908bab573ddb7a682e06c24f25188285f0',
-    'workflow_version' => getenv('OPENAI_CHATKIT_WORKFLOW_VERSION') ?: '', // opzionale: lascia vuoto per usare l'ultima versione pubblicata/deployata
-    'domain_public_key' => 'domain_pk_6a1ada350d5481909dee4821f97c99250215095942c27d8b',
-    'session_endpoint' => 'https://api.openai.com/v1/chatkit/sessions'
+    'api_key' => $envValue('OPENAI_API_KEY', ''), // imposta OPENAI_API_KEY sul server, non committare chiavi API
+    'workflow_id' => $envValue('OPENAI_CHATKIT_WORKFLOW_ID', ''),
+    'workflow_version' => $envValue('OPENAI_CHATKIT_WORKFLOW_VERSION', ''), // opzionale: lascia vuoto per usare l'ultima versione pubblicata/deployata
+    'domain_public_key' => $envValue('OPENAI_CHATKIT_DOMAIN_PUBLIC_KEY', ''),
+    'session_endpoint' => $envValue('OPENAI_CHATKIT_SESSION_ENDPOINT', 'https://api.openai.com/v1/chatkit/sessions')
   ],
 
   'google' => [
     // A) OAuth UTENTE con file credentials.json (consigliata se già lo usi)
-    'oauth_secret_json' => __DIR__ . '/../google/google_client_secret.json',
-    'oauth_token_json' =>  __DIR__ . '/../google/google_token.json', // percorso reale al file scaricato da Google Cloud
-    'riassetti_calendar_id' => '13cbf1c11d4c3501563e17c909423fabeb42b3e74a7869f0dbaf6cfb6d12779b@group.calendar.google.com',
-    'calendar_id' => 'e52b190abb101e0368e78447f0a8857475f0f31163f07e635a357354fde3817d@group.calendar.google.com',
-    'calendar_days_off_id' => 'f110e9509588ceae765a4cf687e66b0fc2865c0e9e33ed337ddbd2a933a8b358@group.calendar.google.com'
+    'oauth_secret_json' => $envValue('GOOGLE_OAUTH_SECRET_JSON', __DIR__ . '/../google/google_client_secret.json'),
+    'oauth_token_json' => $envValue('GOOGLE_OAUTH_TOKEN_JSON', __DIR__ . '/../google/google_token.json'),
+    'riassetti_calendar_id' => $envValue('GOOGLE_RIASSETTI_CALENDAR_ID', ''),
+    'calendar_id' => $envValue('GOOGLE_TRANSFERS_CALENDAR_ID', ''),
+    'calendar_days_off_id' => $envValue('GOOGLE_DAYS_OFF_CALENDAR_ID', '')
   ]
 ];
