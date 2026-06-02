@@ -29,21 +29,8 @@ function scarico_department_emails(PDO $pdo, string $department): array {
   return array_values(array_unique(array_filter(array_map('trim', $stmt->fetchAll(PDO::FETCH_COLUMN)))));
 }
 
-function scarico_sms_body(string $warehouse, array $rows, array $warnings): string {
-  $parts = [];
-  foreach ($rows as $row) {
-    $parts[] = $row['title'] . ' x' . ((float)$row['qty'] + 0);
-  }
-  foreach ($warnings as $warning) {
-    $parts[] = $warning['title'] . ' x' . ((float)$warning['requested'] + 0) . ' non disp.';
-  }
-  $body = 'Scarico ' . $warehouse . ': ' . implode(', ', $parts);
-  $max = 160;
-  $len = function_exists('mb_strlen') ? mb_strlen($body, 'UTF-8') : strlen($body);
-  if ($len > $max) {
-    $body = (function_exists('mb_substr') ? mb_substr($body, 0, $max - 3, 'UTF-8') : substr($body, 0, $max - 3)) . '...';
-  }
-  return $body;
+function scarico_sms_body(string $warehouse): string {
+  return 'Nuovo scarico magazzino ' . $warehouse . '. Dettagli operazione inviati via email.';
 }
 
 function scarico_email_body(string $warehouse, array $rows, array $warnings, array $criticalRows, array $user): string {
@@ -183,30 +170,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $criticalRows[] = $warning;
         }
 
-        $smsDepartment = ($wh === 'Tizzo') ? 'Magazziniere Tizzo' : 'Magazziniere Tramonto';
-        $smsRecipients = scarico_department_phones($pdo, $smsDepartment);
-        if ($smsRecipients && ($summary || $warnings)) {
-          try {
-            sms_send_message($env, $smsRecipients, scarico_sms_body($wh, $summary, $warnings));
-            $notificationNotes[] = 'SMS inviato a ' . $smsDepartment . '.';
-          } catch (Exception $e) {
-            error_log('SCARICO-SMS-ERR: ' . $e->getMessage());
-            $notificationNotes[] = 'SMS non inviato a ' . $smsDepartment . ': ' . $e->getMessage();
-          }
-        } else {
-          $notificationNotes[] = 'Nessun numero SMS trovato per ' . $smsDepartment . '.';
-        }
-
-        $adminEmails = scarico_department_emails($pdo, 'Amministrazione');
-        if ($adminEmails && ($summary || $warnings)) {
-          $subject = 'Scarico magazzino ' . $wh . ' - ' . (new DateTime('now', new DateTimeZone('Europe/Rome')))->format('d/m/Y H:i');
+        $warehouseDepartment = ($wh === 'Tizzo') ? 'Magazziniere Tizzo' : 'Magazziniere Tramonto';
+        $departmentEmails = scarico_department_emails($pdo, $warehouseDepartment);
+        if ($departmentEmails && ($summary || $warnings)) {
+          $subject = 'Dettagli scarico magazzino ' . $wh . ' - ' . (new DateTime('now', new DateTimeZone('Europe/Rome')))->format('d/m/Y H:i');
           $body = scarico_email_body($wh, $summary, $warnings, $criticalRows, $user);
-          foreach ($adminEmails as $email) {
+          foreach ($departmentEmails as $email) {
             send_mail($email, $subject, $body);
           }
-          $notificationNotes[] = 'Email riepilogo inviata ad Amministrazione.';
+          $notificationNotes[] = 'Email dettagli inviata a ' . $warehouseDepartment . '.';
         } else {
-          $notificationNotes[] = 'Nessuna email amministrativa trovata per il riepilogo.';
+          $notificationNotes[] = 'Nessuna email trovata per ' . $warehouseDepartment . '.';
+        }
+
+        $smsRecipients = scarico_department_phones($pdo, $warehouseDepartment);
+        if ($smsRecipients && ($summary || $warnings)) {
+          try {
+            sms_send_message($env, $smsRecipients, scarico_sms_body($wh));
+            $notificationNotes[] = 'SMS avviso inviato a ' . $warehouseDepartment . '.';
+          } catch (Exception $e) {
+            error_log('SCARICO-SMS-ERR: ' . $e->getMessage());
+            $notificationNotes[] = 'SMS non inviato a ' . $warehouseDepartment . ': ' . $e->getMessage();
+          }
+        } else {
+          $notificationNotes[] = 'Nessun numero SMS trovato per ' . $warehouseDepartment . '.';
         }
 
         $message = $summary ? 'Ordine di scarico registrato.' : 'Nessun prodotto scaricato.';
