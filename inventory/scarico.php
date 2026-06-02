@@ -43,21 +43,17 @@ function scarico_email_body(string $warehouse, array $rows, array $warnings, arr
      <strong>Operatore:</strong> <?= htmlspecialchars($sender, ENT_QUOTES, 'UTF-8') ?></p>
   <?php if ($rows): ?>
     <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">
-      <thead><tr style="background:#f2f2f2;"><th align="left">Prodotto</th><th>Q.tà</th><th>Prima</th><th>Dopo</th><th>Min</th><th>Stato</th></tr></thead>
+      <thead><tr style="background:#f2f2f2;"><th align="left">Prodotto</th><th>Q.ta</th><th>Unità di Misura</th></tr></thead>
       <tbody>
       <?php foreach ($rows as $row):
         $isZero = (float)$row['now'] <= 0;
         $isLow = !$isZero && (float)$row['now'] < (float)$row['min_qty'];
-        $status = $isZero ? 'GIACENZA ZERO' : ($isLow ? 'SOTTOSCORTA' : 'OK');
         $style = ($isZero || $isLow) ? 'background:#fff3cd;color:#842029;font-weight:bold;' : '';
       ?>
         <tr style="<?= $style ?>">
           <td><?= htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8') ?></td>
           <td align="center"><?= htmlspecialchars((string)((float)$row['qty'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
-          <td align="center"><?= htmlspecialchars((string)((float)$row['prev'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
-          <td align="center"><?= htmlspecialchars((string)((float)$row['now'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
-          <td align="center"><?= htmlspecialchars((string)((float)$row['min_qty'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
-          <td><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></td>
+          <td align="center"><?= htmlspecialchars($row['unit'] ?? '—', ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
       <?php endforeach; ?>
       </tbody>
@@ -104,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $stGetQty = $pdo->prepare('SELECT qty FROM stock_levels WHERE product_id = ? AND warehouse = ?');
       $stSetQty = $pdo->prepare("\n        INSERT INTO stock_levels (product_id, warehouse, qty)\n        VALUES (?, ?, ?)\n        ON DUPLICATE KEY UPDATE qty = VALUES(qty)\n      ");
       $stLog = $pdo->prepare("\n        INSERT INTO stock_movements (product_id, warehouse, type, qty_delta, created_by)\n        VALUES (?, ?, ?, ?, ?)\n      ");
-      $stProduct = $pdo->prepare('SELECT title, min_qty FROM products WHERE id = ? AND COALESCE(is_active, 1) = 1');
+      $stProduct = $pdo->prepare('SELECT title, unit, min_qty FROM products WHERE id = ? AND COALESCE(is_active, 1) = 1');
 
       $pdo->beginTransaction();
       try {
@@ -128,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               'suggest_wh' => $otherWh,
               'available' => $curOther,
               'requested' => $qty,
+              'unit' => $info['unit'] ?? '',
               'now' => 0,
               'min_qty' => (float)$info['min_qty'],
             ];
@@ -142,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'product_id' => $pid,
             'title' => $info['title'],
             'qty' => $qty,
+            'unit' => $info['unit'] ?? '',
             'prev' => $curWh,
             'now' => $new,
             'min_qty' => (float)$info['min_qty'],
