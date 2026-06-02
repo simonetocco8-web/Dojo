@@ -9,10 +9,32 @@ $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 
+
+function login_is_mobile_request(): bool {
+  $secChMobile = $_SERVER['HTTP_SEC_CH_UA_MOBILE'] ?? '';
+  if ($secChMobile === '?1') return true;
+
+  $ua = strtolower($_SERVER['HTTP_USER_AGENT'] ?? '');
+  if ($ua === '') return false;
+
+  foreach (['android', 'iphone', 'ipad', 'ipod', 'mobile', 'windows phone', 'opera mini', 'blackberry'] as $needle) {
+    if (str_contains($ua, $needle)) return true;
+  }
+  return false;
+}
+
+function login_redirect_url_for_user(array $user, string $base): string {
+  if (login_is_mobile_request() && user_has_department($user, 'Bar')) {
+    return $base . '/inventory/scarico.php';
+  }
+  return $base . '/dashboard.php';
+}
+
 $user = current_user();
 if ($user) {
-  error_log('LOGIN: già autenticato, redirect a dashboard');
-  header('Location: ' . $base . '/dashboard.php');
+  $redirectUrl = login_redirect_url_for_user($user, $base);
+  error_log('LOGIN: già autenticato, redirect a ' . $redirectUrl);
+  header('Location: ' . $redirectUrl);
   exit;
 }
 
@@ -37,8 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $_SESSION['user_id'] = $u['id'];
           // rigenera token CSRF dopo login per sicurezza
           $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+          $redirectUrl = login_redirect_url_for_user($u, $base);
           session_write_close();                  // — salva e chiudi il file di sessione
-          header('Location: dashboard.php');  // <-- relativo! niente $base
+          header('Location: ' . $redirectUrl);
           exit;
 
         }
