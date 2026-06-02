@@ -1,13 +1,18 @@
 <?php
-require_once '/home/bwlxtuul/dojo.villaggiotramonto.it/google/google-api-client/vendor/autoload.php';
-$env = require  '/home/bwlxtuul/dojo.villaggiotramonto.it/config/env.php';
+require_once __DIR__ . '/google-api-client/vendor/autoload.php';
+$env = require __DIR__ . '/../config/env.php';
 
 $client = new Google\Client();
 $client->setAuthConfig($env['google']['oauth_secret_json']);
 $client->setAccessType('offline');
 $client->setPrompt('consent');
 $client->setScopes([Google\Service\Calendar::CALENDAR]);
-$client->setRedirectUri('https://dojo.villaggiotramonto.it/google/oauth2callback.php');
+$client->setIncludeGrantedScopes(true);
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$base = rtrim((string)($env['app']['base_url'] ?? ''), '/');
+$redirectUri = $scheme . '://' . $host . $base . '/google/oauth2callback.php';
+$client->setRedirectUri($redirectUri);
 
 if (!isset($_GET['code'])) { http_response_code(400); echo 'Missing code'; exit; }
 
