@@ -78,6 +78,55 @@ function scarico_email_body(string $warehouse, array $rows, array $warnings, arr
   <?php return trim(ob_get_clean());
 }
 
+function scarico_admin_email_body(string $warehouse, array $rows, array $warnings, array $criticalRows, array $user): string {
+  $sender = trim(($user['cognome'] ?? '') . ' ' . ($user['nome'] ?? ''));
+  if ($sender === '') $sender = $user['email'] ?? 'Utente';
+  $when = (new DateTime('now', new DateTimeZone('Europe/Rome')))->format('d/m/Y H:i');
+  ob_start(); ?>
+  <h2>Riepilogo scarico magazzino <?= htmlspecialchars($warehouse, ENT_QUOTES, 'UTF-8') ?></h2>
+  <p><strong>Data/Ora:</strong> <?= htmlspecialchars($when, ENT_QUOTES, 'UTF-8') ?><br>
+     <strong>Operatore:</strong> <?= htmlspecialchars($sender, ENT_QUOTES, 'UTF-8') ?></p>
+  <?php if ($rows): ?>
+    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;">
+      <thead><tr style="background:#f2f2f2;"><th align="left">Prodotto</th><th>Q.tà</th><th>Prima</th><th>Dopo</th><th>Min</th><th>Stato</th></tr></thead>
+      <tbody>
+      <?php foreach ($rows as $row):
+        $isZero = (float)$row['now'] <= 0;
+        $isLow = !$isZero && (float)$row['now'] < (float)$row['min_qty'];
+        $status = $isZero ? 'GIACENZA ZERO' : ($isLow ? 'SOTTOSCORTA' : 'OK');
+        $style = ($isZero || $isLow) ? 'background:#fff3cd;color:#842029;font-weight:bold;' : '';
+      ?>
+        <tr style="<?= $style ?>">
+          <td><?= htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8') ?></td>
+          <td align="center"><?= htmlspecialchars((string)((float)$row['qty'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
+          <td align="center"><?= htmlspecialchars((string)((float)$row['prev'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
+          <td align="center"><?= htmlspecialchars((string)((float)$row['now'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
+          <td align="center"><?= htmlspecialchars((string)((float)$row['min_qty'] + 0), ENT_QUOTES, 'UTF-8') ?></td>
+          <td><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?></td>
+        </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
+  <?php endif; ?>
+  <?php if ($warnings): ?>
+    <h3>Prodotti non disponibili nel magazzino selezionato</h3>
+    <ul>
+      <?php foreach ($warnings as $warning): ?>
+        <li><strong><?= htmlspecialchars($warning['title'], ENT_QUOTES, 'UTF-8') ?></strong>: richiesti <?= htmlspecialchars((string)((float)$warning['requested'] + 0), ENT_QUOTES, 'UTF-8') ?>, disponibili in <?= htmlspecialchars($warning['suggest_wh'], ENT_QUOTES, 'UTF-8') ?>: <?= htmlspecialchars((string)((float)$warning['available'] + 0), ENT_QUOTES, 'UTF-8') ?>.</li>
+      <?php endforeach; ?>
+    </ul>
+  <?php endif; ?>
+  <?php if ($criticalRows): ?>
+    <h3 style="color:#842029;">Attenzione: prodotti a zero o sottoscorta</h3>
+    <ul>
+      <?php foreach ($criticalRows as $row): ?>
+        <li><strong><?= htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8') ?></strong>: giacenza residua <?= htmlspecialchars((string)((float)$row['now'] + 0), ENT_QUOTES, 'UTF-8') ?> / minima <?= htmlspecialchars((string)((float)$row['min_qty'] + 0), ENT_QUOTES, 'UTF-8') ?>.</li>
+      <?php endforeach; ?>
+    </ul>
+  <?php endif; ?>
+  <?php return trim(ob_get_clean());
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!csrf_check($_POST['csrf'] ?? '')) {
     $message = 'Token CSRF non valido.';
@@ -179,6 +228,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $notificationNotes[] = 'Email dettagli inviata a ' . $warehouseDepartment . '.';
         } else {
           $notificationNotes[] = 'Nessuna email trovata per ' . $warehouseDepartment . '.';
+        }
+
+        $adminEmails = scarico_department_emails($pdo, 'Amministrazione');
+        if ($adminEmails && ($summary || $warnings)) {
+          $subject = 'Riepilogo scarico magazzino ' . $wh . ' - ' . (new DateTime('now', new DateTimeZone('Europe/Rome')))->format('d/m/Y H:i');
+          $body = scarico_admin_email_body($wh, $summary, $warnings, $criticalRows, $user);
+          foreach ($adminEmails as $email) {
+            send_mail($email, $subject, $body);
+          }
+          $notificationNotes[] = 'Email riepilogo inviata ad Amministrazione.';
+        } else {
+          $notificationNotes[] = 'Nessuna email amministrativa trovata per il riepilogo.';
         }
 
         $smsRecipients = scarico_department_phones($pdo, $warehouseDepartment);
