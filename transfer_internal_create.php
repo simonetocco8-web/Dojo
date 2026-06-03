@@ -8,6 +8,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_transfer_internal_details_columns($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
@@ -32,6 +33,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     }
     $date = $_POST['date'] ?? '';
     $time = $_POST['time'] ?? '';
+    $peopleCount = (int)($_POST['people_count'] ?? 1);
+    $note = trim(preg_replace('/\s+/u', ' ', (string)($_POST['note'] ?? '')));
+    if (function_exists('mb_substr')) {
+      $note = mb_substr($note, 0, 255, 'UTF-8');
+    } else {
+      $note = substr($note, 0, 255);
+    }
+    if (!$message && $peopleCount <= 0) {
+      $message = 'Inserire un numero di persone valido.';
+    }
     if (!$message && $room && in_array($direction, ['da','per'], true) && $date && $time) {
       $when_at = DateTime::createFromFormat('Y-m-d H:i', $date.' '.$time);
       if (!$when_at) {
@@ -44,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
         if ($blk) {
           $message = 'Periodo bloccato: impossibile inserire il transfer a questa data/ora.';
         } else {
-          $ins = $pdo->prepare('INSERT INTO transfers_internal (room_number, direction, location, when_at, created_by) VALUES (?,?,?,?,?)');
-          $ins->execute([$room, $direction, $location, $when_at->format('Y-m-d H:i:s'), $user['id']]);
+          $ins = $pdo->prepare('INSERT INTO transfers_internal (room_number, direction, location, people_count, note, when_at, created_by) VALUES (?,?,?,?,?,?,?)');
+          $ins->execute([$room, $direction, $location, $peopleCount, $note !== '' ? $note : null, $when_at->format('Y-m-d H:i:s'), $user['id']]);
 
           $transferId = (int)$pdo->lastInsertId();
 
@@ -127,6 +138,10 @@ include __DIR__ . '/partials/header.php';
               <label class="form-label">Ora</label>
               <input type="time" name="time" class="form-control" required>
             </div>
+            <div class="col-md-4">
+              <label class="form-label">Persone</label>
+              <input type="number" name="people_count" class="form-control" min="1" step="1" value="1" required>
+            </div>
             <div class="col-md-8">
               <label class="form-label">Località</label>
               <div class="d-flex gap-2">
@@ -147,6 +162,10 @@ include __DIR__ . '/partials/header.php';
                   <label class="form-check-label ms-1" for="loc_mode_custom">Manuale</label>
                 </div>
               </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Note</label>
+              <input type="text" name="note" class="form-control" maxlength="255" placeholder="Nota opzionale su singola riga">
             </div>
           </div>
           <div class="mt-3 d-flex gap-2">

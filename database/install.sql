@@ -96,6 +96,12 @@ CREATE TABLE IF NOT EXISTS task_user_assignments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
+
+-- Dettagli transfer interni
+ALTER TABLE transfers_internal
+  ADD COLUMN IF NOT EXISTS people_count INT UNSIGNED DEFAULT NULL AFTER location,
+  ADD COLUMN IF NOT EXISTS note VARCHAR(255) DEFAULT NULL AFTER people_count;
+
 CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
   transfer_id INT UNSIGNED NOT NULL PRIMARY KEY,
   sent_at DATETIME DEFAULT NULL,

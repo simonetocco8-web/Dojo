@@ -9,6 +9,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_transfer_internal_details_columns($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 if (!user_is_reception_or_amministrazione($user)) { http_response_code(403); exit('Permesso negato.'); }
@@ -31,6 +32,8 @@ $form = [
   'location_predef' => in_array($transfer['location'], $predef, true) ? $transfer['location'] : $predef[0],
   'location_custom' => in_array($transfer['location'], $predef, true) ? '' : $transfer['location'],
   'loc_mode' => in_array($transfer['location'], $predef, true) ? 'predef' : 'custom',
+  'people_count' => (string)($transfer['people_count'] ?? 1),
+  'note' => (string)($transfer['note'] ?? ''),
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,6 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $form['location_custom'] = trim($_POST['location_custom'] ?? '');
   $form['date'] = $_POST['date'] ?? '';
   $form['time'] = $_POST['time'] ?? '';
+  $form['people_count'] = (string)($_POST['people_count'] ?? '1');
+  $form['note'] = trim(preg_replace('/\s+/u', ' ', (string)($_POST['note'] ?? '')));
+  if (function_exists('mb_substr')) {
+    $form['note'] = mb_substr($form['note'], 0, 255, 'UTF-8');
+  } else {
+    $form['note'] = substr($form['note'], 0, 255);
+  }
 
   if (!csrf_check($_POST['csrf'] ?? '')) {
     $message = 'Token CSRF non valido.';
@@ -56,6 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($location === '') { $message = 'Inserire una località.'; }
     }
 
+    $peopleCount = (int)$form['people_count'];
+    $note = $form['note'];
+    if (!$message && $peopleCount <= 0) {
+      $message = 'Inserire un numero di persone valido.';
+    }
+
     if (!$message && $room && in_array($direction, ['da','per'], true) && $form['date'] && $form['time']) {
       $whenAt = DateTime::createFromFormat('Y-m-d H:i', $form['date'].' '.$form['time']);
       if (!$whenAt) {
@@ -67,8 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($blockStmt->fetch()) {
           $message = 'Periodo bloccato: impossibile inserire il transfer a questa data/ora.';
         } else {
-          $upd = $pdo->prepare('UPDATE transfers_internal SET room_number = ?, direction = ?, location = ?, when_at = ? WHERE id = ? AND deleted_at IS NULL');
-          $upd->execute([$room, $direction, $location, $whenAt->format('Y-m-d H:i:s'), $id]);
+          $upd = $pdo->prepare('UPDATE transfers_internal SET room_number = ?, direction = ?, location = ?, people_count = ?, note = ?, when_at = ? WHERE id = ? AND deleted_at IS NULL');
+          $upd->execute([$room, $direction, $location, $peopleCount, $note !== '' ? $note : null, $whenAt->format('Y-m-d H:i:s'), $id]);
           ensure_transfer_internal_sms_reminders_table($pdo);
           $pdo->prepare('DELETE FROM transfer_internal_sms_reminders WHERE transfer_id = ?')->execute([$id]);
 
@@ -142,6 +158,10 @@ include __DIR__ . '/partials/header.php';
               <label class="form-label">Ora</label>
               <input type="time" name="time" class="form-control" value="<?= e($form['time']) ?>" required>
             </div>
+            <div class="col-md-4">
+              <label class="form-label">Persone</label>
+              <input type="number" name="people_count" class="form-control" min="1" step="1" value="<?= e($form['people_count']) ?>" required>
+            </div>
             <div class="col-md-8">
               <label class="form-label">Località</label>
               <div class="d-flex gap-2">
@@ -162,6 +182,10 @@ include __DIR__ . '/partials/header.php';
                   <label class="form-check-label ms-1" for="loc_mode_custom">Manuale</label>
                 </div>
               </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Note</label>
+              <input type="text" name="note" class="form-control" maxlength="255" value="<?= e($form['note']) ?>" placeholder="Nota opzionale su singola riga">
             </div>
           </div>
           <div class="mt-3 d-flex gap-2">

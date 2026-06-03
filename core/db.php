@@ -82,6 +82,29 @@ function ensure_task_user_assignments_table(PDO $pdo): void {
 }
 
 
+
+function ensure_transfer_internal_details_columns(PDO $pdo): void {
+  $columns = array();
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'transfers_internal'
+      AND COLUMN_NAME IN ('people_count', 'note')
+  ");
+  foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $column) {
+    $columns[(string)$column] = true;
+  }
+
+  if (empty($columns['people_count'])) {
+    $pdo->exec("ALTER TABLE transfers_internal ADD COLUMN people_count INT UNSIGNED DEFAULT NULL AFTER location");
+  }
+  if (empty($columns['note'])) {
+    $pdo->exec("ALTER TABLE transfers_internal ADD COLUMN note VARCHAR(255) DEFAULT NULL AFTER people_count");
+  }
+}
+
+
 function ensure_transfer_internal_sms_reminders_table(PDO $pdo): void {
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
