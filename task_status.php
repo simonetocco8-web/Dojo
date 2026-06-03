@@ -8,9 +8,16 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+ensure_task_user_assignments_table($pdo);
+
+$allowedViews = ['mio','tutti','completati','nonfattibili','cestino'];
+$returnView = $_POST['return_view'] ?? $_GET['view'] ?? 'mio';
+if (!in_array($returnView, $allowedViews, true)) $returnView = 'mio';
+$returnTo = $_POST['return_to'] ?? $_GET['return_to'] ?? '';
+$returnUrl = $returnTo === 'dashboard' ? $base . '/dashboard.php' : $base . '/tasks.php?view=' . rawurlencode($returnView);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_check($_POST['csrf'] ?? '')) {
-  header('Location: ' . $base . '/tasks.php');
+  header('Location: ' . $returnUrl);
   exit;
 }
 
@@ -20,13 +27,18 @@ $action = $_POST['action'] ?? '';
 $stmt = $pdo->prepare('SELECT * FROM tasks WHERE id=? LIMIT 1');
 $stmt->execute([$id]);
 $task = $stmt->fetch();
-if (!$task) { header('Location: ' . $base . '/tasks.php'); exit; }
+if (!$task) { header('Location: ' . $returnUrl); exit; }
 
 $st = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id=? LIMIT 1');
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
-$canAct = $is_admin || (($me['dipartimento'] ?? '') === $task['dipartimento']);
+$assignmentCount = $pdo->prepare('SELECT COUNT(*) FROM task_user_assignments WHERE task_id = ?');
+$assignmentCount->execute([$id]);
+$hasAssignments = (int)$assignmentCount->fetchColumn() > 0;
+$assigned = $pdo->prepare('SELECT 1 FROM task_user_assignments WHERE task_id = ? AND user_id = ? LIMIT 1');
+$assigned->execute([$id, $user['id']]);
+$canAct = $is_admin || (!$hasAssignments && user_has_department($me, $task['dipartimento'])) || (bool)$assigned->fetchColumn();
 
 try {
   if ($action === 'complete' && $task['status']==='aperto' && $canAct && $task['deleted_at']===null) {
@@ -43,6 +55,9 @@ try {
                      VALUES (?,?,?,?,?,?,?)')->execute([
         $task['title'], $task['description'], $task['priority'], $task['dipartimento'], $due->format('Y-m-d'), $task['recurrence'], $user['id']
       ]);
+      $newTaskId = (int)$pdo->lastInsertId();
+      $copyAssignments = $pdo->prepare('INSERT IGNORE INTO task_user_assignments (task_id, user_id) SELECT ?, user_id FROM task_user_assignments WHERE task_id = ?');
+      $copyAssignments->execute([$newTaskId, $id]);
     }
   } elseif ($action === 'nonfattibile' && $task['status']==='aperto' && $canAct && $task['deleted_at']===null) {
     $note = trim($_POST['status_note'] ?? '');
@@ -62,5 +77,5 @@ try {
   }
 } catch (PDOException $e) {}
 
-header('Location: ' . $base . '/tasks.php');
+header('Location: ' . $returnUrl);
 exit;

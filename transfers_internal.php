@@ -6,6 +6,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_transfer_internal_details_columns($pdo);
 $user = current_user();
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
@@ -17,7 +18,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      FROM transfers_internal t
                      JOIN users u ON u.id = t.created_by
                      WHERE t.deleted_at IS NULL
-                     ORDER BY t.when_at ASC, t.id DESC')->fetchAll();
+                     ORDER BY t.when_at DESC, t.id DESC')->fetchAll();
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -35,7 +36,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
 <div class="container-fluid px-0">
   <div class="row g-3">
     <!-- Colonna SINISTRA: Tabella -->
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-lg-8">
       <div class="card shadow-sm h-100">
         <div class="card-header">
           <h2 class="h6 mb-0">Elenco</h2>
@@ -49,24 +50,53 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                     <th>Data</th>
                     <th>Ora</th>
                     <th>Camera</th>
+                    <th>Persone</th>
                     <th>Verso</th>
                     <th>Località</th>
                     <th>Creato da</th>
+                    <th>Note</th>
                     <th>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php foreach($rows as $r): ?>
                   <tr>
-                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('d/m/y'); ?></td>
+                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('d/m/Y'); ?></td>
                     <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('H:i'); ?></td>
                     <td><?= e($r['room_number']) ?></td>
+                    <td><?= e($r['people_count'] ?: '—') ?></td>
                     <td><?= e(strtoupper($r['direction'])) ?></td>
                     <td><?= e($r['location']) ?></td>
                     <td class="small text-muted"><?= e($r['created_by_email']) ?></td>
+                    <td class="text-center">
+                      <?php if (trim((string)($r['note'] ?? '')) !== ''): ?>
+                        <button type="button" class="btn btn-link p-0" data-bs-toggle="modal" data-bs-target="#transferNoteModal<?= (int)$r['id'] ?>" title="Leggi nota" aria-label="Leggi nota">
+                          <i class="bi bi-chat-left-text text-primary"></i>
+                        </button>
+                        <div class="modal fade" id="transferNoteModal<?= (int)$r['id'] ?>" tabindex="-1" aria-labelledby="transferNoteModalLabel<?= (int)$r['id'] ?>" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content text-start">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="transferNoteModalLabel<?= (int)$r['id'] ?>">Nota transfer camera <?= e($r['room_number']) ?></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                              </div>
+                              <div class="modal-body"><?= e($r['note']) ?></div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      <?php else: ?>
+                        <span class="text-muted">—</span>
+                      <?php endif; ?>
+                    </td>
                     <td>
+                      <a class="btn btn-link p-0 me-2" href="<?= e($base) ?>/transfer_internal_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica" aria-label="Modifica">
+                        <i class="bi bi-pencil-square text-primary"></i>
+                      </a>
                       <form method="post" action="transfer_internal_delete.php" class="d-inline"
-                            onsubmit="return confirm('Confermi l’eliminazione di questo transfer?');">
+                            data-confirm-message="Confermi l’eliminazione di questo transfer?">
                         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                         <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                         <button type="submit" class="btn btn-link p-0" title="Elimina" aria-label="Elimina">
@@ -90,7 +120,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
     </div><!-- /.col -->
 
     <!-- Colonna DESTRA: iFrame Google Calendar -->
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-lg-4">
       <div class="card shadow-sm h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
           <h2 class="h6 mb-0">Calendario</h2>
