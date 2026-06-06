@@ -115,3 +115,21 @@ CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
 -- Prodotti disattivabili: i prodotti non attivi non sono mostrati nella lista principale
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
+
+-- Straordinari del personale
+CREATE TABLE IF NOT EXISTS overtime_entries (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  work_date DATE NOT NULL,
+  hours DECIMAL(6,2) NOT NULL,
+  note TEXT DEFAULT NULL,
+  created_by INT UNSIGNED DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,
+  INDEX idx_overtime_entries_user_date (user_id, work_date),
+  INDEX idx_overtime_entries_work_date (work_date),
+  INDEX idx_overtime_entries_deleted_at (deleted_at),
+  CONSTRAINT fk_overtime_entries_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_overtime_entries_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
