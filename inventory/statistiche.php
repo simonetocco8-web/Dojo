@@ -78,6 +78,40 @@ $categoryTimelineStmt = $pdo->prepare("\n  SELECT\n    DATE_FORMAT(m.created_at,
 $categoryTimelineStmt->execute($params);
 $categoryTimelineRows = $categoryTimelineStmt->fetchAll(PDO::FETCH_ASSOC);
 
+$chartPalette = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6f42c1', '#20c997', '#fd7e14', '#0dcaf0', '#6c757d', '#d63384'];
+$categoryChartLabels = array_map(static fn($row): string => (string)$row['category'], $categoryRows);
+$categoryChartValues = array_map(static fn($row): float => (float)$row['total_qty'], $categoryRows);
+$categoryChartColors = array_map(static fn($index): string => $chartPalette[$index % count($chartPalette)], array_keys($categoryRows));
+
+$timelineMonths = [];
+$timelineCategories = [];
+$timelineValues = [];
+foreach ($categoryTimelineRows as $row) {
+  $month = (string)$row['period_month'];
+  $rowCategory = (string)$row['category'];
+  $timelineMonths[$month] = true;
+  $timelineCategories[$rowCategory] = true;
+  $timelineValues[$rowCategory][$month] = (float)$row['total_qty'];
+}
+$timelineLabels = array_keys($timelineMonths);
+sort($timelineLabels);
+$timelineCategoryNames = array_keys($timelineCategories);
+sort($timelineCategoryNames, SORT_NATURAL | SORT_FLAG_CASE);
+$categoryTimelineDatasets = [];
+foreach ($timelineCategoryNames as $index => $rowCategory) {
+  $color = $chartPalette[$index % count($chartPalette)];
+  $categoryTimelineDatasets[] = [
+    'label' => $rowCategory,
+    'data' => array_map(static fn($month): float => $timelineValues[$rowCategory][$month] ?? 0.0, $timelineLabels),
+    'borderColor' => $color,
+    'backgroundColor' => $color,
+    'tension' => 0.3,
+    'pointRadius' => 3,
+    'pointHoverRadius' => 5,
+    'fill' => false,
+  ];
+}
+
 $formatQty = static function ($value): string {
   return number_format((float)$value, 2, ',', '.');
 };
@@ -192,24 +226,18 @@ include __DIR__ . '/../partials/header.php';
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <h2 class="h6 mb-3">Scarichi per categoria</h2>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>Categoria</th><th class="text-end">Quantità scaricata</th><th class="text-end">Prodotti</th><th class="text-end">Movimenti</th></tr></thead>
-            <tbody>
-              <?php foreach ($categoryRows as $row): ?>
-                <tr>
-                  <td><?= e($row['category']) ?></td>
-                  <td class="text-end fw-semibold"><?= e($formatQty($row['total_qty'])) ?></td>
-                  <td class="text-end"><?= (int)$row['product_count'] ?></td>
-                  <td class="text-end"><?= (int)$row['movement_count'] ?></td>
-                </tr>
-              <?php endforeach; ?>
-              <?php if (!$categoryRows): ?>
-                <tr><td colspan="4" class="text-center text-muted py-3">Nessuno scarico trovato.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
-        </div>
+        <?php if ($categoryRows): ?>
+          <div class="inventory-chart-wrap inventory-chart-wrap--pie">
+            <canvas id="categoryPieChart"
+                    aria-label="Grafico a torta degli scarichi per categoria"
+                    role="img"
+                    data-chart-labels="<?= e(json_encode($categoryChartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-values="<?= e(json_encode($categoryChartValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-colors="<?= e(json_encode($categoryChartColors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"></canvas>
+          </div>
+        <?php else: ?>
+          <div class="text-center text-muted py-5">Nessuno scarico trovato.</div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
@@ -244,26 +272,26 @@ include __DIR__ . '/../partials/header.php';
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <h2 class="h6 mb-3">Andamento mensile per categoria</h2>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead><tr><th>Mese</th><th>Categoria</th><th class="text-end">Quantità scaricata</th></tr></thead>
-            <tbody>
-              <?php foreach ($categoryTimelineRows as $row): ?>
-                <tr>
-                  <td><?= e($row['period_month']) ?></td>
-                  <td><?= e($row['category']) ?></td>
-                  <td class="text-end fw-semibold"><?= e($formatQty($row['total_qty'])) ?></td>
-                </tr>
-              <?php endforeach; ?>
-              <?php if (!$categoryTimelineRows): ?>
-                <tr><td colspan="3" class="text-center text-muted py-3">Nessun andamento disponibile.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
-        </div>
+        <?php if ($categoryTimelineRows): ?>
+          <div class="inventory-chart-wrap inventory-chart-wrap--line">
+            <canvas id="categoryTimelineChart"
+                    aria-label="Grafico a linee dell'andamento mensile per categoria"
+                    role="img"
+                    data-chart-labels="<?= e(json_encode($timelineLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-datasets="<?= e(json_encode($categoryTimelineDatasets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"></canvas>
+          </div>
+        <?php else: ?>
+          <div class="text-center text-muted py-5">Nessun andamento disponibile.</div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
 </div>
+
+<?php if ($categoryRows || $categoryTimelineRows): ?>
+  <?php $inventoryStatisticsChartsVersion = @filemtime(__DIR__ . '/../assets/inventory_statistics_charts.js') ?: time(); ?>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="<?= e($base) ?>/assets/inventory_statistics_charts.js?v=<?= (int)$inventoryStatisticsChartsVersion ?>"></script>
+<?php endif; ?>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
