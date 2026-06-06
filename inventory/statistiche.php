@@ -228,7 +228,12 @@ include __DIR__ . '/../partials/header.php';
         <h2 class="h6 mb-3">Scarichi per categoria</h2>
         <?php if ($categoryRows): ?>
           <div class="inventory-chart-wrap inventory-chart-wrap--pie">
-            <canvas id="categoryPieChart" aria-label="Grafico a torta degli scarichi per categoria" role="img"></canvas>
+            <canvas id="categoryPieChart"
+                    aria-label="Grafico a torta degli scarichi per categoria"
+                    role="img"
+                    data-chart-labels="<?= e(json_encode($categoryChartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-values="<?= e(json_encode($categoryChartValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-colors="<?= e(json_encode($categoryChartColors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"></canvas>
           </div>
         <?php else: ?>
           <div class="text-center text-muted py-5">Nessuno scarico trovato.</div>
@@ -269,7 +274,11 @@ include __DIR__ . '/../partials/header.php';
         <h2 class="h6 mb-3">Andamento mensile per categoria</h2>
         <?php if ($categoryTimelineRows): ?>
           <div class="inventory-chart-wrap inventory-chart-wrap--line">
-            <canvas id="categoryTimelineChart" aria-label="Grafico a linee dell'andamento mensile per categoria" role="img"></canvas>
+            <canvas id="categoryTimelineChart"
+                    aria-label="Grafico a linee dell'andamento mensile per categoria"
+                    role="img"
+                    data-chart-labels="<?= e(json_encode($timelineLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                    data-chart-datasets="<?= e(json_encode($categoryTimelineDatasets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"></canvas>
           </div>
         <?php else: ?>
           <div class="text-center text-muted py-5">Nessun andamento disponibile.</div>
@@ -279,77 +288,10 @@ include __DIR__ . '/../partials/header.php';
   </div>
 </div>
 
-<style>
-.inventory-chart-wrap { position: relative; min-height: 320px; }
-.inventory-chart-wrap--pie { min-height: 360px; }
-.inventory-chart-wrap--line { min-height: 340px; }
-.inventory-chart-wrap canvas { width: 100% !important; height: 100% !important; }
-</style>
 <?php if ($categoryRows || $categoryTimelineRows): ?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var numberFormatter = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  var pieCanvas = document.getElementById('categoryPieChart');
-  if (pieCanvas) {
-    new Chart(pieCanvas, {
-      type: 'pie',
-      data: {
-        labels: <?= json_encode($categoryChartLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-        datasets: [{
-          data: <?= json_encode($categoryChartValues, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-          backgroundColor: <?= json_encode($categoryChartColors, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-          borderColor: '#ffffff',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return context.label + ': ' + numberFormatter.format(context.parsed || 0);
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  var lineCanvas = document.getElementById('categoryTimelineChart');
-  if (lineCanvas) {
-    new Chart(lineCanvas, {
-      type: 'line',
-      data: {
-        labels: <?= json_encode($timelineLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
-        datasets: <?= json_encode($categoryTimelineDatasets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        scales: {
-          y: { beginAtZero: true, ticks: { callback: function (value) { return numberFormatter.format(value); } } }
-        },
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return context.dataset.label + ': ' + numberFormatter.format(context.parsed.y || 0);
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-});
-</script>
+  <?php $inventoryStatisticsChartsVersion = @filemtime(__DIR__ . '/../assets/inventory_statistics_charts.js') ?: time(); ?>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="<?= e($base) ?>/assets/inventory_statistics_charts.js?v=<?= (int)$inventoryStatisticsChartsVersion ?>"></script>
 <?php endif; ?>
 
 <?php include __DIR__ . '/../partials/footer.php'; ?>
