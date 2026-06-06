@@ -47,10 +47,14 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
           </ul>
         </li>
+        <?php endif; ?>
+        <?php if ($user && user_is_amministrazione($user)): ?>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="personaleSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
           <ul class="dropdown-menu" aria-labelledby="personaleSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -113,10 +117,14 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
               </ul>
             </li>
+            <?php endif; ?>
+            <?php if ($user && user_is_amministrazione($user)): ?>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="personaleDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
               <ul class="dropdown-menu" aria-labelledby="personaleDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
               </ul>
             </li>
             <?php endif; ?>
