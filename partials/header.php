@@ -44,6 +44,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/statistiche.php"><i class="bi bi-graph-up"></i><span>Statistiche</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
           </ul>
         </li>
@@ -114,6 +115,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/statistiche.php"><i class="bi bi-graph-up"></i><span>Statistiche</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
               </ul>
             </li>
