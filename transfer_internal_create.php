@@ -86,6 +86,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
               'location' => $location,
               'date' => $when_at->format('d/m/Y'),
               'time' => $time,
+              'people_count' => $peopleCount,
+              'note' => $note,
               'recipients' => $navettistaPhones,
             ]);
           } catch (Throwable $e) {
