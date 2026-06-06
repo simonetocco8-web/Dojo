@@ -47,7 +47,16 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
           </ul>
         </li>
-        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+        <?php endif; ?>
+        <?php if ($user && user_is_amministrazione($user)): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="personaleSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
+          <ul class="dropdown-menu" aria-labelledby="personaleSidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
+          </ul>
+        </li>
         <?php endif; ?>
         <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
@@ -62,7 +71,12 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
         <?php endif; ?>
         <?php if($user && $user['role']==='admin'): ?>
-        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="utentiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
+          <ul class="dropdown-menu" aria-labelledby="utentiSidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Personale</span></a></li>
+          </ul>
+        </li>
         <?php endif; ?>
         <?php if($user && user_is_admin($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
@@ -103,7 +117,16 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+            <?php endif; ?>
+            <?php if ($user && user_is_amministrazione($user)): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="personaleDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
+              <ul class="dropdown-menu" aria-labelledby="personaleDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
+              </ul>
+            </li>
             <?php endif; ?>
             <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
@@ -118,7 +141,12 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
             <?php endif; ?>
             <?php if($user && $user['role']==='admin'): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Utenti</span></a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="utentiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
+              <ul class="dropdown-menu" aria-labelledby="utentiDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Personale</span></a></li>
+              </ul>
+            </li>
             <?php endif; ?>
             <?php if($user && user_is_admin($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/settings.php"><i class="bi bi-gear"></i><span>Setting</span></a></li>
