@@ -21,6 +21,16 @@ if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
   $month = (new DateTimeImmutable('first day of this month'))->format('Y-m');
 }
 $selectedUserId = (int)($_GET['user_id'] ?? 0);
+$contractTypes = [
+  '8' => 'Full Time 8 ore',
+  '6' => 'Part Time 6 ore',
+  '4' => 'Part Time 4 ore',
+];
+$contractHours = (string)($_GET['contract_hours'] ?? '8');
+if (!isset($contractTypes[$contractHours])) {
+  $contractHours = '8';
+}
+$contractHoursValue = (float)$contractHours;
 $monthlyPayRaw = trim(str_replace(',', '.', (string)($_GET['monthly_pay'] ?? '')));
 $monthlyPay = $monthlyPayRaw !== '' ? filter_var($monthlyPayRaw, FILTER_VALIDATE_FLOAT) : null;
 if ($monthlyPay === false || $monthlyPay < 0) {
@@ -29,7 +39,7 @@ if ($monthlyPay === false || $monthlyPay < 0) {
 
 $start = $month . '-01';
 $end = (new DateTimeImmutable($start))->modify('last day of this month')->format('Y-m-d');
-$hourlyRate = $monthlyPay !== null ? ((float)$monthlyPay / 30 / 8) : null;
+$hourlyRate = $monthlyPay !== null ? ((float)$monthlyPay / 26 / $contractHoursValue) : null;
 
 $users = $pdo->query("SELECT id, nome, cognome, email, dipartimento FROM users WHERE deleted_at IS NULL AND is_active = 1 ORDER BY cognome ASC, nome ASC, email ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -79,7 +89,15 @@ include __DIR__ . '/partials/header.php';
         </select>
       </div>
       <div class="col-12 col-md-4">
-        <label class="form-label">Paga mensile</label>
+        <label class="form-label">Tipo Contratto</label>
+        <select name="contract_hours" class="form-select">
+          <?php foreach ($contractTypes as $hours => $label): ?>
+            <option value="<?= e($hours) ?>" <?= $contractHours === $hours ? 'selected' : '' ?>><?= e($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label">Stipendio mensile</label>
         <div class="input-group">
           <span class="input-group-text">€</span>
           <input type="number" class="form-control" name="monthly_pay" min="0" step="0.01" value="<?= e($monthlyPayRaw) ?>" placeholder="Es. 1800.00">
@@ -89,7 +107,7 @@ include __DIR__ . '/partials/header.php';
         <button class="btn btn-primary">Calcola</button>
       </div>
     </div>
-    <p class="text-muted small mb-0 mt-3">Formula: paga mensile ÷ 30 giorni ÷ 8 ore × ore di straordinario.</p>
+    <p class="text-muted small mb-0 mt-3">Formula: stipendio mensile ÷ 26 giorni ÷ ore da contratto × ore di straordinario.</p>
   </div>
 </form>
 
@@ -107,6 +125,7 @@ include __DIR__ . '/partials/header.php';
       <div class="card-body">
         <div class="text-muted small">Costo orario calcolato</div>
         <div class="fs-4 fw-semibold"><?= $hourlyRate !== null ? '€ ' . e(number_format($hourlyRate, 2, ',', '.')) : '—' ?></div>
+        <div class="text-muted small mt-1"><?= e($contractTypes[$contractHours]) ?></div>
       </div>
     </div>
   </div>
