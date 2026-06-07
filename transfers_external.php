@@ -6,6 +6,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_transfer_external_travel_columns($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
@@ -60,8 +61,10 @@ include __DIR__ . '/partials/header.php';
             <th>Luogo</th>
             <th>Data/Ora</th>
             <th>Pickup</th>
+            <th>Rif.</th>
             <th>Camera</th>
             <th>Nominativo</th>
+            <th>Fornitore</th>
             <th>Compagnia</th>
             <th class="text-center">Persone</th>
             <th>Prezzo</th>
@@ -73,13 +76,78 @@ include __DIR__ . '/partials/header.php';
         </thead>
         <tbody>
           <?php foreach($rows as $r): ?>
+          <?php
+            $isRoundTrip = ($r['type'] ?? '') === 'arrivo_partenza';
+            $typeLabel = match ($r['type'] ?? '') {
+              'arrivo' => 'Arrivo',
+              'partenza' => 'Partenza',
+              'arrivo_partenza' => 'Arrivo e Partenza',
+              default => ucfirst((string)($r['type'] ?? '')),
+            };
+            $typeIcons = match ($r['type'] ?? '') {
+              'arrivo' => [['label' => 'A', 'alt' => 'Arrivo']],
+              'partenza' => [['label' => 'P', 'alt' => 'Partenza']],
+              'arrivo_partenza' => [
+                ['label' => 'A', 'alt' => 'Arrivo'],
+                ['label' => 'P', 'alt' => 'Partenza'],
+              ],
+              default => [],
+            };
+            $dateLabel = '—';
+            if (!empty($r['date_time'])) {
+              $dateLabel = (new DateTime($r['date_time']))->format('d/m/y H:i');
+            }
+            $referenceParts = [];
+            if ($isRoundTrip) {
+              if (!empty($r['arrival_flight_number'])) $referenceParts[] = 'Volo arrivo: ' . $r['arrival_flight_number'];
+              if (!empty($r['arrival_train_number'])) $referenceParts[] = 'Treno arrivo: ' . $r['arrival_train_number'];
+              if (!empty($r['departure_flight_number'])) $referenceParts[] = 'Volo partenza: ' . $r['departure_flight_number'];
+              if (!empty($r['departure_train_number'])) $referenceParts[] = 'Treno partenza: ' . $r['departure_train_number'];
+            } else {
+              if (!empty($r['flight_number'])) $referenceParts[] = 'Volo: ' . $r['flight_number'];
+              if (!empty($r['train_number'])) $referenceParts[] = 'Treno: ' . $r['train_number'];
+            }
+          ?>
           <tr>
-            <td><?= e(ucfirst($r['type'])) ?></td>
-            <td><?= e($r['place'] ?? '') ?></td>
-            <td><?php $dt=new DateTime($r['date_time']); echo $dt->format('d/m/y H:i'); ?></td>
-            <td><?= $r['pickup_time'] ? e(substr($r['pickup_time'],0,5)) : '—' ?></td>
+            <td class="text-center">
+              <?php if ($typeIcons): ?>
+                <span class="d-inline-flex align-items-center justify-content-center gap-1" title="<?= e($typeLabel) ?>" aria-label="<?= e($typeLabel) ?>">
+                  <?php foreach ($typeIcons as $icon): ?>
+                    <span class="d-inline-flex align-items-center justify-content-center rounded border bg-white text-dark fw-bold" title="<?= e($icon['alt']) ?>" aria-label="<?= e($icon['alt']) ?>" style="width:24px;height:24px;font-size:0.85rem;line-height:1;"><?= e($icon['label']) ?></span>
+                  <?php endforeach; ?>
+                </span>
+              <?php else: ?>
+                <?= e($typeLabel) ?>
+              <?php endif; ?>
+            </td>
+            <td>
+              <?php if ($isRoundTrip): ?>
+                <div><strong>Arrivo:</strong> <?= e($r['arrival_place'] ?? '') ?></div>
+                <div><strong>Partenza:</strong> <?= e($r['departure_place'] ?? '') ?></div>
+              <?php else: ?>
+                <?= e($r['place'] ?? '') ?>
+              <?php endif; ?>
+            </td>
+            <td>
+              <?php if ($isRoundTrip): ?>
+                <div><strong>Arrivo:</strong> <?= !empty($r['arrival_date_time']) ? e((new DateTime($r['arrival_date_time']))->format('d/m/y H:i')) : '—' ?></div>
+                <div><strong>Partenza:</strong> <?= !empty($r['departure_date_time']) ? e((new DateTime($r['departure_date_time']))->format('d/m/y H:i')) : '—' ?></div>
+              <?php else: ?>
+                <?= e($dateLabel) ?>
+              <?php endif; ?>
+            </td>
+            <td>
+              <?php if ($isRoundTrip): ?>
+                <div><strong>Arrivo:</strong> <?= !empty($r['arrival_pickup_time']) ? e(substr($r['arrival_pickup_time'], 0, 5)) : '—' ?></div>
+                <div><strong>Partenza:</strong> <?= !empty($r['departure_pickup_time']) ? e(substr($r['departure_pickup_time'], 0, 5)) : '—' ?></div>
+              <?php else: ?>
+                <?= $r['pickup_time'] ? e(substr($r['pickup_time'],0,5)) : '—' ?>
+              <?php endif; ?>
+            </td>
+            <td><?= $referenceParts ? e(implode(' · ', $referenceParts)) : '—' ?></td>
             <td><?= e($r['room_number']) ?></td>
             <td><?= e($r['guest_name']) ?></td>
+            <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
             <td><?= $r['booked'] ? e($r['service_company'] ?? '') : '—' ?></td>
             <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
             <td>
