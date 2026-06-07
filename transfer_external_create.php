@@ -224,6 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = 'Nuovo Transfer Esterno';
+$isRoundTripSelected = $form['type'] === 'arrivo_partenza';
 include __DIR__ . '/partials/header.php';
 ?>
 <div class="row justify-content-center">
@@ -245,7 +246,7 @@ include __DIR__ . '/partials/header.php';
               </select>
             </div>
 
-            <div class="col-12" id="singleTransferFields">
+            <div class="col-12<?= $isRoundTripSelected ? ' d-none' : '' ?>" id="singleTransferFields"<?= $isRoundTripSelected ? ' hidden' : '' ?>>
               <div class="row g-3">
                 <div class="col-md-9">
                   <label class="form-label">Luogo Arrivo/Partenza</label>
@@ -278,7 +279,7 @@ include __DIR__ . '/partials/header.php';
               </div>
             </div>
 
-            <div class="col-12 d-none" id="roundTripTransferFields">
+            <div class="col-12<?= $isRoundTripSelected ? '' : ' d-none' ?>" id="roundTripTransferFields"<?= $isRoundTripSelected ? '' : ' hidden' ?>>
               <div class="row g-3">
                 <div class="col-12"><h2 class="h6 mb-0">Arrivo</h2></div>
                 <div class="col-md-6">
@@ -399,5 +400,6 @@ include __DIR__ . '/partials/header.php';
   </div>
 </div>
 
-<script src="<?= e($base) ?>/assets/transfer_external_create.js"></script>
+<?php $transferExternalCreateJsVersion = @filemtime(__DIR__ . '/assets/transfer_external_create.js') ?: time(); ?>
+<script src="<?= e($base) ?>/assets/transfer_external_create.js?v=<?= (int)$transferExternalCreateJsVersion ?>" defer></script>
 <?php include __DIR__ . '/partials/footer.php'; ?>
