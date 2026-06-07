@@ -1,92 +1,105 @@
 (function () {
   'use strict';
 
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
   function showError(message) {
-    var box = document.getElementById('aiChatError');
+    var box = byId('aiChatError');
     if (!box) return;
     box.textContent = message;
     box.classList.remove('d-none');
   }
 
-  async function setupChat() {
-    var chat = document.getElementById('dojoAiChat');
-    if (!chat) return;
+  function hideError() {
+    var box = byId('aiChatError');
+    if (!box) return;
+    box.classList.add('d-none');
+    box.textContent = '';
+  }
 
-    var endpoint = chat.dataset.sessionEndpoint || 'ai_chat_session.php';
-    var csrf = chat.dataset.csrf || '';
-    if (window.customElements && !customElements.get('openai-chatkit')) {
-      await Promise.race([
-        customElements.whenDefined('openai-chatkit'),
-        new Promise(function (_, reject) {
-          setTimeout(function () {
-            reject(new Error('Chat AI non disponibile. Verifica la connessione allo script OpenAI.'));
-          }, 10000);
-        }),
-      ]);
+  function appendMessage(role, text) {
+    var messages = byId('aiChatMessages');
+    if (!messages) return;
+
+    var wrapper = document.createElement('div');
+    wrapper.className = role === 'user' ? 'd-flex justify-content-end mb-3' : 'd-flex justify-content-start mb-3';
+
+    var bubble = document.createElement('div');
+    bubble.className = role === 'user' ? 'alert alert-primary mb-0 py-2 px-3' : 'alert alert-light border mb-0 py-2 px-3';
+    bubble.style.maxWidth = '82%';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.textContent = text;
+
+    wrapper.appendChild(bubble);
+    messages.appendChild(wrapper);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function setLoading(isLoading) {
+    var button = byId('aiChatSubmit');
+    var input = byId('aiChatInput');
+    if (button) {
+      button.disabled = isLoading;
+      button.innerHTML = isLoading
+        ? '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Invio...'
+        : 'Invia';
     }
+    if (input) input.disabled = isLoading;
+  }
 
-    if (typeof chat.setOptions !== 'function') {
-      showError('Chat AI non disponibile. Ricarica la pagina o verifica la connessione allo script OpenAI.');
-      return;
-    }
+  function setupChat() {
+    var form = byId('aiChatForm');
+    var input = byId('aiChatInput');
+    var endpointHolder = byId('dojoAiChat');
+    if (!form || !input || !endpointHolder) return;
 
-    async function fetchClientSecret(currentClientSecret) {
-      var response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrf,
-        },
-        body: JSON.stringify({ current_client_secret: currentClientSecret || null }),
-        credentials: 'same-origin',
-      });
+    var endpoint = endpointHolder.dataset.sessionEndpoint || 'ai_chat_session.php';
+    var csrf = endpointHolder.dataset.csrf || '';
+    var previousResponseId = null;
 
-      var data = await response.json().catch(function () { return {}; });
-      if (!response.ok || !data.client_secret) {
-        throw new Error(data.error || 'Impossibile avviare la sessione AI Chat.');
+    appendMessage('assistant', 'Ciao, come posso aiutarti?');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var message = input.value.trim();
+      if (!message) return;
+
+      hideError();
+      appendMessage('user', message);
+      input.value = '';
+      setLoading(true);
+
+      try {
+        var response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrf,
+          },
+          body: JSON.stringify({
+            message: message,
+            previous_response_id: previousResponseId,
+          }),
+          credentials: 'same-origin',
+        });
+
+        var data = await response.json().catch(function () { return {}; });
+        if (!response.ok || !data.message) {
+          throw new Error(data.error || 'Impossibile ottenere una risposta dalla chat AI.');
+        }
+
+        previousResponseId = data.response_id || previousResponseId;
+        appendMessage('assistant', data.message);
+      } catch (error) {
+        showError(error && error.message ? error.message : 'Errore nella chat AI.');
+      } finally {
+        setLoading(false);
+        input.focus();
       }
-      return data.client_secret;
-    }
-
-    var initialClientSecret = await fetchClientSecret(null);
-
-    chat.setOptions({
-      api: {
-        async getClientSecret(currentClientSecret) {
-          if (!currentClientSecret && initialClientSecret) {
-            var clientSecret = initialClientSecret;
-            initialClientSecret = null;
-            return clientSecret;
-          }
-          return fetchClientSecret(currentClientSecret || null);
-        },
-      },
-      locale: 'it-IT',
-      theme: 'light',
-      frameTitle: 'AI Chat Dojo',
-      header: {
-        title: {
-          enabled: true,
-          text: 'AI Chat',
-        },
-      },
-      startScreen: {
-        greeting: 'Ciao, come posso aiutarti?',
-      },
-      composer: {
-        placeholder: 'Scrivi un messaggio...',
-      },
-    });
-
-    chat.addEventListener('chatkit.error', function (event) {
-      var error = event.detail && event.detail.error;
-      showError(error && error.message ? error.message : 'Errore nella chat AI.');
     });
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
-    setupChat().catch(function (error) {
-      showError(error && error.message ? error.message : 'Errore durante il caricamento della chat AI.');
-    });
-  });
+  document.addEventListener('DOMContentLoaded', setupChat);
 }());
