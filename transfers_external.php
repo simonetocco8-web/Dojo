@@ -83,6 +83,15 @@ include __DIR__ . '/partials/header.php';
               'arrivo_partenza' => 'Arrivo e Partenza',
               default => ucfirst((string)($r['type'] ?? '')),
             };
+            $typeIcons = match ($r['type'] ?? '') {
+              'arrivo' => [['label' => 'A', 'alt' => 'Arrivo']],
+              'partenza' => [['label' => 'P', 'alt' => 'Partenza']],
+              'arrivo_partenza' => [
+                ['label' => 'A', 'alt' => 'Arrivo'],
+                ['label' => 'P', 'alt' => 'Partenza'],
+              ],
+              default => [],
+            };
             $dateLabel = '—';
             if (!empty($r['date_time'])) {
               $dateLabel = (new DateTime($r['date_time']))->format('d/m/y H:i');
@@ -99,7 +108,17 @@ include __DIR__ . '/partials/header.php';
             }
           ?>
           <tr>
-            <td><?= e($typeLabel) ?></td>
+            <td class="text-center">
+              <?php if ($typeIcons): ?>
+                <span class="d-inline-flex align-items-center justify-content-center gap-1" title="<?= e($typeLabel) ?>" aria-label="<?= e($typeLabel) ?>">
+                  <?php foreach ($typeIcons as $icon): ?>
+                    <span class="d-inline-flex align-items-center justify-content-center rounded border bg-white text-dark fw-bold" title="<?= e($icon['alt']) ?>" aria-label="<?= e($icon['alt']) ?>" style="width:24px;height:24px;font-size:0.85rem;line-height:1;"><?= e($icon['label']) ?></span>
+                  <?php endforeach; ?>
+                </span>
+              <?php else: ?>
+                <?= e($typeLabel) ?>
+              <?php endif; ?>
+            </td>
             <td>
               <?php if ($isRoundTrip): ?>
                 <div><strong>Arrivo:</strong> <?= e($r['arrival_place'] ?? '') ?></div>
