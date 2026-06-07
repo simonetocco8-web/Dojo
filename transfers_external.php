@@ -16,17 +16,17 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      WHERE t.deleted_at IS NULL
                      ORDER BY t.date_time ASC, t.id DESC')->fetchAll();
 
-$unpaidTotalsByCompany = [];
+$unpaidTotalsBySupplier = [];
 foreach ($rows as $r) {
     if (!($r['paid'] ?? 0)) {
-        $company = trim((string)($r['service_company'] ?? ''));
-        if ($company === '') {
-            $company = '—';
+        $supplier = trim((string)($r['supplier_name'] ?? ''));
+        if ($supplier === '') {
+            $supplier = '—';
         }
 
         $price = $r['price_eur'];
         if ($price !== null && $price !== '') {
-            $unpaidTotalsByCompany[$company] = ($unpaidTotalsByCompany[$company] ?? 0) + (float)$price;
+            $unpaidTotalsBySupplier[$supplier] = ($unpaidTotalsBySupplier[$supplier] ?? 0) + (float)$price;
         }
     }
 }
@@ -45,7 +45,7 @@ include __DIR__ . '/partials/header.php';
   <div class="card-body">
     <div class="d-flex justify-content-end mb-2">
       <div class="small text-muted">
-        <i class="bi bi-bookmark-check text-primary"></i> Prenotato (con Compagnia) &nbsp;|&nbsp;
+        <i class="bi bi-bookmark-check text-primary"></i> Prenotato &nbsp;|&nbsp;
         <i class="bi bi-cash-coin text-success"></i> Pagato &nbsp;|&nbsp;
         <i class="bi bi-clock text-info"></i> Imposta Pickup &nbsp;|&nbsp;
         <i class="bi bi-x-octagon text-warning"></i> Annulla/Ripristina &nbsp;|&nbsp;
@@ -65,7 +65,6 @@ include __DIR__ . '/partials/header.php';
             <th>Camera</th>
             <th>Nominativo</th>
             <th>Fornitore</th>
-            <th>Compagnia</th>
             <th class="text-center">Persone</th>
             <th>Prezzo</th>
             <th class="text-center">Pren.</th>
@@ -148,7 +147,6 @@ include __DIR__ . '/partials/header.php';
             <td><?= e($r['room_number']) ?></td>
             <td><?= e($r['guest_name']) ?></td>
             <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
-            <td><?= $r['booked'] ? e($r['service_company'] ?? '') : '—' ?></td>
             <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
             <td>
               <?php if ($r['price_eur'] !== null): ?>
@@ -168,20 +166,16 @@ include __DIR__ . '/partials/header.php';
             </td>
             <td class="text-nowrap">
               <?php if (!$r['booked']): ?>
-                <button class="btn btn-sm btn-outline-primary" title="Imposta Prenotato e Compagnia" data-bs-toggle="collapse" data-bs-target="#book_<?= (int)$r['id'] ?>">
-                  <i class="bi bi-bookmark-check"></i>
-                </button>
-                <div id="book_<?= (int)$r['id'] ?>" class="collapse mt-2">
-                  <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-flex gap-2">
-                    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
-                    <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
-                    <input type="hidden" name="action" value="set_booked">
-                    <input type="text" name="service_company" class="form-control form-control-sm" placeholder="Compagnia del Servizio" required>
-                    <button class="btn btn-sm btn-primary"><i class="bi bi-check2"></i></button>
-                  </form>
-                </div>
+                <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline">
+                  <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                  <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                  <input type="hidden" name="action" value="set_booked">
+                  <button class="btn btn-sm btn-outline-primary" title="Imposta Prenotato">
+                    <i class="bi bi-bookmark-check"></i>
+                  </button>
+                </form>
               <?php else: ?>
-                <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline" data-confirm-message="Rimuovere Prenotato e Compagnia?">
+                <form method="post" action="<?= e($base) ?>/transfer_external_action.php" class="d-inline" data-confirm-message="Rimuovere Prenotato?">
                   <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                   <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                   <input type="hidden" name="action" value="unset_booked">
@@ -237,21 +231,21 @@ include __DIR__ . '/partials/header.php';
         </tbody>
       </table>
     </div>
-    <?php if (!empty($unpaidTotalsByCompany)): ?>
+    <?php if (!empty($unpaidTotalsBySupplier)): ?>
       <div class="mt-4 p-3 border rounded bg-light">
-        <h2 class="h6 mb-3">Totali non pagati per Compagnia</h2>
+        <h2 class="h6 mb-3">Totali non pagati per Fornitore</h2>
         <div class="table-responsive">
           <table class="table table-sm mb-0">
             <thead>
               <tr>
-                <th>Compagnia</th>
+                <th>Fornitore</th>
                 <th class="text-end">Totale non pagato</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($unpaidTotalsByCompany as $company => $total): ?>
+              <?php foreach ($unpaidTotalsBySupplier as $supplier => $total): ?>
               <tr>
-                <td><?= e($company) ?></td>
+                <td><?= e($supplier) ?></td>
                 <td class="text-end">€ <?= e(number_format((float)$total, 2, ',', '.')) ?></td>
               </tr>
               <?php endforeach; ?>
