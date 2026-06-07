@@ -28,3 +28,8 @@ body{min-height:100vh}.card{border-radius:1rem}
 .dojo-ai-chat-card { min-height: calc(100vh - 190px); }
 .dojo-ai-chat { display: block; width: 100%; height: calc(100vh - 220px); min-height: 620px; }
 @media (max-width: 767.98px) { .dojo-ai-chat { height: calc(100vh - 190px); min-height: 520px; } }
+
+.inventory-chart-wrap { position: relative; min-height: 320px; }
+.inventory-chart-wrap--pie { min-height: 360px; }
+.inventory-chart-wrap--line { min-height: 340px; }
+.inventory-chart-wrap canvas { width: 100% !important; height: 100% !important; }
