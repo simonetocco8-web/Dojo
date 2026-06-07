@@ -20,25 +20,53 @@ if (!csrf_check($csrf)) {
   exit;
 }
 
+$rawBody = file_get_contents('php://input');
+$requestData = json_decode((string)$rawBody, true);
+if (!is_array($requestData)) {
+  $requestData = $_POST;
+}
+
+$message = trim((string)($requestData['message'] ?? ''));
+$previousResponseId = trim((string)($requestData['previous_response_id'] ?? ''));
+if ($message === '') {
+  http_response_code(400);
+  echo json_encode(['error' => 'Messaggio vuoto.']);
+  exit;
+}
+
 $env = require __DIR__ . '/config/env.php';
 $user = current_user();
-$config = $env['openai_chatkit'] ?? [];
+$config = array_replace($env['openai_chatkit'] ?? [], $env['openai_chat'] ?? []);
 $localEnvPath = __DIR__ . '/config/env.local.php';
 if (is_file($localEnvPath)) {
   $localEnv = require $localEnvPath;
-  if (is_array($localEnv) && isset($localEnv['openai_chatkit']) && is_array($localEnv['openai_chatkit'])) {
-    $config = array_replace($config, $localEnv['openai_chatkit']);
+  if (is_array($localEnv)) {
+    $localConfig = array_replace($localEnv['openai_chatkit'] ?? [], $localEnv['openai_chat'] ?? []);
+    if ($localConfig) {
+      $config = array_replace($config, $localConfig);
+    }
   }
 }
+
 $apiKey = trim((string)(
   getenv('OPENAI_API_KEY')
   ?: ($_SERVER['OPENAI_API_KEY'] ?? '')
   ?: ($_ENV['OPENAI_API_KEY'] ?? '')
   ?: ($config['api_key'] ?? '')
 ));
-$workflowId = trim((string)($config['workflow_id'] ?? ''));
-$workflowVersion = trim((string)(getenv('OPENAI_CHATKIT_WORKFLOW_VERSION') ?: ($config['workflow_version'] ?? '')));
-$endpoint = trim((string)($config['session_endpoint'] ?? 'https://api.openai.com/v1/chatkit/sessions'));
+$promptId = trim((string)(
+  getenv('OPENAI_PROMPT_ID')
+  ?: ($_SERVER['OPENAI_PROMPT_ID'] ?? '')
+  ?: ($_ENV['OPENAI_PROMPT_ID'] ?? '')
+  ?: ($config['prompt_id'] ?? '')
+));
+$promptVersion = trim((string)(
+  getenv('OPENAI_PROMPT_VERSION')
+  ?: ($_SERVER['OPENAI_PROMPT_VERSION'] ?? '')
+  ?: ($_ENV['OPENAI_PROMPT_VERSION'] ?? '')
+  ?: ($config['prompt_version'] ?? '')
+));
+$endpoint = trim((string)($config['responses_endpoint'] ?? 'https://api.openai.com/v1/responses'));
 
 if ($apiKey === '') {
   http_response_code(500);
@@ -46,28 +74,35 @@ if ($apiKey === '') {
   exit;
 }
 
-if ($workflowId === '') {
+if ($promptId === '') {
   http_response_code(500);
-  echo json_encode(['error' => 'Configurazione AI Chat incompleta: workflow_id mancante.']);
+  echo json_encode(['error' => 'Configurazione AI Chat incompleta: prompt_id mancante.']);
   exit;
 }
 
-$workflow = [
-  'id' => $workflowId,
-  'state_variables' => [
-    'dojo_user_id' => (int)($user['id'] ?? 0),
+$prompt = [
+  'id' => $promptId,
+  'variables' => [
+    'dojo_user_id' => (string)(int)($user['id'] ?? 0),
     'dojo_user_email' => (string)($user['email'] ?? ''),
     'dojo_user_name' => trim((string)($user['nome'] ?? '') . ' ' . (string)($user['cognome'] ?? '')),
   ],
 ];
-if ($workflowVersion !== '') {
-  $workflow['version'] = $workflowVersion;
+if ($promptVersion !== '') {
+  $prompt['version'] = $promptVersion;
 }
 
 $payload = [
-  'workflow' => $workflow,
-  'user' => 'dojo-user-' . (int)($user['id'] ?? 0),
+  'prompt' => $prompt,
+  'input' => $message,
+  'store' => true,
+  'metadata' => [
+    'dojo_user_id' => (string)(int)($user['id'] ?? 0),
+  ],
 ];
+if ($previousResponseId !== '') {
+  $payload['previous_response_id'] = $previousResponseId;
+}
 
 $ch = curl_init($endpoint);
 curl_setopt_array($ch, [
@@ -77,10 +112,9 @@ curl_setopt_array($ch, [
     'Authorization: Bearer ' . $apiKey,
     'Content-Type: application/json',
     'Accept: application/json',
-    'OpenAI-Beta: chatkit_beta=v1',
   ],
   CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-  CURLOPT_TIMEOUT => 30,
+  CURLOPT_TIMEOUT => 45,
   CURLOPT_CONNECTTIMEOUT => 10,
   CURLOPT_SSL_VERIFYPEER => true,
   CURLOPT_SSL_VERIFYHOST => 2,
@@ -105,14 +139,33 @@ if ($httpCode < 200 || $httpCode >= 300) {
   exit;
 }
 
-$clientSecret = is_array($decoded) ? ($decoded['client_secret'] ?? '') : '';
-if ($clientSecret === '') {
+function ai_chat_extract_output_text(array $response): string {
+  if (isset($response['output_text']) && is_string($response['output_text']) && trim($response['output_text']) !== '') {
+    return trim($response['output_text']);
+  }
+
+  $parts = [];
+  foreach (($response['output'] ?? []) as $item) {
+    if (!is_array($item)) continue;
+    foreach (($item['content'] ?? []) as $content) {
+      if (!is_array($content)) continue;
+      if (isset($content['text']) && is_string($content['text'])) {
+        $parts[] = $content['text'];
+      }
+    }
+  }
+
+  return trim(implode("\n", $parts));
+}
+
+$reply = is_array($decoded) ? ai_chat_extract_output_text($decoded) : '';
+if ($reply === '') {
   http_response_code(502);
-  echo json_encode(['error' => 'Risposta OpenAI senza client_secret']);
+  echo json_encode(['error' => 'Risposta OpenAI senza testo.']);
   exit;
 }
 
 echo json_encode([
-  'client_secret' => $clientSecret,
-  'workflow' => $decoded['workflow'] ?? null,
+  'response_id' => $decoded['id'] ?? null,
+  'message' => $reply,
 ]);
