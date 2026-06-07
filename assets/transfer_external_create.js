@@ -12,8 +12,15 @@
     const wrap = document.getElementById('companyWrap');
     const input = document.getElementById('service_company');
     const type = document.getElementById('transfer_type');
+    const form = document.getElementById('extForm');
+    const sendEmailInput = document.getElementById('send_supplier_email');
+    const emailPreview = document.getElementById('transferEmailPreview');
+    const emailModalElement = document.getElementById('transferEmailConfirmModal');
+    const emailSendButton = document.getElementById('transferEmailSendButton');
+    const emailSkipButton = document.getElementById('transferEmailSkipButton');
     const singleFields = document.getElementById('singleTransferFields');
     const roundTripFields = document.getElementById('roundTripTransferFields');
+    let confirmedSubmit = false;
 
     function syncCompanyField(){
       if (!booked || !wrap || !input) return;
@@ -87,11 +94,119 @@
       document.querySelectorAll('[data-travel-place]').forEach(syncTravelReference);
     }
 
+    function fieldValue(name) {
+      if (!form) return '';
+      const field = form.elements[name];
+      return field ? (field.value || '').trim() : '';
+    }
+
+    function selectedText(name) {
+      if (!form) return '';
+      const field = form.elements[name];
+      if (!field || !field.options || field.selectedIndex < 0) return fieldValue(name);
+      return field.options[field.selectedIndex].text.trim();
+    }
+
+    function typeLabel(value) {
+      if (value === 'arrivo') return 'Arrivo';
+      if (value === 'partenza') return 'Partenza';
+      if (value === 'arrivo_partenza') return 'Arrivo e Partenza';
+      return value || '—';
+    }
+
+    function formatDateTime(date, time) {
+      if (!date && !time) return '—';
+      let formattedDate = date || '';
+      const parts = date ? date.split('-') : [];
+      if (parts.length === 3) formattedDate = parts[2] + '/' + parts[1] + '/' + parts[0];
+      return (formattedDate + (time ? ' ' + time : '')).trim();
+    }
+
+    function optionalValue(value) {
+      return value || '—';
+    }
+
+    function addReferenceLines(lines, flightName, trainName, prefix) {
+      const flight = fieldValue(flightName);
+      const train = fieldValue(trainName);
+      if (flight) lines.push((prefix || '') + 'Numero volo: ' + flight);
+      if (train) lines.push((prefix || '') + 'Numero treno: ' + train);
+    }
+
+    function buildTransferDetails() {
+      const currentType = fieldValue('type');
+      const lines = [
+        'Tipo: ' + typeLabel(currentType),
+        'Camera: ' + optionalValue(fieldValue('room_number')),
+        'Nominativo: ' + optionalValue(fieldValue('guest_name')),
+        'Numero persone: ' + optionalValue(fieldValue('people_count')),
+        'Prezzo: € ' + optionalValue(fieldValue('price_eur')),
+      ];
+
+      if (currentType === 'arrivo_partenza') {
+        lines.push('', 'Arrivo:');
+        lines.push('- Luogo: ' + optionalValue(selectedText('arrival_place')));
+        lines.push('- Data/Ora: ' + formatDateTime(fieldValue('arrival_date'), fieldValue('arrival_time')));
+        lines.push('- Pickup: ' + optionalValue(fieldValue('arrival_pickup_time')));
+        addReferenceLines(lines, 'arrival_flight_number', 'arrival_train_number', '- ');
+        lines.push('', 'Partenza:');
+        lines.push('- Luogo: ' + optionalValue(selectedText('departure_place')));
+        lines.push('- Data/Ora: ' + formatDateTime(fieldValue('departure_date'), fieldValue('departure_time')));
+        lines.push('- Pickup: ' + optionalValue(fieldValue('departure_pickup_time')));
+        addReferenceLines(lines, 'departure_flight_number', 'departure_train_number', '- ');
+      } else {
+        lines.push('Luogo: ' + optionalValue(selectedText('place')));
+        lines.push('Data/Ora: ' + formatDateTime(fieldValue('date'), fieldValue('time')));
+        lines.push('Pickup: ' + optionalValue(fieldValue('pickup_time')));
+        addReferenceLines(lines, 'flight_number', 'train_number', '');
+      }
+
+      return lines.join('\n');
+    }
+
+    function buildEmailBody() {
+      const supplier = optionalValue(fieldValue('supplier_name'));
+      return 'Gentile ' + supplier + ', \n' +
+        'se possibile vorremmo prenotare un transfer con i seguenti dettagli: ' + buildTransferDetails() +
+        '\n\n\nRestiamo in attesa di conferma \nGrazie';
+    }
+
+    function submitWithEmailChoice(sendEmail) {
+      if (!form || !sendEmailInput) return;
+      sendEmailInput.value = sendEmail ? '1' : '0';
+      confirmedSubmit = true;
+      if (window.bootstrap && emailModalElement) {
+        const modal = window.bootstrap.Modal.getInstance(emailModalElement);
+        if (modal) modal.hide();
+      }
+      form.requestSubmit();
+    }
+
     if (booked) booked.addEventListener('change', syncCompanyField);
     if (type) type.addEventListener('change', syncTransferType);
     document.querySelectorAll('[data-travel-place]').forEach(function(select){
       select.addEventListener('change', function(){ syncTravelReference(select); });
     });
+
+    if (form && emailModalElement && emailPreview && sendEmailInput) {
+      form.addEventListener('submit', function(event){
+        if (confirmedSubmit) return;
+        if (!form.checkValidity()) return;
+        event.preventDefault();
+        emailPreview.textContent = buildEmailBody();
+        if (window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(emailModalElement).show();
+          return;
+        }
+        submitWithEmailChoice(window.confirm(buildEmailBody() + '\n\nInviare questa email a simone@villaggiotramonto.it?'));
+      });
+    }
+    if (emailSendButton) {
+      emailSendButton.addEventListener('click', function(){ submitWithEmailChoice(true); });
+    }
+    if (emailSkipButton) {
+      emailSkipButton.addEventListener('click', function(){ submitWithEmailChoice(false); });
+    }
 
     syncCompanyField();
     syncTransferType();

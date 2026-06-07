@@ -3,6 +3,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/mailer.php';
 
 start_session();
 $env  = require __DIR__ . '/config/env.php';
@@ -79,6 +80,83 @@ function transfer_external_optional_time(?string $time): ?string {
 function transfer_external_required_datetime(string $date, string $time): ?DateTime {
   $dt = DateTime::createFromFormat('Y-m-d H:i', trim($date) . ' ' . trim($time));
   return $dt ?: null;
+}
+
+function transfer_external_type_label(string $type): string {
+  return match ($type) {
+    'arrivo' => 'Arrivo',
+    'partenza' => 'Partenza',
+    'arrivo_partenza' => 'Arrivo e Partenza',
+    default => ucfirst($type),
+  };
+}
+
+function transfer_external_format_datetime(?DateTime $dateTime): string {
+  return $dateTime ? $dateTime->format('d/m/Y H:i') : '—';
+}
+
+function transfer_external_format_time(?string $time): string {
+  return $time ? substr($time, 0, 5) : '—';
+}
+
+function transfer_external_build_email_details(
+  string $type,
+  string $room,
+  string $name,
+  int $people,
+  string $price,
+  ?string $place,
+  ?DateTime $dateTime,
+  ?string $pickupDb,
+  ?string $flightNumber,
+  ?string $trainNumber,
+  ?string $arrivalPlace,
+  ?DateTime $arrivalDateTime,
+  ?string $arrivalPickupDb,
+  ?string $arrivalFlightNumber,
+  ?string $arrivalTrainNumber,
+  ?string $departurePlace,
+  ?DateTime $departureDateTime,
+  ?string $departurePickupDb,
+  ?string $departureFlightNumber,
+  ?string $departureTrainNumber
+): string {
+  $lines = [
+    'Tipo: ' . transfer_external_type_label($type),
+    'Camera: ' . $room,
+    'Nominativo: ' . $name,
+    'Numero persone: ' . $people,
+    'Prezzo: € ' . number_format((float)$price, 2, ',', '.'),
+  ];
+
+  if ($type === 'arrivo_partenza') {
+    $lines[] = '';
+    $lines[] = 'Arrivo:';
+    $lines[] = '- Luogo: ' . ($arrivalPlace ?: '—');
+    $lines[] = '- Data/Ora: ' . transfer_external_format_datetime($arrivalDateTime);
+    $lines[] = '- Pickup: ' . transfer_external_format_time($arrivalPickupDb);
+    if ($arrivalFlightNumber) $lines[] = '- Numero volo: ' . $arrivalFlightNumber;
+    if ($arrivalTrainNumber) $lines[] = '- Numero treno: ' . $arrivalTrainNumber;
+    $lines[] = '';
+    $lines[] = 'Partenza:';
+    $lines[] = '- Luogo: ' . ($departurePlace ?: '—');
+    $lines[] = '- Data/Ora: ' . transfer_external_format_datetime($departureDateTime);
+    $lines[] = '- Pickup: ' . transfer_external_format_time($departurePickupDb);
+    if ($departureFlightNumber) $lines[] = '- Numero volo: ' . $departureFlightNumber;
+    if ($departureTrainNumber) $lines[] = '- Numero treno: ' . $departureTrainNumber;
+  } else {
+    $lines[] = 'Luogo: ' . ($place ?: '—');
+    $lines[] = 'Data/Ora: ' . transfer_external_format_datetime($dateTime);
+    $lines[] = 'Pickup: ' . transfer_external_format_time($pickupDb);
+    if ($flightNumber) $lines[] = 'Numero volo: ' . $flightNumber;
+    if ($trainNumber) $lines[] = 'Numero treno: ' . $trainNumber;
+  }
+
+  return implode("\n", $lines);
+}
+
+function transfer_external_build_supplier_email_body(string $supplierName, string $details): string {
+  return "Gentile {$supplierName}, \nse possibile vorremmo prenotare un transfer con i seguenti dettagli: {$details}\n\n\nRestiamo in attesa di conferma \nGrazie";
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -221,6 +299,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $departureTrainNumber,
           $user['id'],
         ]);
+
+        if (($_POST['send_supplier_email'] ?? '0') === '1') {
+          $emailDetails = transfer_external_build_email_details(
+            $type,
+            $room,
+            $name,
+            (int)$people,
+            (string)$price,
+            $place,
+            $dateTime,
+            $pickupDb,
+            $flightNumber,
+            $trainNumber,
+            $arrivalPlace,
+            $arrivalDateTime,
+            $arrivalPickupDb,
+            $arrivalFlightNumber,
+            $arrivalTrainNumber,
+            $departurePlace,
+            $departureDateTime,
+            $departurePickupDb,
+            $departureFlightNumber,
+            $departureTrainNumber
+          );
+          $emailBody = transfer_external_build_supplier_email_body($supplierName, $emailDetails);
+          send_mail(
+            'simone@villaggiotramonto.it',
+            'Richiesta prenotazione transfer',
+            nl2br(e($emailBody), false)
+          );
+        }
+
         header('Location: ' . $base . '/transfers_external.php');
         exit;
       } catch (PDOException $e) {
@@ -243,6 +353,7 @@ include __DIR__ . '/partials/header.php';
         <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
         <form method="post" id="extForm">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+          <input type="hidden" name="send_supplier_email" id="send_supplier_email" value="0">
           <div class="row g-3">
 
             <div class="col-md-3">
@@ -408,10 +519,30 @@ include __DIR__ . '/partials/header.php';
           </div>
 
           <div class="mt-3 d-flex gap-2">
-            <button class="btn btn-primary">Crea transfer</button>
+            <button class="btn btn-primary" type="submit">Crea Transfer</button>
             <a class="btn btn-outline-secondary" href="<?= e($base) ?>/transfers_external.php">Annulla</a>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="transferEmailConfirmModal" tabindex="-1" aria-labelledby="transferEmailConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="transferEmailConfirmModalLabel">Conferma invio email al fornitore</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-2">Vuoi inviare questa richiesta via email a <strong>simone@villaggiotramonto.it</strong>?</p>
+        <pre class="border rounded bg-light p-3 small mb-0" id="transferEmailPreview" style="white-space: pre-wrap;"></pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-secondary" id="transferEmailSkipButton">Crea senza inviare email</button>
+        <button type="button" class="btn btn-primary" id="transferEmailSendButton">Crea e invia email</button>
       </div>
     </div>
   </div>
