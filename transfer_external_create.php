@@ -20,6 +20,8 @@ $places = [
   'Stazione Rosarno'
 ];
 
+$suppliers = ['Dany Express', 'Nino', 'Altro'];
+
 $message = '';
 $form = [
   'type' => 'arrivo',
@@ -45,6 +47,7 @@ $form = [
   'guest_name' => '',
   'people_count' => '',
   'price_eur' => '',
+  'supplier_name' => $suppliers[0],
   'booked' => 0,
   'paid' => 0,
   'service_company' => '',
@@ -98,6 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priceRaw = $form['price_eur'];
     $booked = (int)$form['booked'];
     $paid = (int)$form['paid'];
+    $supplierName = in_array($form['supplier_name'], $suppliers, true) ? $form['supplier_name'] : '';
+    if ($supplierName === '') {
+      $message = 'Seleziona un fornitore valido.';
+    }
 
     $serviceCompany = null;
     if ($booked) {
@@ -184,8 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$message) {
       try {
         $sql = 'INSERT INTO transfers_external
-                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, supplier_name, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
           $type,
@@ -199,6 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $booked,
           $paid,
           $serviceCompany,
+          $supplierName,
           $flightNumber,
           $trainNumber,
           $arrivalPlace,
@@ -363,6 +371,15 @@ include __DIR__ . '/partials/header.php';
                 <span class="input-group-text">€</span>
                 <input type="number" name="price_eur" class="form-control" min="0" step="0.01" value="<?= e($form['price_eur']) ?>" required>
               </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Fornitore</label>
+              <select name="supplier_name" class="form-select" required>
+                <?php foreach ($suppliers as $supplier): ?>
+                  <option value="<?= e($supplier) ?>" <?= $form['supplier_name'] === $supplier ? 'selected' : '' ?>><?= e($supplier) ?></option>
+                <?php endforeach; ?>
+              </select>
             </div>
 
             <div class="col-md-4 d-flex align-items-center">

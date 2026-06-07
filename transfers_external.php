@@ -64,6 +64,7 @@ include __DIR__ . '/partials/header.php';
             <th>Rif.</th>
             <th>Camera</th>
             <th>Nominativo</th>
+            <th>Fornitore</th>
             <th>Compagnia</th>
             <th class="text-center">Persone</th>
             <th>Prezzo</th>
@@ -146,6 +147,7 @@ include __DIR__ . '/partials/header.php';
             <td><?= $referenceParts ? e(implode(' · ', $referenceParts)) : '—' ?></td>
             <td><?= e($r['room_number']) ?></td>
             <td><?= e($r['guest_name']) ?></td>
+            <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
             <td><?= $r['booked'] ? e($r['service_company'] ?? '') : '—' ?></td>
             <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
             <td>

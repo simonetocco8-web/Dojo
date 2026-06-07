@@ -137,7 +137,8 @@ CREATE TABLE IF NOT EXISTS overtime_entries (
 -- Dettagli transfer esterni per arrivo/partenza e riferimenti viaggio
 ALTER TABLE transfers_external
   MODIFY COLUMN type VARCHAR(32) NOT NULL DEFAULT 'arrivo',
-  ADD COLUMN IF NOT EXISTS flight_number VARCHAR(80) DEFAULT NULL AFTER service_company,
+  ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company,
+  ADD COLUMN IF NOT EXISTS flight_number VARCHAR(80) DEFAULT NULL AFTER supplier_name,
   ADD COLUMN IF NOT EXISTS train_number VARCHAR(80) DEFAULT NULL AFTER flight_number,
   ADD COLUMN IF NOT EXISTS arrival_place VARCHAR(190) DEFAULT NULL AFTER train_number,
   ADD COLUMN IF NOT EXISTS arrival_date_time DATETIME DEFAULT NULL AFTER arrival_place,

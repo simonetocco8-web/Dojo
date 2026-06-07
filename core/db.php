@@ -163,6 +163,7 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'transfers_external'
       AND COLUMN_NAME IN (
+        'supplier_name',
         'flight_number', 'train_number',
         'arrival_place', 'arrival_date_time', 'arrival_pickup_time', 'arrival_flight_number', 'arrival_train_number',
         'departure_place', 'departure_date_time', 'departure_pickup_time', 'departure_flight_number', 'departure_train_number'
@@ -170,8 +171,11 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
   ");
   $columns = array_fill_keys($stmt->fetchAll(PDO::FETCH_COLUMN), true);
 
+  if (empty($columns['supplier_name'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company");
+  }
   if (empty($columns['flight_number'])) {
-    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN flight_number VARCHAR(80) DEFAULT NULL AFTER service_company");
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN flight_number VARCHAR(80) DEFAULT NULL AFTER supplier_name");
   }
   if (empty($columns['train_number'])) {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN train_number VARCHAR(80) DEFAULT NULL AFTER flight_number");
