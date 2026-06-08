@@ -16,10 +16,11 @@ function internal_transfer_navettista_phones(PDO $pdo): array {
 }
 
 function send_due_internal_transfer_reminders(PDO $pdo, array $env): array {
+  ensure_transfer_internal_details_columns($pdo);
   ensure_transfer_internal_sms_reminders_table($pdo);
 
   $stmt = $pdo->query("
-    SELECT t.id, t.room_number, t.direction, t.location, t.when_at
+    SELECT t.id, t.room_number, t.direction, t.location, t.people_count, t.note, t.when_at
     FROM transfers_internal t
     LEFT JOIN transfer_internal_sms_reminders r ON r.transfer_id = t.id AND r.sent_at IS NOT NULL
     WHERE t.deleted_at IS NULL
@@ -42,6 +43,8 @@ function send_due_internal_transfer_reminders(PDO $pdo, array $env): array {
         'location' => $transfer['location'],
         'date' => $whenAt->format('d/m/Y'),
         'time' => $whenAt->format('H:i'),
+        'people_count' => $transfer['people_count'],
+        'note' => $transfer['note'],
         'recipients' => $recipients,
       ));
 
