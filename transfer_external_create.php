@@ -156,7 +156,21 @@ function transfer_external_build_email_details(
 }
 
 function transfer_external_build_supplier_email_body(string $supplierName, string $details): string {
-  return "Gentile {$supplierName}, \nse possibile vorremmo prenotare un transfer con i seguenti dettagli: {$details}\n\n\nRestiamo in attesa di conferma \nGrazie";
+  $safeSupplier = htmlspecialchars($supplierName, ENT_QUOTES, 'UTF-8');
+  $safeDetails = nl2br(htmlspecialchars($details, ENT_QUOTES, 'UTF-8'), false);
+
+  return <<<HTML
+<div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+  <p>Gentile <strong>{$safeSupplier}</strong>,</p>
+  <p>se possibile vorremmo prenotare un transfer con i seguenti dettagli:</p>
+  <div style="background: #f8fafc; border: 1px solid #dbe3ef; border-radius: 8px; padding: 14px 16px; margin: 16px 0;">
+    {$safeDetails}
+  </div>
+  <p>Restiamo in attesa di conferma.</p>
+  <p>Grazie</p>
+  <p style="color: #6b7280; font-size: 13px; margin-top: 24px;">Booking Villaggio Tramonto</p>
+</div>
+HTML;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -327,7 +341,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           send_mail(
             'simone@villaggiotramonto.it',
             'Richiesta prenotazione transfer',
-            nl2br(e($emailBody), false)
+            $emailBody,
+            'booking@villaggiotramonto.it'
           );
         }
 
