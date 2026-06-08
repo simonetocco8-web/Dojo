@@ -25,6 +25,7 @@ require_once __DIR__ . '/../dompdf/vendor/autoload.php';
  *                                           will be created.
  * @param PDO|null       $pdo                Existing PDO connection to reuse when available.
  * @param Throwable|null $dbConnectionError  Receives the connection exception, if any.
+ * @param array|null     $taskAudienceUser   User used to filter the daily tasks table.
  *
  * @throws InvalidArgumentException When the provided date is invalid.
  *
@@ -34,7 +35,8 @@ function generate_daily_summary_pdf(
     ?string $dateYmd = null,
     ?string $outputPath = null,
     ?PDO $pdo = null,
-    ?Throwable &$dbConnectionError = null
+    ?Throwable &$dbConnectionError = null,
+    ?array $taskAudienceUser = null
 ): string {
     if ($pdo === null && $dbConnectionError === null) {
         try {
@@ -62,10 +64,41 @@ function generate_daily_summary_pdf(
 
     // --- Tasks (top 10 for the day) ---
     if ($pdo instanceof PDO) {
+        ensure_task_user_assignments_table($pdo);
+
+        $taskWhere = [
+            't.deleted_at IS NULL',
+            't.due_date = ?',
+        ];
+        $taskArgs = [$dayYmd];
+
+        if ($taskAudienceUser !== null) {
+            $audienceUserId = (int)($taskAudienceUser['id'] ?? 0);
+            $audienceDepartments = user_departments($taskAudienceUser);
+            $departmentConditions = [];
+
+            $audienceConditions = [];
+            if ($audienceUserId > 0) {
+                $audienceConditions[] = 'EXISTS (SELECT 1 FROM task_user_assignments tua_user WHERE tua_user.task_id = t.id AND tua_user.user_id = ?)';
+                $taskArgs[] = $audienceUserId;
+            }
+
+            foreach ($audienceDepartments as $department) {
+                $departmentConditions[] = 't.dipartimento = ?';
+                $taskArgs[] = $department;
+            }
+
+            if ($departmentConditions) {
+                $audienceConditions[] = '(NOT EXISTS (SELECT 1 FROM task_user_assignments tua_any WHERE tua_any.task_id = t.id) AND (' . implode(' OR ', $departmentConditions) . '))';
+            }
+
+            $taskWhere[] = $audienceConditions ? '(' . implode(' OR ', $audienceConditions) . ')' : '1 = 0';
+        }
+
         $taskStmt = $pdo->prepare(
-            "SELECT title, description, priority, dipartimento, status\n         FROM tasks\n         WHERE deleted_at IS NULL\n           AND due_date = ?\n         ORDER BY FIELD(priority, 'urgente','alta','media','bassa') ASC, id DESC\n         LIMIT 10"
+            "SELECT t.title, t.description, t.priority, t.dipartimento, t.status\n         FROM tasks t\n         WHERE " . implode("\n           AND ", $taskWhere) . "\n         ORDER BY FIELD(t.priority, 'urgente','alta','media','bassa') ASC, t.id DESC\n         LIMIT 10"
         );
-        $taskStmt->execute([$dayYmd]);
+        $taskStmt->execute($taskArgs);
         $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $tasks = [];
@@ -117,8 +150,10 @@ function generate_daily_summary_pdf(
 
     // --- Low stock products (top 10) ---
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_products_active_column($pdo);
+
         $lowStockStmt = $pdo->query(
-            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
+            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         WHERE COALESCE(p.is_active, 1) = 1\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
         );
         $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
@@ -441,6 +476,35 @@ function generate_daily_summary_pdf(
 }
 
 /**
+ * Recupera gli utenti attivi dei reparti Amministrazione e Reception che ricevono il report.
+ *
+ * @param PDO $pdo
+ * @return array<int, array<string, mixed>>
+ */
+function fetch_daily_summary_recipient_users(PDO $pdo): array
+{
+    $stmt = $pdo->prepare(
+        "SELECT id, email, nome, cognome, dipartimento\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND (FIND_IN_SET('Amministrazione', REPLACE(dipartimento, ' ', '')) > 0 OR FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0)\n         ORDER BY cognome ASC, nome ASC, email ASC"
+    );
+    $stmt->execute();
+
+    $recipientUsers = [];
+    $seenEmails = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $recipientUser) {
+        $email = trim((string)($recipientUser['email'] ?? ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || isset($seenEmails[$email])) {
+            continue;
+        }
+
+        $recipientUser['email'] = $email;
+        $recipientUsers[] = $recipientUser;
+        $seenEmails[$email] = true;
+    }
+
+    return $recipientUsers;
+}
+
+/**
  * Recupera gli indirizzi email degli utenti attivi dei reparti Amministrazione e Reception.
  *
  * @param PDO $pdo
@@ -448,22 +512,10 @@ function generate_daily_summary_pdf(
  */
 function fetch_daily_summary_recipients(PDO $pdo): array
 {
-    $stmt = $pdo->prepare(
-        "SELECT email\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND (FIND_IN_SET('Amministrazione', REPLACE(dipartimento, ' ', '')) > 0 OR FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0)"
+    return array_map(
+        static fn (array $recipientUser): string => (string)$recipientUser['email'],
+        fetch_daily_summary_recipient_users($pdo)
     );
-    $stmt->execute();
-
-    $emails = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    $validEmails = [];
-    foreach ($emails as $email) {
-        $email = trim((string)$email);
-        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $validEmails[$email] = true; // usa le chiavi per evitare duplicati
-        }
-    }
-
-    return array_keys($validEmails);
 }
 
 function encode_mime_header_utf8(string $value): string
@@ -596,7 +648,8 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
  *     db_error: ?Throwable,
  *     recipients: string[],
  *     mail_summary: array{attempted: string[], invalid: string[], failed: string[]},
- *     mail_skipped: bool
+ *     mail_skipped: bool,
+ *     recipient_pdfs: array<string, string>
  * }
  */
 function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = null): array
@@ -623,7 +676,8 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
 
     $generatedPath = generate_daily_summary_pdf($reportDate->format('Y-m-d'), $pathArg, $pdo, $dbError);
 
-    $recipients  = [];
+    $recipients = [];
+    $recipientPdfs = [];
     $mailSummary = [
         'attempted' => [],
         'invalid'   => [],
@@ -632,9 +686,13 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
     $mailSkipped = false;
 
     if ($pdo instanceof PDO) {
-        $recipients = fetch_daily_summary_recipients($pdo);
+        $recipientUsers = fetch_daily_summary_recipient_users($pdo);
+        $recipients = array_map(
+            static fn (array $recipientUser): string => (string)$recipientUser['email'],
+            $recipientUsers
+        );
 
-        if ($recipients) {
+        if ($recipientUsers) {
             $displayDate = $reportDate->format('d/m/Y');
             $subject     = 'Riepilogo giornaliero ' . $displayDate;
             $body        = '<p>Buongiorno,</p>'
@@ -642,19 +700,48 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
                 . '<p>Questo messaggio è stato generato automaticamente.</p>';
             $filename    = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
 
-            $mailSummary = send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
+            foreach ($recipientUsers as $recipientUser) {
+                $recipientPdfPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+                    . DIRECTORY_SEPARATOR
+                    . 'daily_summary_' . $reportDate->format('Ymd') . '_user_' . (int)$recipientUser['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
+
+                $recipientPdfs[(string)$recipientUser['email']] = generate_daily_summary_pdf(
+                    $reportDate->format('Y-m-d'),
+                    $recipientPdfPath,
+                    $pdo,
+                    $dbError,
+                    $recipientUser
+                );
+
+                $singleMailSummary = send_daily_summary_pdf_email(
+                    [(string)$recipientUser['email']],
+                    $subject,
+                    $body,
+                    $recipientPdfs[(string)$recipientUser['email']],
+                    $filename
+                );
+
+                foreach (['attempted', 'invalid', 'failed'] as $summaryKey) {
+                    $mailSummary[$summaryKey] = array_merge($mailSummary[$summaryKey], $singleMailSummary[$summaryKey]);
+                }
+            }
+
+            foreach (['attempted', 'invalid', 'failed'] as $summaryKey) {
+                $mailSummary[$summaryKey] = array_values(array_unique($mailSummary[$summaryKey]));
+            }
         }
     } else {
         $mailSkipped = true;
     }
 
     return [
-        'path'         => $generatedPath,
-        'date'         => $reportDate,
-        'db_error'     => $dbError,
-        'recipients'   => $recipients,
-        'mail_summary' => $mailSummary,
-        'mail_skipped' => $mailSkipped,
+        'path'           => $generatedPath,
+        'date'           => $reportDate,
+        'db_error'       => $dbError,
+        'recipients'     => $recipients,
+        'mail_summary'   => $mailSummary,
+        'mail_skipped'   => $mailSkipped,
+        'recipient_pdfs' => $recipientPdfs,
     ];
 }
 
