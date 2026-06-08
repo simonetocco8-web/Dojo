@@ -158,7 +158,28 @@ include __DIR__ . '/partials/header.php';
             <td class="text-center"><?= $r['booked'] ? '✔' : '—' ?></td>
             <td class="text-center"><?= $r['paid'] ? '✔' : '—' ?></td>
             <td>
-              <?php if(($r['status'] ?? 'attivo') === 'annullato'): ?>
+              <?php if(($r['status'] ?? 'attivo') === 'rifiutato'): ?>
+                <span class="badge bg-danger">Rifiutato</span>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1" title="Motivazione rifiuto" data-bs-toggle="modal" data-bs-target="#rejectReason_<?= (int)$r['id'] ?>">
+                  <i class="bi bi-exclamation-octagon"></i>
+                </button>
+                <div class="modal fade" id="rejectReason_<?= (int)$r['id'] ?>" tabindex="-1" aria-labelledby="rejectReasonLabel_<?= (int)$r['id'] ?>" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="rejectReasonLabel_<?= (int)$r['id'] ?>">Motivazione rifiuto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                      </div>
+                      <div class="modal-body"><?= e($r['rejection_reason'] ?: 'Nessuna motivazione indicata.') ?></div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <?php elseif(($r['status'] ?? 'attivo') === 'prenotato'): ?>
+                <span class="badge bg-primary">Prenotato</span>
+              <?php elseif(($r['status'] ?? 'attivo') === 'annullato'): ?>
                 <span class="badge bg-warning text-dark">Annullato</span>
               <?php else: ?>
                 <span class="badge bg-success">Attivo</span>

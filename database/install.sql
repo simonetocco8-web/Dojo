@@ -137,8 +137,14 @@ CREATE TABLE IF NOT EXISTS overtime_entries (
 -- Dettagli transfer esterni per arrivo/partenza e riferimenti viaggio
 ALTER TABLE transfers_external
   MODIFY COLUMN type VARCHAR(32) NOT NULL DEFAULT 'arrivo',
+  MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'attivo',
   ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company,
-  ADD COLUMN IF NOT EXISTS flight_number VARCHAR(80) DEFAULT NULL AFTER supplier_name,
+  ADD COLUMN IF NOT EXISTS supplier_confirm_token VARCHAR(64) DEFAULT NULL AFTER supplier_name,
+  ADD COLUMN IF NOT EXISTS supplier_reject_token VARCHAR(64) DEFAULT NULL AFTER supplier_confirm_token,
+  ADD COLUMN IF NOT EXISTS supplier_token_expires_at DATETIME DEFAULT NULL AFTER supplier_reject_token,
+  ADD COLUMN IF NOT EXISTS supplier_responded_at DATETIME DEFAULT NULL AFTER supplier_token_expires_at,
+  ADD COLUMN IF NOT EXISTS rejection_reason VARCHAR(255) DEFAULT NULL AFTER supplier_responded_at,
+  ADD COLUMN IF NOT EXISTS flight_number VARCHAR(80) DEFAULT NULL AFTER rejection_reason,
   ADD COLUMN IF NOT EXISTS train_number VARCHAR(80) DEFAULT NULL AFTER flight_number,
   ADD COLUMN IF NOT EXISTS arrival_place VARCHAR(190) DEFAULT NULL AFTER train_number,
   ADD COLUMN IF NOT EXISTS arrival_date_time DATETIME DEFAULT NULL AFTER arrival_place,

@@ -25,10 +25,10 @@ if (!$row) { header('Location: ' . $base . '/transfers_external.php'); exit; }
 try {
   switch ($act) {
     case 'set_booked':
-      $pdo->prepare('UPDATE transfers_external SET booked=1 WHERE id=?')->execute([$id]);
+      $pdo->prepare("UPDATE transfers_external SET booked=1, status='prenotato' WHERE id=?")->execute([$id]);
       break;
     case 'unset_booked':
-      $pdo->prepare('UPDATE transfers_external SET booked=0, service_company=NULL WHERE id=?')->execute([$id]);
+      $pdo->prepare("UPDATE transfers_external SET booked=0, service_company=NULL, status='attivo' WHERE id=?")->execute([$id]);
       break;
     case 'toggle_paid':
       $new = $row['paid'] ? 0 : 1;

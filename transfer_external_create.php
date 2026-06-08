@@ -155,17 +155,32 @@ function transfer_external_build_email_details(
   return implode("\n", $lines);
 }
 
-function transfer_external_build_supplier_email_body(string $supplierName, string $details): string {
+function transfer_external_public_base_url(string $base): string {
+  $base = rtrim($base, '/');
+  $host = $_SERVER['HTTP_HOST'] ?? '';
+  if ($host === '') return $base;
+  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+  return $scheme . '://' . $host . $base;
+}
+
+function transfer_external_build_supplier_email_body(string $supplierName, string $details, string $confirmUrl, string $rejectUrl): string {
   $safeSupplier = htmlspecialchars($supplierName, ENT_QUOTES, 'UTF-8');
   $safeDetails = nl2br(htmlspecialchars($details, ENT_QUOTES, 'UTF-8'), false);
+  $safeConfirmUrl = htmlspecialchars($confirmUrl, ENT_QUOTES, 'UTF-8');
+  $safeRejectUrl = htmlspecialchars($rejectUrl, ENT_QUOTES, 'UTF-8');
 
   return <<<HTML
-<div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+<div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5; max-width: 680px;">
   <p>Gentile <strong>{$safeSupplier}</strong>,</p>
   <p>se possibile vorremmo prenotare un transfer con i seguenti dettagli:</p>
   <div style="background: #f8fafc; border: 1px solid #dbe3ef; border-radius: 8px; padding: 14px 16px; margin: 16px 0;">
     {$safeDetails}
   </div>
+  <p style="margin-top: 18px;">Puoi confermare o rifiutare la richiesta usando i pulsanti qui sotto entro 24 ore.</p>
+  <p style="margin: 24px 0;">
+    <a href="{$safeConfirmUrl}" style="display: inline-block; background: #198754; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 26px; border-radius: 8px; margin-right: 12px;">Conferma</a>
+    <a href="{$safeRejectUrl}" style="display: inline-block; background: #dc3545; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 26px; border-radius: 8px;">Rifiuta</a>
+  </p>
   <p>Restiamo in attesa di conferma.</p>
   <p>Grazie</p>
   <p style="color: #6b7280; font-size: 13px; margin-top: 24px;">Booking Villaggio Tramonto</p>
@@ -282,9 +297,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$message) {
       try {
+        $sendSupplierEmail = ($_POST['send_supplier_email'] ?? '0') === '1';
+        $confirmToken = $sendSupplierEmail ? bin2hex(random_bytes(32)) : null;
+        $rejectToken = $sendSupplierEmail ? bin2hex(random_bytes(32)) : null;
+        $tokenExpiresAt = $sendSupplierEmail ? (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s') : null;
+
         $sql = 'INSERT INTO transfers_external
-                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, supplier_name, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, supplier_name, supplier_confirm_token, supplier_reject_token, supplier_token_expires_at, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
           $type,
@@ -299,6 +319,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $paid,
           $serviceCompany,
           $supplierName,
+          $confirmToken,
+          $rejectToken,
+          $tokenExpiresAt,
           $flightNumber,
           $trainNumber,
           $arrivalPlace,
@@ -314,7 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $user['id'],
         ]);
 
-        if (($_POST['send_supplier_email'] ?? '0') === '1') {
+        if ($sendSupplierEmail && $confirmToken !== null && $rejectToken !== null) {
           $emailDetails = transfer_external_build_email_details(
             $type,
             $room,
@@ -337,7 +360,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $departureFlightNumber,
             $departureTrainNumber
           );
-          $emailBody = transfer_external_build_supplier_email_body($supplierName, $emailDetails);
+          $publicBaseUrl = transfer_external_public_base_url($base);
+          $confirmUrl = $publicBaseUrl . '/transfer_external_supplier_response.php?action=confirm&token=' . urlencode($confirmToken);
+          $rejectUrl = $publicBaseUrl . '/transfer_external_supplier_response.php?action=reject&token=' . urlencode($rejectToken);
+          $emailBody = transfer_external_build_supplier_email_body($supplierName, $emailDetails, $confirmUrl, $rejectUrl);
           send_mail(
             'simone@villaggiotramonto.it',
             'Richiesta prenotazione transfer',
