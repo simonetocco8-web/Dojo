@@ -18,7 +18,8 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
 
 $unpaidTotalsBySupplier = [];
 foreach ($rows as $r) {
-    if (!($r['paid'] ?? 0)) {
+    $status = (string)($r['status'] ?? 'attivo');
+    if (!($r['paid'] ?? 0) && $status === 'prenotato') {
         $supplier = trim((string)($r['supplier_name'] ?? ''));
         if ($supplier === '') {
             $supplier = '—';
@@ -67,7 +68,6 @@ include __DIR__ . '/partials/header.php';
             <th>Fornitore</th>
             <th class="text-center">Persone</th>
             <th>Prezzo</th>
-            <th class="text-center">Pren.</th>
             <th class="text-center">Pag.</th>
             <th>Stato</th>
             <th>Azioni</th>
@@ -155,7 +155,6 @@ include __DIR__ . '/partials/header.php';
                 —
               <?php endif; ?>
             </td>
-            <td class="text-center"><?= $r['booked'] ? '✔' : '—' ?></td>
             <td class="text-center"><?= $r['paid'] ? '✔' : '—' ?></td>
             <td>
               <?php if(($r['status'] ?? 'attivo') === 'rifiutato'): ?>
