@@ -178,7 +178,7 @@ function transfer_external_build_supplier_email_body(string $supplierName, strin
   </div>
   <p style="margin-top: 18px;">Puoi confermare o rifiutare la richiesta usando i pulsanti qui sotto entro 24 ore.</p>
   <p style="margin: 24px 0;">
-    <a href="{$safeConfirmUrl}" style="display: inline-block; background: #198754; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 26px; border-radius: 8px; margin-right: 12px;">Conferma</a>
+    <a href="{$safeConfirmUrl}" style="display: inline-block; background: #198754; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 26px; border-radius: 8px; margin-right: 12px;">Accetta</a>
     <a href="{$safeRejectUrl}" style="display: inline-block; background: #dc3545; color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 26px; border-radius: 8px;">Rifiuta</a>
   </p>
   <p>Restiamo in attesa di conferma.</p>
@@ -365,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $rejectUrl = $publicBaseUrl . '/transfer_external_supplier_response.php?action=reject&token=' . urlencode($rejectToken);
           $emailBody = transfer_external_build_supplier_email_body($supplierName, $emailDetails, $confirmUrl, $rejectUrl);
           send_mail(
-            'simone@villaggiotramonto.it',
+            'daniexpress.viaggi@gmail.com',
             'Richiesta prenotazione transfer',
             $emailBody,
             'booking@villaggiotramonto.it'
@@ -577,7 +577,7 @@ include __DIR__ . '/partials/header.php';
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-2">Vuoi inviare questa richiesta via email a <strong>simone@villaggiotramonto.it</strong>?</p>
+        <p class="mb-2">Vuoi inviare questa richiesta via email a <strong>daniexpress.viaggi@gmail.com</strong>?</p>
         <pre class="border rounded bg-light p-3 small mb-0" id="transferEmailPreview" style="white-space: pre-wrap;"></pre>
       </div>
       <div class="modal-footer">

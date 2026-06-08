@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/mailer.php';
 
 $env = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -59,6 +60,60 @@ function public_transfer_details(array $row): array {
   return $details;
 }
 
+function reception_recipient_emails(PDO $pdo): array {
+  $stmt = $pdo->query("
+    SELECT email
+    FROM users
+    WHERE deleted_at IS NULL
+      AND is_active = 1
+      AND email IS NOT NULL
+      AND email <> ''
+      AND FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0
+  ");
+  $emails = [];
+  foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $email) {
+    $email = trim((string)$email);
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      $emails[$email] = true;
+    }
+  }
+  return array_keys($emails);
+}
+
+function transfer_status_notification_body(array $row, array $details, string $statusLabel, ?string $reason = null): string {
+  $safeStatus = h($statusLabel);
+  $safeSupplier = h($row['supplier_name'] ?? '—');
+  $items = '';
+  foreach ($details as $label => $value) {
+    $items .= '<tr><th style="text-align:left;padding:6px 10px;border-bottom:1px solid #e5e7eb;">' . h($label) . '</th><td style="padding:6px 10px;border-bottom:1px solid #e5e7eb;">' . h($value) . '</td></tr>';
+  }
+  $reasonHtml = $reason !== null && $reason !== ''
+    ? '<p><strong>Motivazione:</strong> ' . h($reason) . '</p>'
+    : '';
+
+  return <<<HTML
+<div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
+  <p>Il fornitore <strong>{$safeSupplier}</strong> ha aggiornato lo stato del transfer.</p>
+  <p><strong>Nuovo stato:</strong> {$safeStatus}</p>
+  {$reasonHtml}
+  <table style="border-collapse: collapse; width: 100%; max-width: 720px;">
+    {$items}
+  </table>
+</div>
+HTML;
+}
+
+function notify_reception_transfer_status(PDO $pdo, array $row, array $details, string $statusLabel, ?string $reason = null): void {
+  $recipients = reception_recipient_emails($pdo);
+  if (!$recipients) return;
+
+  $subject = 'Aggiornamento transfer esterno: ' . $statusLabel;
+  $body = transfer_status_notification_body($row, $details, $statusLabel, $reason);
+  foreach ($recipients as $email) {
+    send_mail($email, $subject, $body, 'booking@villaggiotramonto.it');
+  }
+}
+
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $token = trim((string)($_GET['token'] ?? $_POST['token'] ?? ''));
 $title = 'Risposta transfer';
@@ -94,6 +149,7 @@ if (!in_array($action, ['confirm', 'reject'], true) || $token === '' || !preg_ma
     $row['status'] = 'prenotato';
     $row['rejection_reason'] = null;
     $message = 'Grazie, la prenotazione del transfer è stata confermata.';
+    notify_reception_transfer_status($pdo, $row, public_transfer_details($row), 'Accettato');
   } else {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $reason = trim((string)($_POST['rejection_reason'] ?? ''));
@@ -116,6 +172,7 @@ if (!in_array($action, ['confirm', 'reject'], true) || $token === '' || !preg_ma
         $row['status'] = 'rifiutato';
         $row['rejection_reason'] = $reason;
         $message = 'Grazie, il rifiuto del transfer è stato registrato.';
+        notify_reception_transfer_status($pdo, $row, public_transfer_details($row), 'Rifiutato', $reason);
       }
     } else {
       $needsReason = true;

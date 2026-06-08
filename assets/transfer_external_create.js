@@ -198,7 +198,7 @@
           window.bootstrap.Modal.getOrCreateInstance(emailModalElement).show();
           return;
         }
-        submitWithEmailChoice(window.confirm(buildEmailBody() + '\n\nInviare questa email a simone@villaggiotramonto.it?'));
+        submitWithEmailChoice(window.confirm(buildEmailBody() + '\n\nInviare questa email a daniexpress.viaggi@gmail.com?'));
       });
     }
     if (emailSendButton) {
