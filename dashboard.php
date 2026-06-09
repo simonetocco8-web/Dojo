@@ -16,6 +16,7 @@ $seasonActive = is_today_within_summer_season($pdo);
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
 ensure_products_active_column($pdo);
+ensure_riassetti_status_column($pdo);
 
 // Ruolo e dipartimento
 $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1');
@@ -77,11 +78,12 @@ $riassettiToday = [];
 if ($seasonActive && $can_see_riassetti) {
   $tz = new DateTimeZone('Europe/Rome');
   $todayRiassetto = (new DateTime('today', $tz))->format('Y-m-d');
-  $stRi = $pdo->prepare('SELECT id, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, completed_at
+  $tomorrowRiassetto = (new DateTime('tomorrow', $tz))->format('Y-m-d');
+  $stRi = $pdo->prepare('SELECT id, data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, completed_at
                           FROM riassetti
-                          WHERE data_riassetto = ?
-                          ORDER BY room ASC, id ASC');
-  $stRi->execute([$todayRiassetto]);
+                          WHERE data_riassetto IN (?, ?)
+                          ORDER BY data_riassetto ASC, room ASC, id ASC');
+  $stRi->execute([$todayRiassetto, $tomorrowRiassetto]);
   $riassettiToday = $stRi->fetchAll();
 }
 
@@ -112,6 +114,28 @@ function riassetti_biancheria_short(array $row): string {
   if (!empty($row['qty_singola'])) $parts[] = $row['qty_singola'] . ' Singola';
   if (!empty($row['qty_set_bagno'])) $parts[] = $row['qty_set_bagno'] . ' Set Bagno';
   return $parts ? implode(', ', $parts) : 'Solo controllo';
+}
+
+function riassetti_dashboard_status_label(array $row): string {
+  $status = trim((string)($row['status'] ?? ''));
+  if ($status === '') $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+  return match ($status) {
+    'da_preparare' => 'Da Preparare',
+    'da_consegnare' => 'Da Consegnare',
+    'concluso' => 'Concluso',
+    default => ucfirst(str_replace('_', ' ', $status)),
+  };
+}
+
+function riassetti_dashboard_status_class(array $row): string {
+  $status = trim((string)($row['status'] ?? ''));
+  if ($status === '') $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+  return match ($status) {
+    'da_preparare' => 'bg-info text-dark',
+    'da_consegnare' => 'bg-warning text-dark',
+    'concluso' => 'bg-success',
+    default => 'bg-secondary',
+  };
 }
 
 
@@ -167,17 +191,18 @@ function riassetti_biancheria_short(array $row): string {
       <div class="card shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti di oggi</h2>
+            <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti oggi/domani</h2>
             <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/riassetti.php" title="Vai alla sezione">Apri</a>
           </div>
           <?php if (empty($riassettiToday)): ?>
-            <div class="text-muted small">Nessun riassetto previsto per oggi.</div>
+            <div class="text-muted small">Nessun riassetto previsto per oggi o domani.</div>
           <?php else: ?>
             <ul class="list-group list-group-flush">
               <?php foreach ($riassettiToday as $ri): ?>
                 <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
                   <div class="me-2">
                     <div class="fw-semibold">Camera <?= e($ri['room']) ?></div>
+                    <div class="small text-muted">Data riassetto: <?= it_date($ri['data_riassetto'] ?? '') ?></div>
                     <div class="small text-muted">
                       <?= e(riassetti_biancheria_short($ri)) ?>
                       <?php if (!empty($ri['pulizia_extra'])): ?>
@@ -191,11 +216,7 @@ function riassetti_biancheria_short(array $row): string {
                     <?php endif; ?>
                   </div>
                   <div class="text-end">
-                    <?php if (!empty($ri['completed_at'])): ?>
-                      <span class="badge bg-success">Completato</span>
-                    <?php else: ?>
-                      <span class="badge bg-info text-dark">Da fare</span>
-                    <?php endif; ?>
+                    <span class="badge <?= e(riassetti_dashboard_status_class($ri)) ?>"><?= e(riassetti_dashboard_status_label($ri)) ?></span>
                   </div>
                 </li>
               <?php endforeach; ?>

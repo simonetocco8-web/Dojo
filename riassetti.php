@@ -8,6 +8,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_riassetti_status_column($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
@@ -77,6 +78,34 @@ function format_biancheria(array $row): string {
   if (!empty($row['qty_singola'])) $parts[] = $row['qty_singola'] . ' Singola';
   if (!empty($row['qty_set_bagno'])) $parts[] = $row['qty_set_bagno'] . ' Set Bagno';
   return $parts ? implode(', ', $parts) : '—';
+}
+
+
+function riassetto_status_value(array $row): string {
+  $status = trim((string)($row['status'] ?? ''));
+  if ($status === '') {
+    $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+  }
+  return $status;
+}
+
+function riassetto_status_label(string $status): string {
+  return match ($status) {
+    'da_preparare' => 'Da Preparare',
+    'da_consegnare' => 'Da Consegnare',
+    'concluso' => 'Concluso',
+    default => ucfirst(str_replace('_', ' ', $status)),
+  };
+}
+
+function riassetto_status_badge(string $status): string {
+  $class = match ($status) {
+    'da_preparare' => 'bg-info text-dark',
+    'da_consegnare' => 'bg-warning text-dark',
+    'concluso' => 'bg-success',
+    default => 'bg-secondary',
+  };
+  return '<span class="badge ' . $class . '">' . e(riassetto_status_label($status)) . '</span>';
 }
 
 function format_data_it(?string $date): string {
@@ -150,7 +179,8 @@ include __DIR__ . '/partials/header.php';
             </thead>
             <tbody>
               <?php foreach ($riassetti as $r): ?>
-              <tr class="<?= $r['completed_at'] ? 'table-success' : '' ?>">
+              <?php $riassettoStatus = riassetto_status_value($r); ?>
+              <tr class="<?= $riassettoStatus === 'concluso' ? 'table-success' : '' ?>">
                 <td><?= e(format_data_it($r['data_riassetto'])) ?></td>
                 <td class="fw-semibold"><?= e($r['room']) ?></td>
                 <td><?= e(format_biancheria($r)) ?></td>
@@ -162,13 +192,7 @@ include __DIR__ . '/partials/header.php';
                   <?php endif; ?>
                 </td>
                 <td class="small"><?= nl2br(e($r['note'] ?? '')) ?></td>
-                <td>
-                  <?php if (!empty($r['completed_at'])): ?>
-                    <span class="badge bg-success">Completato</span>
-                  <?php else: ?>
-                    <span class="badge bg-info text-dark">Da fare</span>
-                  <?php endif; ?>
-                </td>
+                <td><?= riassetto_status_badge($riassettoStatus) ?></td>
                 <td class="text-end text-nowrap">
                   <?php if ($canManage): ?>
                     <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/riassetti_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">
@@ -188,15 +212,20 @@ include __DIR__ . '/partials/header.php';
                       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                       <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
                       <input type="hidden" name="redirect" value="<?= e($_SERVER['REQUEST_URI'] ?? ($base . '/riassetti.php')) ?>">
-                      <?php if (!empty($r['completed_at'])): ?>
-                        <input type="hidden" name="action" value="reopen">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Segna da fare">
-                          <i class="bi bi-arrow-counterclockwise"></i>
+                      <?php if ($riassettoStatus === 'da_preparare'): ?>
+                        <input type="hidden" name="action" value="mark_ready">
+                        <button type="submit" class="btn btn-sm btn-outline-warning" title="Dichiara pronto">
+                          Pronto
+                        </button>
+                      <?php elseif ($riassettoStatus === 'da_consegnare'): ?>
+                        <input type="hidden" name="action" value="close">
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Dichiara chiuso">
+                          Chiuso
                         </button>
                       <?php else: ?>
-                        <input type="hidden" name="action" value="complete">
-                        <button type="submit" class="btn btn-sm btn-outline-success" title="Segna completato">
-                          <i class="bi bi-check2-circle"></i>
+                        <input type="hidden" name="action" value="reopen">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Riporta da preparare">
+                          <i class="bi bi-arrow-counterclockwise"></i>
                         </button>
                       <?php endif; ?>
                     </form>
