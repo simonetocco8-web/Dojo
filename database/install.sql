@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS riassetti (
   qty_set_bagno INT UNSIGNED NOT NULL DEFAULT 0,
   pulizia_extra TINYINT(1) NOT NULL DEFAULT 0,
   note TEXT DEFAULT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'da_preparare',
   google_event_id VARCHAR(255) DEFAULT NULL,
   completed_at DATETIME DEFAULT NULL,
   completed_by INT UNSIGNED DEFAULT NULL,

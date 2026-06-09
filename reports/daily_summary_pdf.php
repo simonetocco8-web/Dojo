@@ -120,12 +120,17 @@ function generate_daily_summary_pdf(
         $tasks = [];
     }
 
-    // --- Riassetti of the day ---
+    // --- Riassetti to prepare today or deliver today ---
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_riassetti_status_column($pdo);
+        $nextDayYmd = (clone $date)->modify('+1 day')->format('Y-m-d');
         $riassettiStmt = $pdo->prepare(
-            "SELECT room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note\n         FROM riassetti\n         WHERE data_riassetto = ?\n         ORDER BY room ASC, id ASC"
+            "SELECT data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, completed_at
+         FROM riassetti
+         WHERE data_riassetto IN (?, ?)
+         ORDER BY data_riassetto ASC, room ASC, id ASC"
         );
-        $riassettiStmt->execute([$dayYmd]);
+        $riassettiStmt->execute([$dayYmd, $nextDayYmd]);
         $riassetti = $riassettiStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $riassetti = [];
@@ -210,6 +215,19 @@ function generate_daily_summary_pdf(
         };
     };
 
+    $riassettoStatusLabel = static function (array $row): string {
+        $status = trim((string)($row['status'] ?? ''));
+        if ($status === '') {
+            $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+        }
+        return match ($status) {
+            'da_preparare' => 'Da Preparare',
+            'da_consegnare' => 'Da Consegnare',
+            'concluso' => 'Concluso',
+            default => ucfirst(str_replace('_', ' ', $status)),
+        };
+    };
+
     $linenSummary = static function (array $row): string {
         $parts = [];
         if (!empty($row['qty_matrimoniale'])) {
@@ -286,25 +304,29 @@ function generate_daily_summary_pdf(
   <table>
     <thead>
       <tr>
+        <th>Data riassetto</th>
         <th>Camera</th>
         <th>Biancheria</th>
         <th>Pulizia extra</th>
+        <th>Stato</th>
         <th>Note</th>
       </tr>
     </thead>
     <tbody>
     <?php foreach ($riassetti as $row): ?>
       <tr>
+        <td><?= e(!empty($row['data_riassetto']) ? (new DateTime($row['data_riassetto']))->format('d/m/Y') : '') ?></td>
         <td><?= e($row['room'] ?? '') ?></td>
         <td><?= e($linenSummary($row)) ?></td>
         <td><?= !empty($row['pulizia_extra']) ? 'Sì' : 'No' ?></td>
+        <td><?= e($riassettoStatusLabel($row)) ?></td>
         <td><?= nl2br(e($row['note'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
   </table>
   <?php else: ?>
-    <p class="muted">Nessun riassetto programmato per oggi.</p>
+    <p class="muted">Nessun riassetto da preparare o consegnare per oggi.</p>
   <?php endif; ?>
 
   <h2>Transfer interni</h2>

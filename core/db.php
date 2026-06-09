@@ -133,6 +133,22 @@ function ensure_products_active_column(PDO $pdo): void {
   }
 }
 
+
+function ensure_riassetti_status_column(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'riassetti'
+      AND COLUMN_NAME = 'status'
+    LIMIT 1
+  ");
+  if (!$stmt->fetch()) {
+    $pdo->exec("ALTER TABLE riassetti ADD COLUMN status VARCHAR(32) NOT NULL DEFAULT 'da_preparare' AFTER note");
+    $pdo->exec("UPDATE riassetti SET status = CASE WHEN completed_at IS NULL THEN 'da_preparare' ELSE 'concluso' END");
+  }
+}
+
 function ensure_overtime_entries_table(PDO $pdo): void {
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS overtime_entries (
