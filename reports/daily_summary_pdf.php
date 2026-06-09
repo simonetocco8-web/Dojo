@@ -11,6 +11,22 @@ require_once __DIR__ . '/../core/security.php';
 require_once __DIR__ . '/../core/settings.php';
 require_once __DIR__ . '/../dompdf/vendor/autoload.php';
 
+
+function format_daily_summary_quantity(mixed $value): string
+{
+    if ($value === null || $value === '') {
+        return '0';
+    }
+
+    $normalized = str_replace(',', '.', (string)$value);
+    if (!is_numeric($normalized)) {
+        return (string)$value;
+    }
+
+    $formatted = number_format((float)$normalized, 3, ',', '');
+    return rtrim(rtrim($formatted, '0'), ',');
+}
+
 /**
  * Generate the daily PDF summary for the given date (defaults to today).
  *
@@ -405,8 +421,8 @@ function generate_daily_summary_pdf(
       <tr>
         <td><?= e($row['title'] ?? '') ?></td>
         <td><?= e($row['category'] ?? '') ?></td>
-        <td><?= e((string)($row['total_qty'] ?? 0)) ?></td>
-        <td><?= e((string)($row['min_qty'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['total_qty'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['min_qty'] ?? 0)) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
