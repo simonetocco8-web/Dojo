@@ -90,6 +90,35 @@ function sms_send_message($env, $recipients, $message) {
   }
 }
 
+
+function sms_utf8_length(string $value): int {
+  return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+}
+
+function sms_utf8_substr(string $value, int $start, int $length): string {
+  return function_exists('mb_substr') ? mb_substr($value, $start, $length, 'UTF-8') : substr($value, $start, $length);
+}
+
+function sms_append_optional_note(string $message, string $note, int $maxLength = 160): string {
+  $note = trim(preg_replace('/\s+/u', ' ', $note) ?? '');
+  if ($note === '') {
+    return sms_utf8_length($message) > $maxLength ? sms_utf8_substr($message, 0, $maxLength) : $message;
+  }
+
+  $prefix = ' - Note ';
+  $remaining = $maxLength - sms_utf8_length($message) - sms_utf8_length($prefix);
+  if ($remaining <= 0) {
+    return sms_utf8_substr($message, 0, $maxLength);
+  }
+
+  if (sms_utf8_length($note) > $remaining) {
+    $ellipsis = '…';
+    $note = sms_utf8_substr($note, 0, max(0, $remaining - sms_utf8_length($ellipsis))) . $ellipsis;
+  }
+
+  return $message . $prefix . $note;
+}
+
 function sms_send_internal_transfer($env, $payload) {
   $cfg = isset($env['sms']) && is_array($env['sms']) ? $env['sms'] : array();
   $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
@@ -99,6 +128,8 @@ function sms_send_internal_transfer($env, $payload) {
   $location = isset($payload['location']) ? (string)$payload['location'] : '';
   $date = isset($payload['date']) ? (string)$payload['date'] : '';
   $time = isset($payload['time']) ? (string)$payload['time'] : '';
+  $peopleCount = isset($payload['people_count']) ? trim((string)$payload['people_count']) : '';
+  $note = isset($payload['note']) ? (string)$payload['note'] : '';
   $recipients = array();
   if (isset($payload['recipients']) && is_array($payload['recipients'])) {
     $recipients = $payload['recipients'];
@@ -110,6 +141,8 @@ function sms_send_internal_transfer($env, $payload) {
 
   $label = isset($payload['label']) ? trim((string)$payload['label']) : 'Nuovo';
   if ($label === '') $label = 'Nuovo';
-  $message = sprintf('%s transfer interno: Camera %s %s %s - Data %s Ora %s', $label, $room, $direction, $location, $date, $time);
+  $peoplePart = $peopleCount !== '' ? ' - Persone ' . $peopleCount : '';
+  $message = sprintf('%s transfer interno: Camera %s %s %s - Data %s Ora %s%s', $label, $room, $direction, $location, $date, $time, $peoplePart);
+  $message = sms_append_optional_note($message, $note);
   sms_send_message($env, $recipients, $message);
 }
