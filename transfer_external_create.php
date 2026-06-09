@@ -126,7 +126,6 @@ function transfer_external_build_email_details(
     'Camera: ' . $room,
     'Nominativo: ' . $name,
     'Numero persone: ' . $people,
-    'Prezzo: € ' . number_format((float)$price, 2, ',', '.'),
   ];
 
   if ($type === 'arrivo_partenza') {

@@ -140,7 +140,6 @@
         'Camera: ' + optionalValue(fieldValue('room_number')),
         'Nominativo: ' + optionalValue(fieldValue('guest_name')),
         'Numero persone: ' + optionalValue(fieldValue('people_count')),
-        'Prezzo: € ' + optionalValue(fieldValue('price_eur')),
       ];
 
       if (currentType === 'arrivo_partenza') {
