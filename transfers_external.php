@@ -16,19 +16,35 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      WHERE t.deleted_at IS NULL
                      ORDER BY t.date_time ASC, t.id DESC')->fetchAll();
 
-$unpaidTotalsBySupplier = [];
+$supplierTotals = [];
 foreach ($rows as $r) {
     $status = (string)($r['status'] ?? 'attivo');
     $isBookedStatus = $status === 'prenotato' || (!empty($r['booked']) && !in_array($status, ['annullato', 'rifiutato'], true));
-    if (!($r['paid'] ?? 0) && $isBookedStatus) {
-        $supplier = trim((string)($r['supplier_name'] ?? ''));
-        if ($supplier === '') {
-            $supplier = '—';
-        }
+    if (!$isBookedStatus) {
+        continue;
+    }
 
-        $price = $r['price_eur'];
-        if ($price !== null && $price !== '') {
-            $unpaidTotalsBySupplier[$supplier] = ($unpaidTotalsBySupplier[$supplier] ?? 0) + (float)$price;
+    $supplier = trim((string)($r['supplier_name'] ?? ''));
+    if ($supplier === '') {
+        $supplier = '—';
+    }
+
+    if (!isset($supplierTotals[$supplier])) {
+        $supplierTotals[$supplier] = [
+            'unpaid' => 0.0,
+            'collected' => 0.0,
+        ];
+    }
+
+    if (!($r['paid'] ?? 0)) {
+        $supplierPrice = $r['supplier_price_eur'] ?? null;
+        if ($supplierPrice !== null && $supplierPrice !== '') {
+            $supplierTotals[$supplier]['unpaid'] += (float)$supplierPrice;
+        }
+    } else {
+        $customerPrice = $r['price_eur'] ?? null;
+        if ($customerPrice !== null && $customerPrice !== '') {
+            $supplierTotals[$supplier]['collected'] += (float)$customerPrice;
         }
     }
 }
@@ -68,7 +84,8 @@ include __DIR__ . '/partials/header.php';
             <th>Nominativo</th>
             <th>Fornitore</th>
             <th class="text-center">Persone</th>
-            <th>Prezzo</th>
+            <th>Prezzo al Cliente</th>
+            <th>Prezzo al Fornitore</th>
             <th class="text-center">Pag.</th>
             <th>Stato</th>
             <th>Azioni</th>
@@ -152,6 +169,13 @@ include __DIR__ . '/partials/header.php';
             <td>
               <?php if ($r['price_eur'] !== null): ?>
                 € <?= e(number_format((float)$r['price_eur'], 2, ',', '.')) ?>
+              <?php else: ?>
+                —
+              <?php endif; ?>
+            </td>
+            <td>
+              <?php if (($r['supplier_price_eur'] ?? null) !== null): ?>
+                € <?= e(number_format((float)$r['supplier_price_eur'], 2, ',', '.')) ?>
               <?php else: ?>
                 —
               <?php endif; ?>
@@ -252,7 +276,7 @@ include __DIR__ . '/partials/header.php';
         </tbody>
       </table>
     </div>
-    <?php if (!empty($unpaidTotalsBySupplier)): ?>
+    <?php if (!empty($supplierTotals)): ?>
       <div class="mt-4 p-3 border rounded bg-light">
         <h2 class="h6 mb-3">Totali non pagati per Fornitore</h2>
         <div class="table-responsive">
@@ -261,13 +285,15 @@ include __DIR__ . '/partials/header.php';
               <tr>
                 <th>Fornitore</th>
                 <th class="text-end">Totale non pagato</th>
+                <th class="text-end">Totale Incassato</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($unpaidTotalsBySupplier as $supplier => $total): ?>
+              <?php foreach ($supplierTotals as $supplier => $totals): ?>
               <tr>
                 <td><?= e($supplier) ?></td>
-                <td class="text-end">€ <?= e(number_format((float)$total, 2, ',', '.')) ?></td>
+                <td class="text-end">€ <?= e(number_format((float)$totals['unpaid'], 2, ',', '.')) ?></td>
+                <td class="text-end">€ <?= e(number_format((float)$totals['collected'], 2, ',', '.')) ?></td>
               </tr>
               <?php endforeach; ?>
             </tbody>

@@ -48,6 +48,7 @@ $form = [
   'guest_name' => '',
   'people_count' => '',
   'price_eur' => '',
+  'supplier_price_eur' => '',
   'supplier_name' => $suppliers[0],
   'booked' => 0,
   'paid' => 0,
@@ -97,6 +98,28 @@ function transfer_external_format_datetime(?DateTime $dateTime): string {
 
 function transfer_external_format_time(?string $time): string {
   return $time ? substr($time, 0, 5) : '—';
+}
+
+
+function transfer_external_normalize_price(string $rawValue, string $label, ?string &$message): ?string {
+  if ($rawValue === '') {
+    $message = 'Inserisci il ' . $label . ' del transfer.';
+    return null;
+  }
+
+  $normalizedPrice = str_replace([' ', ','], ['', '.'], $rawValue);
+  if (!is_numeric($normalizedPrice)) {
+    $message = 'Inserisci un ' . $label . ' valido.';
+    return null;
+  }
+
+  $priceValue = (float)$normalizedPrice;
+  if ($priceValue < 0) {
+    $message = 'Il ' . $label . ' non può essere negativo.';
+    return null;
+  }
+
+  return number_format($priceValue, 2, '.', '');
 }
 
 function transfer_external_build_email_details(
@@ -205,6 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $form['guest_name'];
     $peopleRaw = $form['people_count'];
     $priceRaw = $form['price_eur'];
+    $supplierPriceRaw = $form['supplier_price_eur'];
     $booked = (int)$form['booked'];
     $paid = (int)$form['paid'];
     $supplierName = in_array($form['supplier_name'], $suppliers, true) ? $form['supplier_name'] : '';
@@ -227,21 +251,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $price = null;
     if (!$message) {
-      if ($priceRaw === '') {
-        $message = 'Inserisci il Prezzo del transfer.';
-      } else {
-        $normalizedPrice = str_replace([' ', ','], ['', '.'], $priceRaw);
-        if (!is_numeric($normalizedPrice)) {
-          $message = 'Inserisci un Prezzo valido.';
-        } else {
-          $priceValue = (float)$normalizedPrice;
-          if ($priceValue < 0) {
-            $message = 'Il Prezzo non può essere negativo.';
-          } else {
-            $price = number_format($priceValue, 2, '.', '');
-          }
-        }
-      }
+      $price = transfer_external_normalize_price($priceRaw, 'Prezzo al Cliente', $message);
+    }
+
+    $supplierPrice = null;
+    if (!$message) {
+      $supplierPrice = transfer_external_normalize_price($supplierPriceRaw, 'Prezzo al Fornitore', $message);
     }
 
     if (!$message && (!$room || !$name)) {
@@ -302,8 +317,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tokenExpiresAt = $sendSupplierEmail ? (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s') : null;
 
         $sql = 'INSERT INTO transfers_external
-                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, booked, paid, service_company, supplier_name, supplier_confirm_token, supplier_reject_token, supplier_token_expires_at, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, supplier_price_eur, booked, paid, service_company, supplier_name, supplier_confirm_token, supplier_reject_token, supplier_token_expires_at, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
           $type,
@@ -314,6 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $name,
           $people,
           $price,
+          $supplierPrice,
           $booked,
           $paid,
           $serviceCompany,
@@ -517,10 +533,18 @@ include __DIR__ . '/partials/header.php';
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Prezzo</label>
+              <label class="form-label">Prezzo al Cliente</label>
               <div class="input-group">
                 <span class="input-group-text">€</span>
                 <input type="number" name="price_eur" class="form-control" min="0" step="0.01" value="<?= e($form['price_eur']) ?>" required>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Prezzo al Fornitore</label>
+              <div class="input-group">
+                <span class="input-group-text">€</span>
+                <input type="number" name="supplier_price_eur" class="form-control" min="0" step="0.01" value="<?= e($form['supplier_price_eur']) ?>" required>
               </div>
             </div>
 
