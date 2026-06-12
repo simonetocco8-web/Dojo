@@ -150,7 +150,7 @@ function generate_daily_summary_pdf(
     // --- External transfers ---
     if ($showFullSummary && $pdo instanceof PDO) {
         $externalStmt = $pdo->prepare(
-            "SELECT type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, service_company, booked, paid, status\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
+            "SELECT type, place, date_time, pickup_time, room_number, guest_name\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
         );
         $externalStmt->execute([$dayYmd]);
         $externalTransfers = $externalStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -366,12 +366,6 @@ function generate_daily_summary_pdf(
         <th>Luogo</th>
         <th>Camera</th>
         <th>Ospite</th>
-        <th>Compagnia</th>
-        <th>Persone</th>
-        <th>Prezzo</th>
-        <th>Prenotato</th>
-        <th>Pagato</th>
-        <th>Stato</th>
       </tr>
     </thead>
     <tbody>
@@ -383,18 +377,6 @@ function generate_daily_summary_pdf(
         <td><?= e($row['place'] ?? '') ?></td>
         <td><?= e($row['room_number'] ?? '') ?></td>
         <td><?= e($row['guest_name'] ?? '') ?></td>
-        <td><?= e($row['service_company'] ?? '') ?></td>
-        <td><?= isset($row['people_count']) && $row['people_count'] !== null ? e((int)$row['people_count']) : '—' ?></td>
-        <td>
-          <?php if (isset($row['price_eur']) && $row['price_eur'] !== null): ?>
-            € <?= e(number_format((float)$row['price_eur'], 2, ',', '.')) ?>
-          <?php else: ?>
-            —
-          <?php endif; ?>
-        </td>
-        <td><?= !empty($row['booked']) ? 'Sì' : 'No' ?></td>
-        <td><?= !empty($row['paid']) ? 'Sì' : 'No' ?></td>
-        <td><?= e($statusLabel($row['status'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
