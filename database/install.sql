@@ -64,6 +64,10 @@ ALTER TABLE transfers_external
   ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER people_count,
   ADD COLUMN IF NOT EXISTS supplier_price_eur DECIMAL(10,2) DEFAULT NULL AFTER price_eur;
 
+-- Aggiornamenti tabella suppliers
+ALTER TABLE suppliers
+  ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
+
 CREATE TABLE IF NOT EXISTS system_settings (
   setting_key VARCHAR(190) NOT NULL PRIMARY KEY,
   setting_value TEXT DEFAULT NULL,

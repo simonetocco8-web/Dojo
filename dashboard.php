@@ -430,6 +430,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
   $tz = new DateTimeZone('Europe/Rome');
   $todayIdx = (int)(new DateTime('now', $tz))->format('w');
 
+  ensure_suppliers_active_column($pdo);
   $sql = "
     SELECT s.id, s.name, s.phone, s.email
     FROM suppliers s
@@ -437,6 +438,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
       ON d.supplier_id = s.id
      AND d.kind = 'order'
      AND d.day = :day
+    WHERE COALESCE(s.is_active, 1) = 1
     ORDER BY s.name ASC
   ";
   $stmt = $pdo->prepare($sql);

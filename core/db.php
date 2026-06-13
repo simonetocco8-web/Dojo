@@ -134,6 +134,21 @@ function ensure_products_active_column(PDO $pdo): void {
 }
 
 
+function ensure_suppliers_active_column(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'suppliers'
+      AND COLUMN_NAME = 'is_active'
+    LIMIT 1
+  ");
+  if (!$stmt->fetch()) {
+    $pdo->exec("ALTER TABLE suppliers ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1");
+  }
+}
+
+
 function ensure_riassetti_status_column(PDO $pdo): void {
   $stmt = $pdo->query("
     SELECT COLUMN_NAME

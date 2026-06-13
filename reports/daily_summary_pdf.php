@@ -184,8 +184,9 @@ function generate_daily_summary_pdf(
     // --- Suppliers accepting orders today ---
     $weekdayIndex = (int)$date->format('w'); // 0=Sun ... 6=Sat in PHP
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_suppliers_active_column($pdo);
         $supplierStmt = $pdo->prepare(
-            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         ORDER BY s.name ASC"
+            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         WHERE COALESCE(s.is_active, 1) = 1\n         ORDER BY s.name ASC"
         );
         $supplierStmt->execute([':day' => $weekdayIndex]);
         $suppliersToday = $supplierStmt->fetchAll(PDO::FETCH_ASSOC);
