@@ -34,7 +34,13 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <?php endif; ?>
         <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="trasportiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
+          <ul class="dropdown-menu" aria-labelledby="trasportiSidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
+          </ul>
+        </li>
         <?php endif; ?>
         <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
         <li class="nav-item dropdown">
@@ -105,7 +111,13 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <?php endif; ?>
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="trasportiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
+              <ul class="dropdown-menu" aria-labelledby="trasportiDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
+              </ul>
+            </li>
             <?php endif; ?>
             <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
             <li class="nav-item dropdown">
