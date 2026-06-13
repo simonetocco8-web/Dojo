@@ -61,12 +61,11 @@ return [
     'auth_mode' => 'bearer' // OpenAPI SMS v2 usa Authorization: Bearer <token>
   ],
 
-  'openai_chatkit' => [
+  'openai_chat' => [
     'api_key' => getenv('OPENAI_API_KEY') ?: '', // imposta OPENAI_API_KEY sul server, non committare chiavi API
-    'workflow_id' => 'wf_6a1ab0fd7a6881908bab573ddb7a682e06c24f25188285f0',
-    'workflow_version' => getenv('OPENAI_CHATKIT_WORKFLOW_VERSION') ?: '', // opzionale: lascia vuoto per usare l'ultima versione pubblicata/deployata
-    'domain_public_key' => 'domain_pk_6a1ada350d5481909dee4821f97c99250215095942c27d8b',
-    'session_endpoint' => 'https://api.openai.com/v1/chatkit/sessions'
+    'prompt_id' => getenv('OPENAI_PROMPT_ID') ?: 'pmpt_6a2531fae3ac81959ab390a16089a8b7050b8d8a5e78b0a6',
+    'prompt_version' => getenv('OPENAI_PROMPT_VERSION') ?: '', // opzionale: lascia vuoto per usare l'ultima versione pubblicata
+    'responses_endpoint' => 'https://api.openai.com/v1/responses'
   ],
 
   'google' => [

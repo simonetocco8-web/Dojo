@@ -7,6 +7,7 @@ require_once __DIR__ . '/dompdf/vendor/autoload.php';
 start_session();
 
 $pdo  = db();
+ensure_riassetti_status_column($pdo);
 $user = current_user();
 if (!$user) { header('Location: index.php?msg=auth'); exit; }
 
@@ -42,6 +43,18 @@ $displayFrom = DateTime::createFromFormat('Y-m-d', $dateFrom)->format('d/m/Y');
 $displayTo = DateTime::createFromFormat('Y-m-d', $dateTo)->format('d/m/Y');
 $displayRange = $dateFrom === $dateTo ? $displayFrom : ($displayFrom . ' - ' . $displayTo);
 
+
+function riassetto_pdf_status_label(array $row): string {
+  $status = trim((string)($row['status'] ?? ''));
+  if ($status === '') $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+  return match ($status) {
+    'da_preparare' => 'Da Preparare',
+    'da_consegnare' => 'Da Consegnare',
+    'concluso' => 'Concluso',
+    default => ucfirst(str_replace('_', ' ', $status)),
+  };
+}
+
 function riassetto_linen_summary(array $row): string {
   $parts = [];
   if (!empty($row['qty_matrimoniale'])) $parts[] = $row['qty_matrimoniale'] . ' Matrimoniale';
@@ -75,6 +88,7 @@ ob_start();
           <th style="width: 12%;">Camera</th>
           <th style="width: 28%;">Biancheria</th>
           <th style="width: 15%;">Pulizia extra</th>
+          <th style="width: 15%;">Stato</th>
           <th>Note</th>
         </tr>
       </thead>
@@ -85,6 +99,7 @@ ob_start();
           <td><?= e($row['room']) ?></td>
           <td><?= e(riassetto_linen_summary($row)) ?></td>
           <td><?= !empty($row['pulizia_extra']) ? 'Sì' : 'No' ?></td>
+          <td><?= e(riassetto_pdf_status_label($row)) ?></td>
           <td class="note"><?= nl2br(e($row['note'] ?? '')) ?></td>
         </tr>
         <?php endforeach; ?>

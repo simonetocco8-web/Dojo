@@ -12,6 +12,7 @@ $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_products_active_column($pdo);
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 
 // Permessi (adatta se vuoi renderla visibile ad altri reparti in sola lettura)
@@ -22,11 +23,17 @@ if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione') || u
 // Config statiche
 $CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
 $WAREHOUSES = ['Tizzo','Tramonto'];
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // --- Filtri (GET) ---
 $q         = trim((string)($_GET['q'] ?? ''));                // nome prodotto (LIKE)
 $category  = trim((string)($_GET['category'] ?? ''));         // categoria precisa
 $warehouse = trim((string)($_GET['warehouse'] ?? ''));        // Tizzo | Tramonto | ''
+$supplierId = filter_input(INPUT_GET, 'supplier_id', FILTER_VALIDATE_INT) ?: 0;
+$activeSupplierIds = array_map('intval', array_column($suppliers, 'id'));
+if ($supplierId > 0 && !in_array($supplierId, $activeSupplierIds, true)) {
+  $supplierId = 0;
+}
 $quantity  = trim((string)($_GET['quantity'] ?? 'all'));       // all | low
 if (!in_array($quantity, ['all','low'], true)) { $quantity = 'all'; }
 $page      = max(1, (int)($_GET['page'] ?? 1));
@@ -48,6 +55,12 @@ if ($q !== '') {
 if ($category !== '' && in_array($category, $CATEGORIES, true)) {
   $where[] = "p.category = :cat";
   $params[':cat'] = $category;
+}
+
+// Filtro fornitore
+if ($supplierId > 0) {
+  $where[] = "p.supplier_id = :supplier_id";
+  $params[':supplier_id'] = $supplierId;
 }
 
 // Filtro magazzino
@@ -98,7 +111,7 @@ $listSql = "
     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
   FROM products p
   LEFT JOIN stock_levels sl ON sl.product_id = p.id
-  LEFT JOIN suppliers s ON s.id = p.supplier_id
+  LEFT JOIN suppliers s ON s.id = p.supplier_id AND COALESCE(s.is_active, 1) = 1
   $joinWarehouse
   $whereSql
   GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name
@@ -144,11 +157,11 @@ include __DIR__ . '/../partials/header.php';
 <form class="card mb-3" method="get">
   <div class="card-body">
     <div class="row g-2 align-items-end">
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-md-3">
         <label class="form-label">Nome prodotto</label>
         <input type="text" name="q" class="form-control" value="<?= e($q) ?>" placeholder="Cerca per nome...">
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
         <label class="form-label">Categoria</label>
         <select name="category" class="form-select">
           <option value="">Tutte</option>
@@ -157,7 +170,16 @@ include __DIR__ . '/../partials/header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
+        <label class="form-label">Fornitore</label>
+        <select name="supplier_id" class="form-select">
+          <option value="">Tutti</option>
+          <?php foreach ($suppliers as $supplier): ?>
+            <option value="<?= (int)$supplier['id'] ?>" <?= $supplierId===(int)$supplier['id']?'selected':''; ?>><?= e($supplier['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
         <label class="form-label">Magazzino</label>
         <select name="warehouse" class="form-select">
           <option value="">Tutti</option>
@@ -166,7 +188,7 @@ include __DIR__ . '/../partials/header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-6 col-md-2">
+      <div class="col-6 col-md-1">
         <label class="form-label">Quantità</label>
         <select name="quantity" class="form-select">
           <option value="all" <?= $quantity==='all'?'selected':''; ?>>Tutti</option>
