@@ -39,6 +39,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
           <ul class="dropdown-menu" aria-labelledby="trasportiSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/treni.php"><i class="bi bi-train-front"></i><span>Treni</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -116,6 +117,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
               <ul class="dropdown-menu" aria-labelledby="trasportiDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/treni.php"><i class="bi bi-train-front"></i><span>Treni</span></a></li>
               </ul>
             </li>
             <?php endif; ?>
