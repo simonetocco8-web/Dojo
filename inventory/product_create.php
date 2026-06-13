@@ -4,6 +4,7 @@ if (!$user) { header('Location: login.php?msg=auth'); exit; }     // redirect RE
 if (!is_amministrazione()) { header($_SERVER['SERVER_PROTOCOL'].' 403 Forbidden'); echo 'Solo Amministrazione.'; exit; }
 
 ensure_products_active_column($pdo);
+ensure_suppliers_active_column($pdo);
 
 $message = '';
 $messageType = 'info';
@@ -20,7 +21,7 @@ $form = [
   'supplier_id' => '',
 ];
 
-$suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 
 function inventory_products_redirect_url(): string {
@@ -116,25 +117,39 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $message = 'Sessione non valida: utente non rilevato.';
       $messageType = 'danger';
     } else {
-      $duplicateCandidates = find_similar_products($pdo, $title);
-      if ($duplicateCandidates && !$confirmSimilar) {
-        $message = 'Attenzione: esistono già prodotti con nome uguale o simile. Verifica l’elenco e conferma solo se vuoi creare comunque il nuovo prodotto.';
-        $messageType = 'warning';
-      } else {
-        $stmt = $pdo->prepare("\n          INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)\n          VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        ");
-        try {
-          $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
-          header('Location: ' . inventory_products_redirect_url());
-          exit;
-        } catch (PDOException $e) {
-          $sqlstate = $e->getCode();
-          $errno    = $e->errorInfo[1] ?? 0;
-          if ($sqlstate === '23000' && (int)$errno === 1062) {
-            $message = 'EAN già presente (duplicato).';
-          } else {
-            $message = 'Errore DB: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-          }
+      if ($supplier_id !== null) {
+        $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id = ? AND COALESCE(is_active, 1) = 1");
+        $chk->execute([$supplier_id]);
+        if (!$chk->fetchColumn()) {
+          $message = 'Fornitore selezionato non valido o non attivo.';
           $messageType = 'danger';
+        }
+      }
+
+      if (!$message) {
+        $duplicateCandidates = find_similar_products($pdo, $title);
+        if ($duplicateCandidates && !$confirmSimilar) {
+          $message = 'Attenzione: esistono già prodotti con nome uguale o simile. Verifica l’elenco e conferma solo se vuoi creare comunque il nuovo prodotto.';
+          $messageType = 'warning';
+        } else {
+          $stmt = $pdo->prepare("
+          INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+          try {
+            $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
+            header('Location: ' . inventory_products_redirect_url());
+            exit;
+          } catch (PDOException $e) {
+            $sqlstate = $e->getCode();
+            $errno    = $e->errorInfo[1] ?? 0;
+            if ($sqlstate === '23000' && (int)$errno === 1062) {
+              $message = 'EAN già presente (duplicato).';
+            } else {
+              $message = 'Errore DB: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+            }
+            $messageType = 'danger';
+          }
         }
       }
     }

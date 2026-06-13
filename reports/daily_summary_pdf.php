@@ -11,6 +11,22 @@ require_once __DIR__ . '/../core/security.php';
 require_once __DIR__ . '/../core/settings.php';
 require_once __DIR__ . '/../dompdf/vendor/autoload.php';
 
+
+function format_daily_summary_quantity(mixed $value): string
+{
+    if ($value === null || $value === '') {
+        return '0';
+    }
+
+    $normalized = str_replace(',', '.', (string)$value);
+    if (!is_numeric($normalized)) {
+        return (string)$value;
+    }
+
+    $formatted = number_format((float)$normalized, 3, ',', '');
+    return rtrim(rtrim($formatted, '0'), ',');
+}
+
 /**
  * Generate the daily PDF summary for the given date (defaults to today).
  *
@@ -25,6 +41,7 @@ require_once __DIR__ . '/../dompdf/vendor/autoload.php';
  *                                           will be created.
  * @param PDO|null       $pdo                Existing PDO connection to reuse when available.
  * @param Throwable|null $dbConnectionError  Receives the connection exception, if any.
+ * @param array|null     $taskAudienceUser   User used to filter the daily tasks table.
  *
  * @throws InvalidArgumentException When the provided date is invalid.
  *
@@ -34,7 +51,8 @@ function generate_daily_summary_pdf(
     ?string $dateYmd = null,
     ?string $outputPath = null,
     ?PDO $pdo = null,
-    ?Throwable &$dbConnectionError = null
+    ?Throwable &$dbConnectionError = null,
+    ?array $taskAudienceUser = null
 ): string {
     if ($pdo === null && $dbConnectionError === null) {
         try {
@@ -62,21 +80,57 @@ function generate_daily_summary_pdf(
 
     // --- Tasks (top 10 for the day) ---
     if ($pdo instanceof PDO) {
+        ensure_task_user_assignments_table($pdo);
+
+        $taskWhere = [
+            't.deleted_at IS NULL',
+            't.due_date = ?',
+        ];
+        $taskArgs = [$dayYmd];
+
+        if ($taskAudienceUser !== null) {
+            $audienceUserId = (int)($taskAudienceUser['id'] ?? 0);
+            $audienceDepartments = user_departments($taskAudienceUser);
+            $departmentConditions = [];
+
+            $audienceConditions = [];
+            if ($audienceUserId > 0) {
+                $audienceConditions[] = 'EXISTS (SELECT 1 FROM task_user_assignments tua_user WHERE tua_user.task_id = t.id AND tua_user.user_id = ?)';
+                $taskArgs[] = $audienceUserId;
+            }
+
+            foreach ($audienceDepartments as $department) {
+                $departmentConditions[] = 't.dipartimento = ?';
+                $taskArgs[] = $department;
+            }
+
+            if ($departmentConditions) {
+                $audienceConditions[] = '(NOT EXISTS (SELECT 1 FROM task_user_assignments tua_any WHERE tua_any.task_id = t.id) AND (' . implode(' OR ', $departmentConditions) . '))';
+            }
+
+            $taskWhere[] = $audienceConditions ? '(' . implode(' OR ', $audienceConditions) . ')' : '1 = 0';
+        }
+
         $taskStmt = $pdo->prepare(
-            "SELECT title, description, priority, dipartimento, status\n         FROM tasks\n         WHERE deleted_at IS NULL\n           AND due_date = ?\n         ORDER BY FIELD(priority, 'urgente','alta','media','bassa') ASC, id DESC\n         LIMIT 10"
+            "SELECT t.title, t.description, t.priority, t.dipartimento, t.status\n         FROM tasks t\n         WHERE " . implode("\n           AND ", $taskWhere) . "\n         ORDER BY FIELD(t.priority, 'urgente','alta','media','bassa') ASC, t.id DESC\n         LIMIT 10"
         );
-        $taskStmt->execute([$dayYmd]);
+        $taskStmt->execute($taskArgs);
         $tasks = $taskStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $tasks = [];
     }
 
-    // --- Riassetti of the day ---
+    // --- Riassetti to prepare today or deliver today ---
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_riassetti_status_column($pdo);
+        $nextDayYmd = (clone $date)->modify('+1 day')->format('Y-m-d');
         $riassettiStmt = $pdo->prepare(
-            "SELECT room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note\n         FROM riassetti\n         WHERE data_riassetto = ?\n         ORDER BY room ASC, id ASC"
+            "SELECT data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, completed_at
+         FROM riassetti
+         WHERE data_riassetto IN (?, ?)
+         ORDER BY data_riassetto ASC, room ASC, id ASC"
         );
-        $riassettiStmt->execute([$dayYmd]);
+        $riassettiStmt->execute([$dayYmd, $nextDayYmd]);
         $riassetti = $riassettiStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $riassetti = [];
@@ -96,7 +150,7 @@ function generate_daily_summary_pdf(
     // --- External transfers ---
     if ($showFullSummary && $pdo instanceof PDO) {
         $externalStmt = $pdo->prepare(
-            "SELECT type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, service_company, booked, paid, status\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
+            "SELECT type, place, date_time, pickup_time, room_number, guest_name\n         FROM transfers_external\n         WHERE deleted_at IS NULL\n           AND DATE(date_time) = ?\n         ORDER BY date_time ASC, id ASC"
         );
         $externalStmt->execute([$dayYmd]);
         $externalTransfers = $externalStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -117,8 +171,10 @@ function generate_daily_summary_pdf(
 
     // --- Low stock products (top 10) ---
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_products_active_column($pdo);
+
         $lowStockStmt = $pdo->query(
-            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
+            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         WHERE COALESCE(p.is_active, 1) = 1\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
         );
         $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
@@ -128,8 +184,9 @@ function generate_daily_summary_pdf(
     // --- Suppliers accepting orders today ---
     $weekdayIndex = (int)$date->format('w'); // 0=Sun ... 6=Sat in PHP
     if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_suppliers_active_column($pdo);
         $supplierStmt = $pdo->prepare(
-            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         ORDER BY s.name ASC"
+            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         WHERE COALESCE(s.is_active, 1) = 1\n         ORDER BY s.name ASC"
         );
         $supplierStmt->execute([':day' => $weekdayIndex]);
         $suppliersToday = $supplierStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -156,6 +213,19 @@ function generate_daily_summary_pdf(
             'completato'     => 'Completato',
             'non_fattibile'  => 'Non fattibile',
             default          => ucfirst(str_replace('_', ' ', $status)),
+        };
+    };
+
+    $riassettoStatusLabel = static function (array $row): string {
+        $status = trim((string)($row['status'] ?? ''));
+        if ($status === '') {
+            $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+        }
+        return match ($status) {
+            'da_preparare' => 'Da Preparare',
+            'da_consegnare' => 'Da Consegnare',
+            'concluso' => 'Concluso',
+            default => ucfirst(str_replace('_', ' ', $status)),
         };
     };
 
@@ -235,25 +305,29 @@ function generate_daily_summary_pdf(
   <table>
     <thead>
       <tr>
+        <th>Data riassetto</th>
         <th>Camera</th>
         <th>Biancheria</th>
         <th>Pulizia extra</th>
+        <th>Stato</th>
         <th>Note</th>
       </tr>
     </thead>
     <tbody>
     <?php foreach ($riassetti as $row): ?>
       <tr>
+        <td><?= e(!empty($row['data_riassetto']) ? (new DateTime($row['data_riassetto']))->format('d/m/Y') : '') ?></td>
         <td><?= e($row['room'] ?? '') ?></td>
         <td><?= e($linenSummary($row)) ?></td>
         <td><?= !empty($row['pulizia_extra']) ? 'Sì' : 'No' ?></td>
+        <td><?= e($riassettoStatusLabel($row)) ?></td>
         <td><?= nl2br(e($row['note'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
   </table>
   <?php else: ?>
-    <p class="muted">Nessun riassetto programmato per oggi.</p>
+    <p class="muted">Nessun riassetto da preparare o consegnare per oggi.</p>
   <?php endif; ?>
 
   <h2>Transfer interni</h2>
@@ -293,12 +367,6 @@ function generate_daily_summary_pdf(
         <th>Luogo</th>
         <th>Camera</th>
         <th>Ospite</th>
-        <th>Compagnia</th>
-        <th>Persone</th>
-        <th>Prezzo</th>
-        <th>Prenotato</th>
-        <th>Pagato</th>
-        <th>Stato</th>
       </tr>
     </thead>
     <tbody>
@@ -310,18 +378,6 @@ function generate_daily_summary_pdf(
         <td><?= e($row['place'] ?? '') ?></td>
         <td><?= e($row['room_number'] ?? '') ?></td>
         <td><?= e($row['guest_name'] ?? '') ?></td>
-        <td><?= e($row['service_company'] ?? '') ?></td>
-        <td><?= isset($row['people_count']) && $row['people_count'] !== null ? e((int)$row['people_count']) : '—' ?></td>
-        <td>
-          <?php if (isset($row['price_eur']) && $row['price_eur'] !== null): ?>
-            € <?= e(number_format((float)$row['price_eur'], 2, ',', '.')) ?>
-          <?php else: ?>
-            —
-          <?php endif; ?>
-        </td>
-        <td><?= !empty($row['booked']) ? 'Sì' : 'No' ?></td>
-        <td><?= !empty($row['paid']) ? 'Sì' : 'No' ?></td>
-        <td><?= e($statusLabel($row['status'] ?? '')) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
@@ -370,8 +426,8 @@ function generate_daily_summary_pdf(
       <tr>
         <td><?= e($row['title'] ?? '') ?></td>
         <td><?= e($row['category'] ?? '') ?></td>
-        <td><?= e((string)($row['total_qty'] ?? 0)) ?></td>
-        <td><?= e((string)($row['min_qty'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['total_qty'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['min_qty'] ?? 0)) ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
@@ -441,6 +497,35 @@ function generate_daily_summary_pdf(
 }
 
 /**
+ * Recupera gli utenti attivi dei reparti Amministrazione e Reception che ricevono il report.
+ *
+ * @param PDO $pdo
+ * @return array<int, array<string, mixed>>
+ */
+function fetch_daily_summary_recipient_users(PDO $pdo): array
+{
+    $stmt = $pdo->prepare(
+        "SELECT id, email, nome, cognome, dipartimento\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND (FIND_IN_SET('Amministrazione', REPLACE(dipartimento, ' ', '')) > 0 OR FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0)\n         ORDER BY cognome ASC, nome ASC, email ASC"
+    );
+    $stmt->execute();
+
+    $recipientUsers = [];
+    $seenEmails = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $recipientUser) {
+        $email = trim((string)($recipientUser['email'] ?? ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || isset($seenEmails[$email])) {
+            continue;
+        }
+
+        $recipientUser['email'] = $email;
+        $recipientUsers[] = $recipientUser;
+        $seenEmails[$email] = true;
+    }
+
+    return $recipientUsers;
+}
+
+/**
  * Recupera gli indirizzi email degli utenti attivi dei reparti Amministrazione e Reception.
  *
  * @param PDO $pdo
@@ -448,22 +533,10 @@ function generate_daily_summary_pdf(
  */
 function fetch_daily_summary_recipients(PDO $pdo): array
 {
-    $stmt = $pdo->prepare(
-        "SELECT email\n         FROM users\n         WHERE deleted_at IS NULL\n           AND is_active = 1\n           AND email IS NOT NULL\n           AND email <> ''\n           AND (FIND_IN_SET('Amministrazione', REPLACE(dipartimento, ' ', '')) > 0 OR FIND_IN_SET('Reception', REPLACE(dipartimento, ' ', '')) > 0)"
+    return array_map(
+        static fn (array $recipientUser): string => (string)$recipientUser['email'],
+        fetch_daily_summary_recipient_users($pdo)
     );
-    $stmt->execute();
-
-    $emails = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    $validEmails = [];
-    foreach ($emails as $email) {
-        $email = trim((string)$email);
-        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $validEmails[$email] = true; // usa le chiavi per evitare duplicati
-        }
-    }
-
-    return array_keys($validEmails);
 }
 
 function encode_mime_header_utf8(string $value): string
@@ -596,7 +669,8 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
  *     db_error: ?Throwable,
  *     recipients: string[],
  *     mail_summary: array{attempted: string[], invalid: string[], failed: string[]},
- *     mail_skipped: bool
+ *     mail_skipped: bool,
+ *     recipient_pdfs: array<string, string>
  * }
  */
 function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = null): array
@@ -623,7 +697,8 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
 
     $generatedPath = generate_daily_summary_pdf($reportDate->format('Y-m-d'), $pathArg, $pdo, $dbError);
 
-    $recipients  = [];
+    $recipients = [];
+    $recipientPdfs = [];
     $mailSummary = [
         'attempted' => [],
         'invalid'   => [],
@@ -632,9 +707,13 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
     $mailSkipped = false;
 
     if ($pdo instanceof PDO) {
-        $recipients = fetch_daily_summary_recipients($pdo);
+        $recipientUsers = fetch_daily_summary_recipient_users($pdo);
+        $recipients = array_map(
+            static fn (array $recipientUser): string => (string)$recipientUser['email'],
+            $recipientUsers
+        );
 
-        if ($recipients) {
+        if ($recipientUsers) {
             $displayDate = $reportDate->format('d/m/Y');
             $subject     = 'Riepilogo giornaliero ' . $displayDate;
             $body        = '<p>Buongiorno,</p>'
@@ -642,19 +721,48 @@ function run_daily_summary_workflow(?string $dateArg = null, ?string $pathArg = 
                 . '<p>Questo messaggio è stato generato automaticamente.</p>';
             $filename    = 'Riepilogo_' . $reportDate->format('Ymd') . '.pdf';
 
-            $mailSummary = send_daily_summary_pdf_email($recipients, $subject, $body, $generatedPath, $filename);
+            foreach ($recipientUsers as $recipientUser) {
+                $recipientPdfPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+                    . DIRECTORY_SEPARATOR
+                    . 'daily_summary_' . $reportDate->format('Ymd') . '_user_' . (int)$recipientUser['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
+
+                $recipientPdfs[(string)$recipientUser['email']] = generate_daily_summary_pdf(
+                    $reportDate->format('Y-m-d'),
+                    $recipientPdfPath,
+                    $pdo,
+                    $dbError,
+                    $recipientUser
+                );
+
+                $singleMailSummary = send_daily_summary_pdf_email(
+                    [(string)$recipientUser['email']],
+                    $subject,
+                    $body,
+                    $recipientPdfs[(string)$recipientUser['email']],
+                    $filename
+                );
+
+                foreach (['attempted', 'invalid', 'failed'] as $summaryKey) {
+                    $mailSummary[$summaryKey] = array_merge($mailSummary[$summaryKey], $singleMailSummary[$summaryKey]);
+                }
+            }
+
+            foreach (['attempted', 'invalid', 'failed'] as $summaryKey) {
+                $mailSummary[$summaryKey] = array_values(array_unique($mailSummary[$summaryKey]));
+            }
         }
     } else {
         $mailSkipped = true;
     }
 
     return [
-        'path'         => $generatedPath,
-        'date'         => $reportDate,
-        'db_error'     => $dbError,
-        'recipients'   => $recipients,
-        'mail_summary' => $mailSummary,
-        'mail_skipped' => $mailSkipped,
+        'path'           => $generatedPath,
+        'date'           => $reportDate,
+        'db_error'       => $dbError,
+        'recipients'     => $recipients,
+        'mail_summary'   => $mailSummary,
+        'mail_skipped'   => $mailSkipped,
+        'recipient_pdfs' => $recipientPdfs,
     ];
 }
 
