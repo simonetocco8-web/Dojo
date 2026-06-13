@@ -10,6 +10,7 @@ start_session();
 $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 
 // Solo Amministrazione o Admin
@@ -32,7 +33,7 @@ $product = $st->fetch(PDO::FETCH_ASSOC);
 if (!$product) { http_response_code(404); exit('Prodotto non trovato.'); }
 
 // --- Carica fornitori per la tendina ---
-$suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // --- Helpers ---
 $errors = [];
@@ -84,10 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 3) Fornitore esistente?
     if ($supplier_id !== null) {
-      $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id=?");
+      $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id=? AND COALESCE(is_active, 1) = 1");
       $chk->execute([$supplier_id]);
       if (!$chk->fetchColumn()) {
-        $errors[] = 'Fornitore selezionato non valido.';
+        $errors[] = 'Fornitore selezionato non valido o non attivo.';
         $supplier_id = null;
       }
     }
