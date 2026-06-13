@@ -158,8 +158,18 @@ include __DIR__ . '/partials/header.php';
 <?php endif; ?>
 
 <div class="row g-3">
-  <div class="col-12 col-lg-6">
-    <div class="card shadow-sm h-100">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="ratio ratio-4x3">
+          <iframe src="https://calendar.google.com/calendar/embed?src=13cbf1c11d4c3501563e17c909423fabeb42b3e74a7869f0dbaf6cfb6d12779b%40group.calendar.google.com&amp;ctz=Europe%2FRome" style="border:0" width="800" height="600" frameborder="0" scrolling="no" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card shadow-sm">
       <div class="card-body">
         <?php if (empty($riassetti)): ?>
           <p class="text-muted mb-0">Nessun riassetto trovato.</p>
@@ -238,11 +248,6 @@ include __DIR__ . '/partials/header.php';
         </div>
         <?php endif; ?>
       </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-6">
-    <div class="ratio ratio-4x3">
-      <iframe src="https://calendar.google.com/calendar/embed?src=13cbf1c11d4c3501563e17c909423fabeb42b3e74a7869f0dbaf6cfb6d12779b%40group.calendar.google.com&amp;ctz=Europe%2FRome" style="border:0" width="800" height="600" frameborder="0" scrolling="no" allowfullscreen></iframe>
     </div>
   </div>
 </div>
