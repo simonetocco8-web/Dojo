@@ -87,6 +87,11 @@ function trains_image_alt(DOMXPath $xpath, DOMElement $row, string $cellId): str
   return $node instanceof DOMElement ? trains_clean_text($node->getAttribute('alt')) : '';
 }
 
+function trains_next_stops(DOMXPath $xpath, DOMElement $row): string {
+  $node = $xpath->query('.//td[@id="RDettagli"]//*[contains(concat(" ", normalize-space(@class), " "), " testoinfoaggiuntive ")]', $row)->item(0);
+  return $node ? trains_clean_text($node->textContent ?? '') : '';
+}
+
 function trains_parse_departures(string $html): array {
   if (!class_exists('DOMDocument')) return [];
 
@@ -116,6 +121,7 @@ function trains_parse_departures(string $html): array {
       'delay' => $delay !== '' ? $delay : '—',
       'platform' => $platform !== '' ? $platform : '—',
       'departing' => $departing !== '' ? $departing : '—',
+      'next_stops' => trains_next_stops($xpath, $row),
     ];
   }
 
@@ -151,10 +157,12 @@ include __DIR__ . '/partials/header.php';
               <th>Ritardo</th>
               <th>Binario</th>
               <th>In partenza</th>
+              <th>Informazioni</th>
             </tr>
           </thead>
           <tbody>
-            <?php foreach ($departures as $departure): ?>
+            <?php foreach ($departures as $index => $departure): ?>
+              <?php $modalId = 'trainStops_' . $index; ?>
               <tr>
                 <td class="fw-semibold"><?= e($departure['time']) ?></td>
                 <td><?= e($departure['train']) ?></td>
@@ -163,6 +171,29 @@ include __DIR__ . '/partials/header.php';
                 <td><?= e($departure['delay']) ?></td>
                 <td><?= e($departure['platform']) ?></td>
                 <td><?= e($departure['departing']) ?></td>
+                <td>
+                  <?php if ($departure['next_stops'] !== ''): ?>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#<?= e($modalId) ?>">
+                      Fermate
+                    </button>
+                    <div class="modal fade" id="<?= e($modalId) ?>" tabindex="-1" aria-labelledby="<?= e($modalId) ?>Label" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="<?= e($modalId) ?>Label">Fermate successive · Treno <?= e($departure['train']) ?></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                          </div>
+                          <div class="modal-body"><?= e($departure['next_stops']) ?></div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <?php else: ?>
+                    <span class="text-muted">—</span>
+                  <?php endif; ?>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>
