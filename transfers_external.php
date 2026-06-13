@@ -49,6 +49,11 @@ foreach ($rows as $r) {
     }
 }
 
+
+$flightReferenceLink = static function (string $label, string $flightNumber) use ($base): string {
+    return e($label) . ': <a href="' . e($base) . '/voli.php" title="Apri pagina voli">' . e($flightNumber) . '</a>';
+};
+
 $title = 'Transfere — Esterni';
 include __DIR__ . '/partials/header.php';
 ?>
@@ -116,13 +121,13 @@ include __DIR__ . '/partials/header.php';
             }
             $referenceParts = [];
             if ($isRoundTrip) {
-              if (!empty($r['arrival_flight_number'])) $referenceParts[] = 'Volo arrivo: ' . $r['arrival_flight_number'];
-              if (!empty($r['arrival_train_number'])) $referenceParts[] = 'Treno arrivo: ' . $r['arrival_train_number'];
-              if (!empty($r['departure_flight_number'])) $referenceParts[] = 'Volo partenza: ' . $r['departure_flight_number'];
-              if (!empty($r['departure_train_number'])) $referenceParts[] = 'Treno partenza: ' . $r['departure_train_number'];
+              if (!empty($r['arrival_flight_number'])) $referenceParts[] = $flightReferenceLink('Volo arrivo', (string)$r['arrival_flight_number']);
+              if (!empty($r['arrival_train_number'])) $referenceParts[] = e('Treno arrivo: ' . $r['arrival_train_number']);
+              if (!empty($r['departure_flight_number'])) $referenceParts[] = $flightReferenceLink('Volo partenza', (string)$r['departure_flight_number']);
+              if (!empty($r['departure_train_number'])) $referenceParts[] = e('Treno partenza: ' . $r['departure_train_number']);
             } else {
-              if (!empty($r['flight_number'])) $referenceParts[] = 'Volo: ' . $r['flight_number'];
-              if (!empty($r['train_number'])) $referenceParts[] = 'Treno: ' . $r['train_number'];
+              if (!empty($r['flight_number'])) $referenceParts[] = $flightReferenceLink('Volo', (string)$r['flight_number']);
+              if (!empty($r['train_number'])) $referenceParts[] = e('Treno: ' . $r['train_number']);
             }
           ?>
           <tr>
@@ -161,7 +166,7 @@ include __DIR__ . '/partials/header.php';
                 <?= $r['pickup_time'] ? e(substr($r['pickup_time'],0,5)) : '—' ?>
               <?php endif; ?>
             </td>
-            <td><?= $referenceParts ? e(implode(' · ', $referenceParts)) : '—' ?></td>
+            <td><?= $referenceParts ? implode(' · ', $referenceParts) : '—' ?></td>
             <td><?= e($r['room_number']) ?></td>
             <td><?= e($r['guest_name']) ?></td>
             <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
