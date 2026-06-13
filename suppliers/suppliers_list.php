@@ -7,6 +7,7 @@ start_session();
 $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 
 if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
@@ -21,7 +22,7 @@ function render_days_badges(array $days){
 }
 
 $sql = "
-  SELECT s.id, s.name, s.phone, s.email
+  SELECT s.id, s.name, s.phone, s.email, COALESCE(s.is_active, 1) AS is_active
   FROM suppliers s
   ORDER BY s.name ASC
 ";
@@ -51,6 +52,7 @@ include __DIR__ . '/../partials/header.php';
           <th>Nome</th>
           <th>Telefono</th>
           <th>Email</th>
+          <th>Attivo</th>
           <th>Giorni Ordini</th>
           <th>Giorni Consegne</th>
           <th class="text-end">Azioni</th>
@@ -65,6 +67,7 @@ include __DIR__ . '/../partials/header.php';
           <td class="fw-semibold"><?= e($r['name']) ?></td>
           <td><?= e($r['phone'] ?? '') ?></td>
           <td><a href="mailto:<?= e($r['email'] ?? '') ?>"><?= e($r['email'] ?? '') ?></a></td>
+          <td><?= !empty($r['is_active']) ? '<span class="badge bg-success">Sì</span>' : '<span class="badge bg-secondary">No</span>' ?></td>
           <td><?= render_days_badges($ord) ?></td>
           <td><?= render_days_badges($del) ?></td>
           <td class="text-end">
@@ -78,7 +81,7 @@ include __DIR__ . '/../partials/header.php';
         </tr>
       <?php endforeach; ?>
       <?php if (!$rows): ?>
-        <tr><td colspan="6" class="text-center text-muted py-3">Nessun fornitore</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-3">Nessun fornitore</td></tr>
       <?php endif; ?>
       </tbody>
     </table>

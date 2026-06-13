@@ -9,6 +9,7 @@ start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_riassetti_status_column($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
@@ -28,6 +29,7 @@ $riassetto = [
   'qty_set_bagno' => 0,
   'pulizia_extra' => 0,
   'note' => '',
+  'status' => 'da_preparare',
 ];
 $errors = [];
 
@@ -101,8 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
       $id = $riassetto['id'];
     } else {
       $stmt = $pdo->prepare('INSERT INTO riassetti
-        (data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, created_by, updated_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        (data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, created_by, updated_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
       $stmt->execute([
         $riassetto['data_riassetto'],
         $riassetto['room'],
@@ -111,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $riassetto['qty_set_bagno'],
         $riassetto['pulizia_extra'],
         $riassetto['note'],
+        'da_preparare',
         $user['id'],
         $user['id'],
       ]);
