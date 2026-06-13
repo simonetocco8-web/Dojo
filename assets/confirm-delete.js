@@ -35,7 +35,7 @@
   function defaultMessage(form) {
     var action = hiddenActionValue(form);
     if (action === 'toggle_cancel') return 'Confermi di voler annullare o ripristinare questo elemento?';
-    if (action === 'unset_booked') return 'Confermi di voler rimuovere Prenotato e Compagnia?';
+    if (action === 'unset_booked') return 'Confermi di voler rimuovere Prenotato?';
     if (action === 'trash') return 'Confermi di voler spostare questo elemento nel cestino?';
     return 'Confermi di voler eliminare questo elemento?';
   }
