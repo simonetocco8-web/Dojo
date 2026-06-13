@@ -108,6 +108,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               'location' => $location,
               'date' => $whenAt->format('d/m/Y'),
               'time' => $form['time'],
+              'people_count' => $peopleCount,
+              'note' => $note,
               'recipients' => $navettistaPhones,
             ]);
           } catch (Throwable $e) {
@@ -135,7 +137,7 @@ include __DIR__ . '/partials/header.php';
       <div class="card-body">
         <h1 class="h5 mb-3">Modifica Transfer Interno #<?= (int)$id ?></h1>
         <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
-        <form method="post">
+        <form method="post" data-wait-feedback="Salvataggio transfer e invio SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <input type="hidden" name="id" value="<?= (int)$id ?>">
           <div class="row g-3">
