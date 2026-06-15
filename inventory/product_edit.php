@@ -49,7 +49,8 @@ function supplier_options(array $suppliers, ?int $selectedId = null): string {
   $html = '<option value="">— Nessuno —</option>';
   foreach ($suppliers as $s) {
     $sel = ($selectedId !== null && (int)$s['id'] === (int)$selectedId) ? ' selected' : '';
-    $html .= '<option value="'.(int)$s['id'].'" data-supplier-name="'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
+    $isInternet = strcasecmp(trim((string)$s['name']), 'Internet') === 0 ? '1' : '0';
+    $html .= '<option value="'.(int)$s['id'].'" data-supplier-name="'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'" data-is-internet="'.$isInternet.'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
   }
   return $html;
 }
@@ -189,7 +190,7 @@ include __DIR__ . '/../partials/header.php';
 
         <div class="col-md-3">
           <label class="form-label">Fornitore</label>
-          <select name="supplier_id" class="form-select" id="supplier_id">
+          <select name="supplier_id" class="form-select" id="supplier_id" onchange="toggleProductUrlField()">
             <?= supplier_options($suppliers, $product['supplier_id'] !== null ? (int)$product['supplier_id'] : null) ?>
           </select>
         </div>
@@ -241,19 +242,26 @@ include __DIR__ . '/../partials/header.php';
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var supplierSelect = document.getElementById('supplier_id');
-  var urlField = document.getElementById('productUrlField');
-  if (!supplierSelect || !urlField) return;
-
-  function toggleUrlField() {
-    var option = supplierSelect.options[supplierSelect.selectedIndex];
-    var supplierName = option ? (option.dataset.supplierName || option.text || '') : '';
-    urlField.classList.toggle('d-none', supplierName.trim().toLowerCase() !== 'internet');
+(function () {
+  function isInternetSupplier(option) {
+    if (!option) return false;
+    var supplierName = option.getAttribute('data-supplier-name') || option.text || '';
+    return option.getAttribute('data-is-internet') === '1' || supplierName.trim().toLowerCase() === 'internet';
   }
 
-  supplierSelect.addEventListener('change', toggleUrlField);
-  toggleUrlField();
-});
+  window.toggleProductUrlField = function () {
+    var supplierSelect = document.getElementById('supplier_id');
+    var urlField = document.getElementById('productUrlField');
+    if (!supplierSelect || !urlField) return;
+    var option = supplierSelect.options[supplierSelect.selectedIndex];
+    urlField.classList.toggle('d-none', !isInternetSupplier(option));
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.toggleProductUrlField);
+  } else {
+    window.toggleProductUrlField();
+  }
+})();
 </script>
 <?php include __DIR__ . '/../partials/footer.php'; ?>
