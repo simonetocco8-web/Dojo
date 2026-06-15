@@ -202,7 +202,7 @@ include __DIR__ . '/../partials/header.php';
 
         <div class="col-md-4">
           <label class="form-label">Categoria</label>
-          <select name="category" class="form-select">
+          <select name="category" class="form-select" id="category">
             <option value="">— Nessuna —</option>
             <?php foreach ($CATEGORIES as $c): ?>
               <option value="<?= e($c) ?>" <?= ($product['category'] === $c ? 'selected' : '') ?>><?= e($c) ?></option>
