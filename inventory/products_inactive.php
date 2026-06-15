@@ -12,6 +12,7 @@ $env = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo = db();
 ensure_products_active_column($pdo);
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 
 if (!$user || !user_is_bar_or_amministrazione($user)) {
@@ -25,7 +26,7 @@ $stmt = $pdo->query(""
   . "SELECT p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name AS supplier_name, "
   . "COALESCE(SUM(sl.qty), 0) AS total_qty "
   . "FROM products p "
-  . "LEFT JOIN suppliers s ON s.id = p.supplier_id "
+  . "LEFT JOIN suppliers s ON s.id = p.supplier_id AND COALESCE(s.is_active, 1) = 1 "
   . "LEFT JOIN stock_levels sl ON sl.product_id = p.id "
   . "WHERE p.is_active = 0 "
   . "GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name "
