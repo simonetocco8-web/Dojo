@@ -10,6 +10,8 @@ start_session();
 $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
+ensure_products_url_column($pdo);
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 
 // Solo Amministrazione o Admin
@@ -26,13 +28,14 @@ $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) { http_response_code(400); exit('ID non valido.'); }
 
 // --- Carica prodotto ---
-$st = $pdo->prepare("SELECT id, title, ean13, min_qty, max_qty, category, unit, supplier_id FROM products WHERE id = ?");
+$st = $pdo->prepare("SELECT id, title, ean13, min_qty, max_qty, category, unit, supplier_id, product_url FROM products WHERE id = ?");
 $st->execute([$id]);
 $product = $st->fetch(PDO::FETCH_ASSOC);
 if (!$product) { http_response_code(404); exit('Prodotto non trovato.'); }
 
 // --- Carica fornitori per la tendina ---
-$suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$supplierNameById = array_column($suppliers, 'name', 'id');
 
 // --- Helpers ---
 $errors = [];
@@ -42,7 +45,7 @@ function supplier_options(array $suppliers, ?int $selectedId = null): string {
   $html = '<option value="">— Nessuno —</option>';
   foreach ($suppliers as $s) {
     $sel = ($selectedId !== null && (int)$s['id'] === (int)$selectedId) ? ' selected' : '';
-    $html .= '<option value="'.(int)$s['id'].'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
+    $html .= '<option value="'.(int)$s['id'].'" data-supplier-name="'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
   }
   return $html;
 }
@@ -60,6 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $min_qty     = (string)($_POST['min_qty'] ?? '');
     $max_qty     = (string)($_POST['max_qty'] ?? '');
     $supplier_id = isset($_POST['supplier_id']) && $_POST['supplier_id'] !== '' ? (int)$_POST['supplier_id'] : null;
+    $product_url = trim((string)($_POST['product_url'] ?? ''));
+    $product_url = $product_url !== '' ? $product_url : null;
+    $isInternetSupplier = $supplier_id !== null && strcasecmp((string)($supplierNameById[$supplier_id] ?? ''), 'Internet') === 0;
 
     // 2) Validazioni base
     if ($title === '') {
@@ -84,12 +90,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 3) Fornitore esistente?
     if ($supplier_id !== null) {
-      $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id=?");
+      $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id=? AND COALESCE(is_active, 1) = 1");
       $chk->execute([$supplier_id]);
       if (!$chk->fetchColumn()) {
-        $errors[] = 'Fornitore selezionato non valido.';
+        $errors[] = 'Fornitore selezionato non valido o non attivo.';
         $supplier_id = null;
       }
+    }
+    if ($product_url !== null && !filter_var($product_url, FILTER_VALIDATE_URL)) {
+      $errors[] = 'Inserisci un URL valido.';
+    }
+    if (!$isInternetSupplier) {
+      $product_url = null;
     }
 
     // 4) Unicità EAN13 (se valorizzato)
@@ -106,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       try {
         $upd = $pdo->prepare("
           UPDATE products
-          SET title = ?, ean13 = ?, category = ?, unit = ?, min_qty = ?, max_qty = ?, supplier_id = ?
+          SET title = ?, ean13 = ?, category = ?, unit = ?, min_qty = ?, max_qty = ?, supplier_id = ?, product_url = ?
           WHERE id = ?
         ");
         $upd->execute([
@@ -117,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $min_qty,
           $max_qty,
           $supplier_id,
+          $product_url,
           $id
         ]);
 
@@ -172,9 +185,14 @@ include __DIR__ . '/../partials/header.php';
 
         <div class="col-md-3">
           <label class="form-label">Fornitore</label>
-          <select name="supplier_id" class="form-select">
+          <select name="supplier_id" class="form-select" id="supplier_id">
             <?= supplier_options($suppliers, $product['supplier_id'] !== null ? (int)$product['supplier_id'] : null) ?>
           </select>
+        </div>
+
+        <div class="col-md-12 d-none" id="productUrlField">
+          <label class="form-label">Url</label>
+          <input type="url" name="product_url" class="form-control" value="<?= e($product['product_url'] ?? '') ?>" placeholder="https://...">
         </div>
 
         <div class="col-md-4">
@@ -218,4 +236,20 @@ include __DIR__ . '/../partials/header.php';
   </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var supplierSelect = document.getElementById('supplier_id');
+  var urlField = document.getElementById('productUrlField');
+  if (!supplierSelect || !urlField) return;
+
+  function toggleUrlField() {
+    var option = supplierSelect.options[supplierSelect.selectedIndex];
+    var supplierName = option ? (option.dataset.supplierName || option.text || '') : '';
+    urlField.classList.toggle('d-none', supplierName.trim().toLowerCase() !== 'internet');
+  }
+
+  supplierSelect.addEventListener('change', toggleUrlField);
+  toggleUrlField();
+});
+</script>
 <?php include __DIR__ . '/../partials/footer.php'; ?>
