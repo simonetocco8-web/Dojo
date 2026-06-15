@@ -310,7 +310,7 @@ include __DIR__ . '/../partials/header.php';
 
 <div class="card shadow-sm no-print" id="scaricoApp">
   <div class="card-body p-3 p-lg-4">
-    <form method="post" id="scaricoForm" autocomplete="off">
+    <form method="post" id="scaricoForm" autocomplete="off" data-wait-feedback="Registrazione scarico e invio notifiche in corso...">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="warehouse" id="scaricoWarehouse" value="<?= e(in_array($wh, $warehouses, true) ? $wh : '') ?>">
       <div id="scaricoHiddenItems"></div>

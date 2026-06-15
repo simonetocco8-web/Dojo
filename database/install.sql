@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS riassetti (
   qty_set_bagno INT UNSIGNED NOT NULL DEFAULT 0,
   pulizia_extra TINYINT(1) NOT NULL DEFAULT 0,
   note TEXT DEFAULT NULL,
+  status VARCHAR(32) NOT NULL DEFAULT 'da_preparare',
   google_event_id VARCHAR(255) DEFAULT NULL,
   completed_at DATETIME DEFAULT NULL,
   completed_by INT UNSIGNED DEFAULT NULL,
@@ -60,7 +61,35 @@ CREATE TABLE IF NOT EXISTS riassetti (
 -- Aggiornamenti tabella transfers_external
 ALTER TABLE transfers_external
   ADD COLUMN IF NOT EXISTS people_count INT UNSIGNED DEFAULT NULL AFTER guest_name,
-  ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER people_count;
+  ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER people_count,
+  ADD COLUMN IF NOT EXISTS supplier_price_eur DECIMAL(10,2) DEFAULT NULL AFTER price_eur;
+
+-- Aggiornamenti tabella suppliers
+ALTER TABLE suppliers
+  ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
+
+-- Aggiornamenti URL prodotti
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS product_url VARCHAR(2048) DEFAULT NULL AFTER supplier_id;
+
+CREATE TABLE IF NOT EXISTS product_categories (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO product_categories (name) VALUES
+  ('Bibite'),
+  ('Caffetteria'),
+  ('Colazione'),
+  ('Pulizia'),
+  ('Rosticceria');
+
+INSERT IGNORE INTO product_categories (name)
+SELECT DISTINCT TRIM(category)
+FROM products
+WHERE category IS NOT NULL AND TRIM(category) <> '';
 
 CREATE TABLE IF NOT EXISTS system_settings (
   setting_key VARCHAR(190) NOT NULL PRIMARY KEY,
@@ -115,3 +144,44 @@ CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
 -- Prodotti disattivabili: i prodotti non attivi non sono mostrati nella lista principale
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
+
+-- Straordinari del personale
+CREATE TABLE IF NOT EXISTS overtime_entries (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  work_date DATE NOT NULL,
+  hours DECIMAL(6,2) NOT NULL,
+  note TEXT DEFAULT NULL,
+  created_by INT UNSIGNED DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME DEFAULT NULL,
+  INDEX idx_overtime_entries_user_date (user_id, work_date),
+  INDEX idx_overtime_entries_work_date (work_date),
+  INDEX idx_overtime_entries_deleted_at (deleted_at),
+  CONSTRAINT fk_overtime_entries_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_overtime_entries_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dettagli transfer esterni per arrivo/partenza e riferimenti viaggio
+ALTER TABLE transfers_external
+  MODIFY COLUMN type VARCHAR(32) NOT NULL DEFAULT 'arrivo',
+  MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'attivo',
+  ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company,
+  ADD COLUMN IF NOT EXISTS supplier_confirm_token VARCHAR(64) DEFAULT NULL AFTER supplier_name,
+  ADD COLUMN IF NOT EXISTS supplier_reject_token VARCHAR(64) DEFAULT NULL AFTER supplier_confirm_token,
+  ADD COLUMN IF NOT EXISTS supplier_token_expires_at DATETIME DEFAULT NULL AFTER supplier_reject_token,
+  ADD COLUMN IF NOT EXISTS supplier_responded_at DATETIME DEFAULT NULL AFTER supplier_token_expires_at,
+  ADD COLUMN IF NOT EXISTS rejection_reason VARCHAR(255) DEFAULT NULL AFTER supplier_responded_at,
+  ADD COLUMN IF NOT EXISTS flight_number VARCHAR(80) DEFAULT NULL AFTER rejection_reason,
+  ADD COLUMN IF NOT EXISTS train_number VARCHAR(80) DEFAULT NULL AFTER flight_number,
+  ADD COLUMN IF NOT EXISTS arrival_place VARCHAR(190) DEFAULT NULL AFTER train_number,
+  ADD COLUMN IF NOT EXISTS arrival_date_time DATETIME DEFAULT NULL AFTER arrival_place,
+  ADD COLUMN IF NOT EXISTS arrival_pickup_time TIME DEFAULT NULL AFTER arrival_date_time,
+  ADD COLUMN IF NOT EXISTS arrival_flight_number VARCHAR(80) DEFAULT NULL AFTER arrival_pickup_time,
+  ADD COLUMN IF NOT EXISTS arrival_train_number VARCHAR(80) DEFAULT NULL AFTER arrival_flight_number,
+  ADD COLUMN IF NOT EXISTS departure_place VARCHAR(190) DEFAULT NULL AFTER arrival_train_number,
+  ADD COLUMN IF NOT EXISTS departure_date_time DATETIME DEFAULT NULL AFTER departure_place,
+  ADD COLUMN IF NOT EXISTS departure_pickup_time TIME DEFAULT NULL AFTER departure_date_time,
+  ADD COLUMN IF NOT EXISTS departure_flight_number VARCHAR(80) DEFAULT NULL AFTER departure_pickup_time,
+  ADD COLUMN IF NOT EXISTS departure_train_number VARCHAR(80) DEFAULT NULL AFTER departure_flight_number;
