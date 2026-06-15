@@ -241,7 +241,7 @@ include __DIR__ . '/../partials/header.php';
             </div>
              <div class="col-md-4">
               <label class="form-label">Fornitore</label>
-               <select name="supplier_id" class="form-select" id="supplier_id" onchange="toggleProductUrlField()">
+               <select name="supplier_id" class="form-select" id="supplier_id">
                 <?= supplier_options($suppliers, $form['supplier_id'] !== '' ? (int)$form['supplier_id'] : null) ?>
                 </select>
             </div>
@@ -262,27 +262,6 @@ include __DIR__ . '/../partials/header.php';
     </div>
   </div>
 </div>
-<script>
-(function () {
-  function isInternetSupplier(option) {
-    if (!option) return false;
-    var supplierName = option.getAttribute('data-supplier-name') || option.text || '';
-    return option.getAttribute('data-is-internet') === '1' || supplierName.trim().toLowerCase() === 'internet';
-  }
-
-  window.toggleProductUrlField = function () {
-    var supplierSelect = document.getElementById('supplier_id');
-    var urlField = document.getElementById('productUrlField');
-    if (!supplierSelect || !urlField) return;
-    var option = supplierSelect.options[supplierSelect.selectedIndex];
-    urlField.classList.toggle('d-none', !isInternetSupplier(option));
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', window.toggleProductUrlField);
-  } else {
-    window.toggleProductUrlField();
-  }
-})();
-</script>
+<?php $productFormJs = __DIR__ . '/../assets/product-form.js'; ?>
+<script src="<?= e($base) ?>/assets/product-form.js?v=<?= file_exists($productFormJs) ? filemtime($productFormJs) : time() ?>" defer></script>
 <?php include __DIR__ . '/../partials/footer.php'; ?>
