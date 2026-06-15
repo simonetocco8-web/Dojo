@@ -68,6 +68,10 @@ ALTER TABLE transfers_external
 ALTER TABLE suppliers
   ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1;
 
+-- Aggiornamenti URL prodotti
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS product_url VARCHAR(2048) DEFAULT NULL AFTER supplier_id;
+
 CREATE TABLE IF NOT EXISTS system_settings (
   setting_key VARCHAR(190) NOT NULL PRIMARY KEY,
   setting_value TEXT DEFAULT NULL,

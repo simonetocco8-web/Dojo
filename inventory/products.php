@@ -12,6 +12,7 @@ $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_products_active_column($pdo);
+ensure_products_url_column($pdo);
 ensure_suppliers_active_column($pdo);
 $user = current_user();
 
@@ -105,6 +106,7 @@ $listSql = "
     p.unit,
     p.min_qty,
     p.max_qty,
+    p.product_url,
     s.name AS supplier_name,
     COALESCE(SUM(sl.qty), 0) AS total_qty,
     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0)    AS qty_tizzo,
@@ -114,7 +116,7 @@ $listSql = "
   LEFT JOIN suppliers s ON s.id = p.supplier_id AND COALESCE(s.is_active, 1) = 1
   $joinWarehouse
   $whereSql
-  GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name
+  GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, p.product_url, s.name
   $havingSql
   ORDER BY p.title ASC
   LIMIT :limit OFFSET :offset
@@ -262,7 +264,35 @@ include __DIR__ . '/../partials/header.php';
                          data-warehouse="Tramonto">
                 </td>
 
-              <td><?= $r['supplier_name'] ? e($r['supplier_name']) : '<span class="text-muted">—</span>' ?></td>
+              <td>
+                <?php if ($r['supplier_name']): ?>
+                  <?= e($r['supplier_name']) ?>
+                  <?php if (strcasecmp((string)$r['supplier_name'], 'Internet') === 0 && !empty($r['product_url'])): ?>
+                    <?php $urlModalId = 'productUrl_' . (int)$r['id']; ?>
+                    <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" title="Mostra Url" data-bs-toggle="modal" data-bs-target="#<?= e($urlModalId) ?>">
+                      <i class="bi bi-link-45deg"></i>
+                    </button>
+                    <div class="modal fade" id="<?= e($urlModalId) ?>" tabindex="-1" aria-labelledby="<?= e($urlModalId) ?>Label" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="<?= e($urlModalId) ?>Label">Url prodotto</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                          </div>
+                          <div class="modal-body text-break">
+                            <a href="<?= e($r['product_url']) ?>" target="_blank" rel="noopener"><?= e($r['product_url']) ?></a>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endif; ?>
+                <?php else: ?>
+                  <span class="text-muted">—</span>
+                <?php endif; ?>
+              </td>
               <td class="text-end text-nowrap">
                 <a class="btn btn-link btn-sm" href="product_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">✏️</a>
                 <form method="post" action="<?= e($base) ?>/inventory/product_action.php" class="d-inline" data-confirm-message="Disattivare questo prodotto? Non sarà più visibile nella lista principale.">
