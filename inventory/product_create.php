@@ -4,11 +4,17 @@ if (!$user) { header('Location: login.php?msg=auth'); exit; }     // redirect RE
 if (!is_amministrazione()) { header($_SERVER['SERVER_PROTOCOL'].' 403 Forbidden'); echo 'Solo Amministrazione.'; exit; }
 
 ensure_products_active_column($pdo);
+ensure_products_url_column($pdo);
+ensure_suppliers_active_column($pdo);
+ensure_product_categories_table($pdo);
 
 $message = '';
 $messageType = 'info';
 $duplicateCandidates = [];
-$categories = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+$categories = $pdo->query("SELECT name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+if (!$categories) {
+  $categories = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+}
 $units = ['pacco','cartone','blister','Bottiglia','Busta','confezione'];
 $form = [
   'title' => '',
@@ -18,9 +24,11 @@ $form = [
   'min_qty' => '0',
   'max_qty' => '0',
   'supplier_id' => '',
+  'product_url' => '',
 ];
 
-$suppliers = $pdo->query("SELECT id, name FROM suppliers ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+$supplierNameById = array_column($suppliers, 'name', 'id');
 
 
 function inventory_products_redirect_url(): string {
@@ -37,7 +45,8 @@ function supplier_options(array $suppliers, ?int $selectedId = null): string {
   $html = '<option value="">— Nessuno —</option>';
   foreach ($suppliers as $s) {
     $sel = ($selectedId !== null && (int)$s['id'] === (int)$selectedId) ? ' selected' : '';
-    $html .= '<option value="'.(int)$s['id'].'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
+    $isInternet = strcasecmp(trim((string)$s['name']), 'Internet') === 0 ? '1' : '0';
+    $html .= '<option value="'.(int)$s['id'].'" data-supplier-name="'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'" data-is-internet="'.$isInternet.'"'.$sel.'>'.htmlspecialchars($s['name'], ENT_QUOTES, 'UTF-8').'</option>';
   }
   return $html;
 }
@@ -88,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     'min_qty' => (string)($_POST['min_qty'] ?? '0'),
     'max_qty' => (string)($_POST['max_qty'] ?? '0'),
     'supplier_id' => trim((string)($_POST['supplier_id'] ?? '')),
+    'product_url' => trim((string)($_POST['product_url'] ?? '')),
   ]);
 
   if (!csrf_check($_POST['csrf'] ?? '')) {
@@ -101,6 +111,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $min   = (float)$form['min_qty'];
     $max   = (float)$form['max_qty'];
     $supplier_id = $form['supplier_id'] !== '' ? (int)$form['supplier_id'] : null;
+    $product_url = $form['product_url'] !== '' ? $form['product_url'] : null;
+    $isInternetSupplier = $supplier_id !== null && strcasecmp((string)($supplierNameById[$supplier_id] ?? ''), 'Internet') === 0;
     $confirmSimilar = ($_POST['confirm_similar'] ?? '') === '1';
 
     if (!in_array($cat, $categories, true)) {
@@ -116,25 +128,47 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $message = 'Sessione non valida: utente non rilevato.';
       $messageType = 'danger';
     } else {
-      $duplicateCandidates = find_similar_products($pdo, $title);
-      if ($duplicateCandidates && !$confirmSimilar) {
-        $message = 'Attenzione: esistono già prodotti con nome uguale o simile. Verifica l’elenco e conferma solo se vuoi creare comunque il nuovo prodotto.';
-        $messageType = 'warning';
-      } else {
-        $stmt = $pdo->prepare("\n          INSERT INTO products (title, ean13, category, supplier_id, unit, min_qty, max_qty, created_by)\n          VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        ");
-        try {
-          $stmt->execute([$title, $ean, $cat, $supplier_id, $unit, $min, $max, $user['id']]);
-          header('Location: ' . inventory_products_redirect_url());
-          exit;
-        } catch (PDOException $e) {
-          $sqlstate = $e->getCode();
-          $errno    = $e->errorInfo[1] ?? 0;
-          if ($sqlstate === '23000' && (int)$errno === 1062) {
-            $message = 'EAN già presente (duplicato).';
-          } else {
-            $message = 'Errore DB: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
-          }
+      if ($supplier_id !== null) {
+        $chk = $pdo->prepare("SELECT 1 FROM suppliers WHERE id = ? AND COALESCE(is_active, 1) = 1");
+        $chk->execute([$supplier_id]);
+        if (!$chk->fetchColumn()) {
+          $message = 'Fornitore selezionato non valido o non attivo.';
           $messageType = 'danger';
+        }
+      }
+
+      if (!$message && $product_url !== null && !filter_var($product_url, FILTER_VALIDATE_URL)) {
+        $message = 'Inserisci un URL valido.';
+        $messageType = 'danger';
+      }
+      if (!$isInternetSupplier) {
+        $product_url = null;
+      }
+
+      if (!$message) {
+        $duplicateCandidates = find_similar_products($pdo, $title);
+        if ($duplicateCandidates && !$confirmSimilar) {
+          $message = 'Attenzione: esistono già prodotti con nome uguale o simile. Verifica l’elenco e conferma solo se vuoi creare comunque il nuovo prodotto.';
+          $messageType = 'warning';
+        } else {
+          $stmt = $pdo->prepare("
+          INSERT INTO products (title, ean13, category, supplier_id, product_url, unit, min_qty, max_qty, created_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+          try {
+            $stmt->execute([$title, $ean, $cat, $supplier_id, $product_url, $unit, $min, $max, $user['id']]);
+            header('Location: ' . inventory_products_redirect_url());
+            exit;
+          } catch (PDOException $e) {
+            $sqlstate = $e->getCode();
+            $errno    = $e->errorInfo[1] ?? 0;
+            if ($sqlstate === '23000' && (int)$errno === 1062) {
+              $message = 'EAN già presente (duplicato).';
+            } else {
+              $message = 'Errore DB: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+            }
+            $messageType = 'danger';
+          }
         }
       }
     }
@@ -207,9 +241,13 @@ include __DIR__ . '/../partials/header.php';
             </div>
              <div class="col-md-4">
               <label class="form-label">Fornitore</label>
-               <select name="supplier_id" class="form-select">
+               <select name="supplier_id" class="form-select" id="supplier_id">
                 <?= supplier_options($suppliers, $form['supplier_id'] !== '' ? (int)$form['supplier_id'] : null) ?>
                 </select>
+            </div>
+            <div class="col-md-8 d-none" id="productUrlField">
+              <label class="form-label">Url</label>
+              <input type="url" name="product_url" class="form-control" value="<?= e($form['product_url']) ?>" placeholder="https://...">
             </div>
           </div>
           <div class="mt-3 d-flex flex-wrap gap-2">
@@ -224,4 +262,6 @@ include __DIR__ . '/../partials/header.php';
     </div>
   </div>
 </div>
+<?php $productFormJs = __DIR__ . '/../assets/product-form.js'; ?>
+<script src="<?= e($base) ?>/assets/product-form.js?v=<?= file_exists($productFormJs) ? filemtime($productFormJs) : time() ?>" defer></script>
 <?php include __DIR__ . '/../partials/footer.php'; ?>
