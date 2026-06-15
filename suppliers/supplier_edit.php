@@ -5,6 +5,7 @@ require_once __DIR__ . '/../core/db.php';
 
 start_session();
 $pdo  = db();
+ensure_suppliers_active_column($pdo);
 $user = current_user();
 if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
   http_response_code(403); exit('Permesso negato.');
@@ -31,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
     $name = trim($_POST['name'] ?? '');
     $phone= trim($_POST['phone'] ?? '');
     $email= trim($_POST['email'] ?? '');
+    $is_active = isset($_POST['is_active']) ? 1 : 0;
     $order_days    = array_map('intval', $_POST['order_days'] ?? []);
     $delivery_days = array_map('intval', $_POST['delivery_days'] ?? []);
 
@@ -38,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
     else{
       try{
         $pdo->beginTransaction();
-        $up = $pdo->prepare("UPDATE suppliers SET name=?, phone=?, email=? WHERE id=?");
-        $up->execute([$name, $phone ?: null, $email ?: null, $id]);
+        $up = $pdo->prepare("UPDATE suppliers SET name=?, phone=?, email=?, is_active=? WHERE id=?");
+        $up->execute([$name, $phone ?: null, $email ?: null, $is_active, $id]);
 
         // reset giorni e reinserisci
         $pdo->prepare("DELETE FROM supplier_days WHERE supplier_id=?")->execute([$id]);
@@ -89,6 +91,12 @@ include __DIR__ . '/../partials/header.php';
         <div class="col-md-3">
           <label class="form-label">Email</label>
           <input type="email" name="email" class="form-control" value="<?= e($s['email'] ?? '') ?>">
+        </div>
+        <div class="col-md-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active" value="1" <?= !isset($s['is_active']) || (int)$s['is_active'] === 1 ? 'checked' : '' ?>>
+            <label class="form-check-label" for="is_active">Fornitore attivo</label>
+          </div>
         </div>
       </div>
 

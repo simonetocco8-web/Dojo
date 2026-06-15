@@ -12,6 +12,9 @@ $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_products_active_column($pdo);
+ensure_products_url_column($pdo);
+ensure_suppliers_active_column($pdo);
+ensure_product_categories_table($pdo);
 $user = current_user();
 
 // Permessi (adatta se vuoi renderla visibile ad altri reparti in sola lettura)
@@ -20,13 +23,22 @@ if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione') || u
 }
 
 // Config statiche
-$CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+$CATEGORIES = $pdo->query("SELECT name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+if (!$CATEGORIES) {
+  $CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+}
 $WAREHOUSES = ['Tizzo','Tramonto'];
+$suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 // --- Filtri (GET) ---
 $q         = trim((string)($_GET['q'] ?? ''));                // nome prodotto (LIKE)
 $category  = trim((string)($_GET['category'] ?? ''));         // categoria precisa
 $warehouse = trim((string)($_GET['warehouse'] ?? ''));        // Tizzo | Tramonto | ''
+$supplierId = filter_input(INPUT_GET, 'supplier_id', FILTER_VALIDATE_INT) ?: 0;
+$activeSupplierIds = array_map('intval', array_column($suppliers, 'id'));
+if ($supplierId > 0 && !in_array($supplierId, $activeSupplierIds, true)) {
+  $supplierId = 0;
+}
 $quantity  = trim((string)($_GET['quantity'] ?? 'all'));       // all | low
 if (!in_array($quantity, ['all','low'], true)) { $quantity = 'all'; }
 $page      = max(1, (int)($_GET['page'] ?? 1));
@@ -48,6 +60,12 @@ if ($q !== '') {
 if ($category !== '' && in_array($category, $CATEGORIES, true)) {
   $where[] = "p.category = :cat";
   $params[':cat'] = $category;
+}
+
+// Filtro fornitore
+if ($supplierId > 0) {
+  $where[] = "p.supplier_id = :supplier_id";
+  $params[':supplier_id'] = $supplierId;
 }
 
 // Filtro magazzino
@@ -92,16 +110,17 @@ $listSql = "
     p.unit,
     p.min_qty,
     p.max_qty,
+    p.product_url,
     s.name AS supplier_name,
     COALESCE(SUM(sl.qty), 0) AS total_qty,
     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0)    AS qty_tizzo,
     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
   FROM products p
   LEFT JOIN stock_levels sl ON sl.product_id = p.id
-  LEFT JOIN suppliers s ON s.id = p.supplier_id
+  LEFT JOIN suppliers s ON s.id = p.supplier_id AND COALESCE(s.is_active, 1) = 1
   $joinWarehouse
   $whereSql
-  GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, s.name
+  GROUP BY p.id, p.title, p.ean13, p.category, p.unit, p.min_qty, p.max_qty, p.product_url, s.name
   $havingSql
   ORDER BY p.title ASC
   LIMIT :limit OFFSET :offset
@@ -144,11 +163,11 @@ include __DIR__ . '/../partials/header.php';
 <form class="card mb-3" method="get">
   <div class="card-body">
     <div class="row g-2 align-items-end">
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-md-3">
         <label class="form-label">Nome prodotto</label>
         <input type="text" name="q" class="form-control" value="<?= e($q) ?>" placeholder="Cerca per nome...">
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
         <label class="form-label">Categoria</label>
         <select name="category" class="form-select">
           <option value="">Tutte</option>
@@ -157,7 +176,16 @@ include __DIR__ . '/../partials/header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md-2">
+        <label class="form-label">Fornitore</label>
+        <select name="supplier_id" class="form-select">
+          <option value="">Tutti</option>
+          <?php foreach ($suppliers as $supplier): ?>
+            <option value="<?= (int)$supplier['id'] ?>" <?= $supplierId===(int)$supplier['id']?'selected':''; ?>><?= e($supplier['name']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
         <label class="form-label">Magazzino</label>
         <select name="warehouse" class="form-select">
           <option value="">Tutti</option>
@@ -166,7 +194,7 @@ include __DIR__ . '/../partials/header.php';
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-6 col-md-2">
+      <div class="col-6 col-md-1">
         <label class="form-label">Quantità</label>
         <select name="quantity" class="form-select">
           <option value="all" <?= $quantity==='all'?'selected':''; ?>>Tutti</option>
@@ -240,7 +268,39 @@ include __DIR__ . '/../partials/header.php';
                          data-warehouse="Tramonto">
                 </td>
 
-              <td><?= $r['supplier_name'] ? e($r['supplier_name']) : '<span class="text-muted">—</span>' ?></td>
+              <td>
+                <?php
+                  $showProductUrl = !empty($r['product_url'])
+                    && strcasecmp((string)($r['supplier_name'] ?? ''), 'Internet') === 0;
+                ?>
+                <?php if ($r['supplier_name']): ?>
+                  <?= e($r['supplier_name']) ?>
+                <?php else: ?>
+                  <span class="text-muted">—</span>
+                <?php endif; ?>
+                <?php if ($showProductUrl): ?>
+                  <?php $urlModalId = 'productUrl_' . (int)$r['id']; ?>
+                  <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" title="Mostra Url" data-bs-toggle="modal" data-bs-target="#<?= e($urlModalId) ?>">
+                    <i class="bi bi-link-45deg"></i>
+                  </button>
+                  <div class="modal fade" id="<?= e($urlModalId) ?>" tabindex="-1" aria-labelledby="<?= e($urlModalId) ?>Label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="<?= e($urlModalId) ?>Label">Url prodotto</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                        </div>
+                        <div class="modal-body text-break">
+                          <a href="<?= e($r['product_url']) ?>" target="_blank" rel="noopener"><?= e($r['product_url']) ?></a>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <?php endif; ?>
+              </td>
               <td class="text-end text-nowrap">
                 <a class="btn btn-link btn-sm" href="product_edit.php?id=<?= (int)$r['id'] ?>" title="Modifica">✏️</a>
                 <form method="post" action="<?= e($base) ?>/inventory/product_action.php" class="d-inline" data-confirm-message="Disattivare questo prodotto? Non sarà più visibile nella lista principale.">
