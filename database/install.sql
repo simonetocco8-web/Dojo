@@ -72,6 +72,25 @@ ALTER TABLE suppliers
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS product_url VARCHAR(2048) DEFAULT NULL AFTER supplier_id;
 
+CREATE TABLE IF NOT EXISTS product_categories (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO product_categories (name) VALUES
+  ('Bibite'),
+  ('Caffetteria'),
+  ('Colazione'),
+  ('Pulizia'),
+  ('Rosticceria');
+
+INSERT IGNORE INTO product_categories (name)
+SELECT DISTINCT TRIM(category)
+FROM products
+WHERE category IS NOT NULL AND TRIM(category) <> '';
+
 CREATE TABLE IF NOT EXISTS system_settings (
   setting_key VARCHAR(190) NOT NULL PRIMARY KEY,
   setting_value TEXT DEFAULT NULL,

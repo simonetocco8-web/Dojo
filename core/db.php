@@ -149,6 +149,31 @@ function ensure_products_url_column(PDO $pdo): void {
 }
 
 
+function ensure_product_categories_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS product_categories (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100) NOT NULL UNIQUE,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $defaults = ['Bibite', 'Caffetteria', 'Colazione', 'Pulizia', 'Rosticceria'];
+  $insert = $pdo->prepare("INSERT IGNORE INTO product_categories (name) VALUES (?)");
+  foreach ($defaults as $category) {
+    $insert->execute([$category]);
+  }
+
+  $pdo->exec("
+    INSERT IGNORE INTO product_categories (name)
+    SELECT DISTINCT TRIM(category)
+    FROM products
+    WHERE category IS NOT NULL AND TRIM(category) <> ''
+  ");
+}
+
+
 function ensure_suppliers_active_column(PDO $pdo): void {
   $stmt = $pdo->query("
     SELECT COLUMN_NAME

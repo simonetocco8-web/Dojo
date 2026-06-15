@@ -12,6 +12,7 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_products_url_column($pdo);
 ensure_suppliers_active_column($pdo);
+ensure_product_categories_table($pdo);
 $user = current_user();
 
 // Solo Amministrazione o Admin
@@ -20,7 +21,10 @@ if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione'))) {
 }
 
 // --- Config “statiche” del form (adatta se servono) ---
-$CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+$CATEGORIES = $pdo->query("SELECT name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+if (!$CATEGORIES) {
+  $CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+}
 $UNITS      = ['pacco','cartone','blister','Bottiglia','Busta','confezione'];
 
 // --- Carica ID prodotto ---

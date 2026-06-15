@@ -48,6 +48,9 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
           <a class="nav-link dropdown-toggle" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
           <ul class="dropdown-menu" aria-labelledby="magazzinoSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
+            <?php if ($user && user_is_amministrazione($user)): ?>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/product_categories.php"><i class="bi bi-folder2-open"></i><span>Categorie Prodotti</span></a></li>
+            <?php endif; ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
@@ -126,6 +129,9 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
               <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
               <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
+                <?php if ($user && user_is_amministrazione($user)): ?>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/product_categories.php"><i class="bi bi-folder2-open"></i><span>Categorie Prodotti</span></a></li>
+                <?php endif; ?>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products_inactive.php"><i class="bi bi-archive"></i><span>Non Attivi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/carico.php"><i class="bi bi-box-arrow-in-down"></i><span>Carico</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>

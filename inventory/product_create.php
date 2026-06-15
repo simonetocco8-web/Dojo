@@ -6,11 +6,15 @@ if (!is_amministrazione()) { header($_SERVER['SERVER_PROTOCOL'].' 403 Forbidden'
 ensure_products_active_column($pdo);
 ensure_products_url_column($pdo);
 ensure_suppliers_active_column($pdo);
+ensure_product_categories_table($pdo);
 
 $message = '';
 $messageType = 'info';
 $duplicateCandidates = [];
-$categories = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+$categories = $pdo->query("SELECT name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+if (!$categories) {
+  $categories = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+}
 $units = ['pacco','cartone','blister','Bottiglia','Busta','confezione'];
 $form = [
   'title' => '',

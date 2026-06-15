@@ -14,6 +14,7 @@ $pdo  = db();
 ensure_products_active_column($pdo);
 ensure_products_url_column($pdo);
 ensure_suppliers_active_column($pdo);
+ensure_product_categories_table($pdo);
 $user = current_user();
 
 // Permessi (adatta se vuoi renderla visibile ad altri reparti in sola lettura)
@@ -22,7 +23,10 @@ if (!$user || !(is_admin() || user_has_department($user, 'Amministrazione') || u
 }
 
 // Config statiche
-$CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+$CATEGORIES = $pdo->query("SELECT name FROM product_categories ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+if (!$CATEGORIES) {
+  $CATEGORIES = ['Bibite','Caffetteria','Colazione','Pulizia','Rosticceria'];
+}
 $WAREHOUSES = ['Tizzo','Tramonto'];
 $suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
