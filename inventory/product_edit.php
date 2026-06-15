@@ -70,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $product_url = trim((string)($_POST['product_url'] ?? ''));
     $product_url = $product_url !== '' ? $product_url : null;
     $isInternetSupplier = $supplier_id !== null && strcasecmp((string)($supplierNameById[$supplier_id] ?? ''), 'Internet') === 0;
-    $isInternetCategory = strcasecmp($category, 'Internet') === 0;
 
     // 2) Validazioni base
     if ($title === '') {
@@ -105,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($product_url !== null && !filter_var($product_url, FILTER_VALIDATE_URL)) {
       $errors[] = 'Inserisci un URL valido.';
     }
-    if (!$isInternetSupplier && !$isInternetCategory) {
+    if (!$isInternetSupplier) {
       $product_url = null;
     }
 
@@ -244,20 +243,16 @@ include __DIR__ . '/../partials/header.php';
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   var supplierSelect = document.getElementById('supplier_id');
-  var categorySelect = document.getElementById('category');
   var urlField = document.getElementById('productUrlField');
-  if (!supplierSelect || !categorySelect || !urlField) return;
+  if (!supplierSelect || !urlField) return;
 
   function toggleUrlField() {
     var option = supplierSelect.options[supplierSelect.selectedIndex];
     var supplierName = option ? (option.dataset.supplierName || option.text || '') : '';
-    var categoryName = categorySelect.value || '';
-    var isInternet = supplierName.trim().toLowerCase() === 'internet' || categoryName.trim().toLowerCase() === 'internet';
-    urlField.classList.toggle('d-none', !isInternet);
+    urlField.classList.toggle('d-none', supplierName.trim().toLowerCase() !== 'internet');
   }
 
   supplierSelect.addEventListener('change', toggleUrlField);
-  categorySelect.addEventListener('change', toggleUrlField);
   toggleUrlField();
 });
 </script>

@@ -271,8 +271,7 @@ include __DIR__ . '/../partials/header.php';
               <td>
                 <?php
                   $showProductUrl = !empty($r['product_url'])
-                    && (strcasecmp((string)($r['supplier_name'] ?? ''), 'Internet') === 0
-                      || strcasecmp((string)($r['category'] ?? ''), 'Internet') === 0);
+                    && strcasecmp((string)($r['supplier_name'] ?? ''), 'Internet') === 0;
                 ?>
                 <?php if ($r['supplier_name']): ?>
                   <?= e($r['supplier_name']) ?>
