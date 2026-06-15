@@ -156,8 +156,10 @@ function ensure_product_categories_table(PDO $pdo): void {
       name VARCHAR(100) NOT NULL UNIQUE,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   ");
+
+  $pdo->exec("ALTER TABLE product_categories CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
   $defaults = ['Bibite', 'Caffetteria', 'Colazione', 'Pulizia', 'Rosticceria'];
   $insert = $pdo->prepare("INSERT IGNORE INTO product_categories (name) VALUES (?)");

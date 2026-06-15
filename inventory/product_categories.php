@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $categories = $pdo->query("
   SELECT c.id, c.name, COUNT(p.id) AS product_count
   FROM product_categories c
-  LEFT JOIN products p ON p.category = c.name
+  LEFT JOIN products p ON p.category COLLATE utf8mb4_unicode_ci = c.name COLLATE utf8mb4_unicode_ci
   GROUP BY c.id, c.name
   ORDER BY c.name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
