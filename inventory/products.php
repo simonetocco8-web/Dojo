@@ -269,32 +269,37 @@ include __DIR__ . '/../partials/header.php';
                 </td>
 
               <td>
+                <?php
+                  $showProductUrl = !empty($r['product_url'])
+                    && (strcasecmp((string)($r['supplier_name'] ?? ''), 'Internet') === 0
+                      || strcasecmp((string)($r['category'] ?? ''), 'Internet') === 0);
+                ?>
                 <?php if ($r['supplier_name']): ?>
                   <?= e($r['supplier_name']) ?>
-                  <?php if (strcasecmp((string)$r['supplier_name'], 'Internet') === 0 && !empty($r['product_url'])): ?>
-                    <?php $urlModalId = 'productUrl_' . (int)$r['id']; ?>
-                    <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" title="Mostra Url" data-bs-toggle="modal" data-bs-target="#<?= e($urlModalId) ?>">
-                      <i class="bi bi-link-45deg"></i>
-                    </button>
-                    <div class="modal fade" id="<?= e($urlModalId) ?>" tabindex="-1" aria-labelledby="<?= e($urlModalId) ?>Label" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="<?= e($urlModalId) ?>Label">Url prodotto</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-                          </div>
-                          <div class="modal-body text-break">
-                            <a href="<?= e($r['product_url']) ?>" target="_blank" rel="noopener"><?= e($r['product_url']) ?></a>
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                          </div>
+                <?php else: ?>
+                  <span class="text-muted">—</span>
+                <?php endif; ?>
+                <?php if ($showProductUrl): ?>
+                  <?php $urlModalId = 'productUrl_' . (int)$r['id']; ?>
+                  <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" title="Mostra Url" data-bs-toggle="modal" data-bs-target="#<?= e($urlModalId) ?>">
+                    <i class="bi bi-link-45deg"></i>
+                  </button>
+                  <div class="modal fade" id="<?= e($urlModalId) ?>" tabindex="-1" aria-labelledby="<?= e($urlModalId) ?>Label" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="<?= e($urlModalId) ?>Label">Url prodotto</h5>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                        </div>
+                        <div class="modal-body text-break">
+                          <a href="<?= e($r['product_url']) ?>" target="_blank" rel="noopener"><?= e($r['product_url']) ?></a>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
                         </div>
                       </div>
                     </div>
-                  <?php endif; ?>
-                <?php else: ?>
-                  <span class="text-muted">—</span>
+                  </div>
                 <?php endif; ?>
               </td>
               <td class="text-end text-nowrap">
