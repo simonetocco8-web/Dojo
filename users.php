@@ -23,6 +23,18 @@ if ($show_trash) {
   $title = 'Utenti';
 }
 
+
+function users_format_datetime(?string $value): string {
+  $value = trim((string)$value);
+  if ($value === '') return '—';
+
+  try {
+    return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+  } catch (Throwable $e) {
+    return $value;
+  }
+}
+
 include __DIR__ . '/partials/header.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -64,7 +76,7 @@ include __DIR__ . '/partials/header.php';
             <?php if($show_trash): ?>
               <td><?= e($u['deleted_at']) ?></td>
             <?php else: ?>
-              <td><?= e($u['created_at']) ?></td>
+              <td><?= e(users_format_datetime($u['created_at'] ?? null)) ?></td>
             <?php endif; ?>
             <td class="text-nowrap d-flex gap-2">
               <?php if(!$show_trash): ?>
