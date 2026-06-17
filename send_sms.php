@@ -153,7 +153,7 @@ include __DIR__ . '/partials/header.php';
     <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h6 mb-3">Nuovo SMS</h2>
-        <form method="post">
+        <form method="post" data-wait-feedback="Invio SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
 
           <div class="mb-3">

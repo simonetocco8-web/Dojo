@@ -3,6 +3,7 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/sms.php';
+require_once __DIR__ . '/core/task_sms_reminders.php';
 require_once __DIR__ . '/notification/send-notification-chat.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
@@ -12,6 +13,7 @@ $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
 ensure_task_user_assignments_table($pdo);
+ensure_task_sms_reminders_table($pdo);
 
 $allowedDeps = available_departments();
 $allowedPri  = ['bassa','media','alta','urgente'];
@@ -124,10 +126,16 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
           notify($title, $dip, $due_date, $priority, $description);
         }
 
+        $smsMessage = task_sms_body($title, $due_date, $priority);
+        $today = (new DateTimeImmutable('now', task_sms_timezone()))->format('Y-m-d');
         try {
-          sms_send_message($env, $smsRecipients, task_sms_body($title, $due_date, $priority));
+          if ($due_date === $today) {
+            sms_send_message($env, $smsRecipients, $smsMessage);
+          } else {
+            schedule_task_sms_reminder($pdo, $taskId, $smsRecipients, $smsMessage, $due_date);
+          }
         } catch (Throwable $e) {
-          error_log('Task SMS send failed: ' . $e->getMessage());
+          error_log('Task SMS handling failed: ' . $e->getMessage());
           header('Location: tasks.php?id=' . $taskId . '&msg=' . rawurlencode('created_sms_error: ' . $e->getMessage()));
           exit;
         }
@@ -153,7 +161,7 @@ include __DIR__ . '/partials/header.php';
       <div class="card-body">
         <h1 class="h5 mb-3">Crea nuovo compito</h1>
         <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
-        <form method="post">
+        <form method="post" data-wait-feedback="Creazione task e gestione SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <div class="row g-3">
             <div class="col-md-8">
