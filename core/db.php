@@ -82,6 +82,26 @@ function ensure_task_user_assignments_table(PDO $pdo): void {
 }
 
 
+function ensure_task_sms_reminders_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS task_sms_reminders (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      task_id INT UNSIGNED NOT NULL,
+      recipients TEXT NOT NULL,
+      message VARCHAR(160) NOT NULL,
+      scheduled_at DATETIME NOT NULL,
+      sent_at DATETIME DEFAULT NULL,
+      last_error TEXT DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_task_sms_reminders_task (task_id),
+      INDEX idx_task_sms_reminders_due (scheduled_at, sent_at),
+      CONSTRAINT fk_task_sms_reminders_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
+
+
 
 function ensure_transfer_internal_details_columns(PDO $pdo): void {
   $columns = array();
