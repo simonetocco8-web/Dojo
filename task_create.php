@@ -18,6 +18,8 @@ ensure_task_sms_reminders_table($pdo);
 $allowedDeps = available_departments();
 $allowedPri  = ['bassa','media','alta','urgente'];
 $allowedRec  = ['nessuna','giornaliera','settimanale','mensile','annuale'];
+$taskTitleMaxLength = 30;
+$taskDescriptionMaxLength = 120;
 $message = '';
 $formData = [
   'target_type' => 'department',
@@ -30,21 +32,11 @@ $formData = [
   'recurrence' => 'nessuna',
 ];
 
-function task_sms_body(string $title, string $dueDate, string $priority): string {
-  $dateLabel = $dueDate;
-  $dt = DateTime::createFromFormat('Y-m-d', $dueDate);
-  if ($dt && $dt->format('Y-m-d') === $dueDate) {
-    $dateLabel = $dt->format('d/m/Y');
-  }
-  $body = sprintf('Nuovo task: %s - Scad. %s - Priorita %s', $title, $dateLabel, $priority);
-  if ((function_exists('mb_strlen') ? mb_strlen($body, 'UTF-8') : strlen($body)) > 160) {
-    $suffix = sprintf(' - Scad. %s - Priorita %s', $dateLabel, $priority);
-    $maxTitle = 160 - (function_exists('mb_strlen') ? mb_strlen('Nuovo task: ', 'UTF-8') + mb_strlen($suffix, 'UTF-8') : strlen('Nuovo task: ') + strlen($suffix));
-    $maxTitle = max(10, $maxTitle);
-    $shortTitle = function_exists('mb_substr') ? mb_substr($title, 0, $maxTitle, 'UTF-8') : substr($title, 0, $maxTitle);
-    $body = 'Nuovo task: ' . $shortTitle . $suffix;
-  }
-  return $body;
+function task_sms_body(string $title, string $description): string {
+  $title = sms_utf8_substr(trim($title), 0, 30);
+  $description = sms_utf8_substr(trim($description), 0, 120);
+  $body = 'Task: ' . $title . "\n" . $description;
+  return sms_utf8_substr($body, 0, 160);
 }
 
 $users = $pdo->query("SELECT id, nome, cognome, email, telefono, dipartimento
@@ -77,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
 
     if (!in_array($priority, $allowedPri, true)) $priority = 'media';
     if (!in_array($recurrence, $allowedRec, true)) $recurrence = 'nessuna';
+    if (sms_utf8_length($title) > $taskTitleMaxLength) { $message = 'Il titolo può contenere al massimo ' . $taskTitleMaxLength . ' caratteri.'; }
+    if (sms_utf8_length($description) > $taskDescriptionMaxLength) { $message = 'La descrizione può contenere al massimo ' . $taskDescriptionMaxLength . ' caratteri.'; }
     if ($targetType === 'department' && !in_array($dip, $allowedDeps, true)) { $message = 'Dipartimento non valido.'; }
     if ($targetType === 'users' && !$selectedIds) { $message = 'Seleziona almeno un utente destinatario.'; }
 
@@ -126,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
           notify($title, $dip, $due_date, $priority, $description);
         }
 
-        $smsMessage = task_sms_body($title, $due_date, $priority);
+        $smsMessage = task_sms_body($title, $description);
         $today = (new DateTimeImmutable('now', task_sms_timezone()))->format('Y-m-d');
         try {
           if ($due_date === $today) {
@@ -165,8 +159,11 @@ include __DIR__ . '/partials/header.php';
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <div class="row g-3">
             <div class="col-md-8">
-              <label class="form-label">Titolo</label>
-              <input type="text" name="title" class="form-control" value="<?= e($formData['title']) ?>" required>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0" for="task_title">Titolo</label>
+                <small class="text-muted" data-char-counter-for="task_title"><?= $taskTitleMaxLength ?> caratteri rimanenti</small>
+              </div>
+              <input type="text" id="task_title" name="title" class="form-control" value="<?= e($formData['title']) ?>" maxlength="<?= $taskTitleMaxLength ?>" data-maxlength="<?= $taskTitleMaxLength ?>" required>
             </div>
             <div class="col-md-4">
               <label class="form-label">Priorità</label>
@@ -221,8 +218,11 @@ include __DIR__ . '/partials/header.php';
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label">Descrizione</label>
-              <textarea name="description" class="form-control" rows="4" required><?= e($formData['description']) ?></textarea>
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label mb-0" for="task_description">Descrizione</label>
+                <small class="text-muted" data-char-counter-for="task_description"><?= $taskDescriptionMaxLength ?> caratteri rimanenti</small>
+              </div>
+              <textarea id="task_description" name="description" class="form-control" rows="4" maxlength="<?= $taskDescriptionMaxLength ?>" data-maxlength="<?= $taskDescriptionMaxLength ?>" required><?= e($formData['description']) ?></textarea>
             </div>
           </div>
           <div class="mt-3 d-flex gap-2">
@@ -230,6 +230,8 @@ include __DIR__ . '/partials/header.php';
             <a class="btn btn-outline-secondary" href="<?= e($base) ?>/tasks.php">Annulla</a>
           </div>
         </form>
+        <?php $taskCreateCountersVersion = @filemtime(__DIR__ . '/assets/task-create-counters.js') ?: time(); ?>
+        <script src="<?= e($base) ?>/assets/task-create-counters.js?v=<?= (int)$taskCreateCountersVersion ?>"></script>
       </div>
     </div>
   </div>
