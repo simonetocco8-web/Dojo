@@ -34,7 +34,7 @@ function sms_send_message($env, $recipients, $message) {
     throw new RuntimeException('Nessun destinatario SMS configurato.');
   }
 
-  $message = trim((string)$message);
+  $message = sms_gsm7_sanitize(trim((string)$message));
   if ($message === '') {
     throw new RuntimeException('Corpo SMS vuoto.');
   }
@@ -91,6 +91,74 @@ function sms_send_message($env, $recipients, $message) {
 }
 
 
+function sms_gsm7_allowed_characters(): array {
+  static $allowed = null;
+  if ($allowed !== null) return $allowed;
+
+  $chars = "@£" . '$' . "¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
+  $extensions = "^{}\\[~]|€";
+  $allowed = array_fill_keys(preg_split('//u', $chars . $extensions, -1, PREG_SPLIT_NO_EMPTY), true);
+  return $allowed;
+}
+
+function sms_gsm7_is_allowed(string $char): bool {
+  $allowed = sms_gsm7_allowed_characters();
+  return isset($allowed[$char]);
+}
+
+function sms_gsm7_filter_ascii(string $value): string {
+  $filtered = '';
+  foreach (preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY) as $char) {
+    if (sms_gsm7_is_allowed($char)) {
+      $filtered .= $char;
+    }
+  }
+  return $filtered;
+}
+
+function sms_gsm7_sanitize(string $value): string {
+  $value = strtr($value, array(
+    '→' => '->',
+    '⇒' => '->',
+    '➜' => '->',
+    '➔' => '->',
+    '➡' => '->',
+    '←' => '<-',
+    '⇐' => '<-',
+    '⬅' => '<-',
+    '↔' => '<->',
+    '–' => '-',
+    '—' => '-',
+    '−' => '-',
+    '…' => '...',
+    '“' => '"',
+    '”' => '"',
+    '„' => '"',
+    '’' => "'",
+    '‘' => "'",
+    '‚' => "'",
+    '′' => "'",
+    '″' => '"',
+    '•' => '-',
+    '·' => '-',
+    "\xc2\xa0" => ' ',
+  ));
+
+  $sanitized = '';
+  foreach (preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY) as $char) {
+    if (sms_gsm7_is_allowed($char)) {
+      $sanitized .= $char;
+      continue;
+    }
+
+    $transliterated = function_exists('iconv') ? @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $char) : '';
+    $transliterated = is_string($transliterated) ? sms_gsm7_filter_ascii($transliterated) : '';
+    $sanitized .= $transliterated !== '' ? $transliterated : '?';
+  }
+
+  return trim(preg_replace('/[ \t]+/u', ' ', $sanitized) ?? $sanitized);
+}
+
 function sms_utf8_length(string $value): int {
   return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
 }
@@ -112,11 +180,18 @@ function sms_append_optional_note(string $message, string $note, int $maxLength 
   }
 
   if (sms_utf8_length($note) > $remaining) {
-    $ellipsis = '…';
+    $ellipsis = '...';
     $note = sms_utf8_substr($note, 0, max(0, $remaining - sms_utf8_length($ellipsis))) . $ellipsis;
   }
 
   return $message . $prefix . $note;
+}
+
+function sms_internal_transfer_direction_symbol(string $direction): string {
+  $direction = strtolower(trim($direction));
+  if ($direction === 'per') return '->';
+  if ($direction === 'da') return '<-';
+  return strtoupper($direction);
 }
 
 function sms_send_internal_transfer($env, $payload) {
@@ -124,7 +199,7 @@ function sms_send_internal_transfer($env, $payload) {
   $fallbackTo = isset($cfg['to']) ? (string)$cfg['to'] : '';
 
   $room = isset($payload['room_number']) ? (string)$payload['room_number'] : '';
-  $direction = isset($payload['direction']) ? strtoupper((string)$payload['direction']) : '';
+  $direction = isset($payload['direction']) ? sms_internal_transfer_direction_symbol((string)$payload['direction']) : '';
   $location = isset($payload['location']) ? (string)$payload['location'] : '';
   $date = isset($payload['date']) ? (string)$payload['date'] : '';
   $time = isset($payload['time']) ? (string)$payload['time'] : '';
