@@ -344,7 +344,7 @@ function ensure_tramontoday_bookings_table(PDO $pdo): void {
       discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
       final_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       payment_status ENUM('da_pagare','acconto','pagato') NOT NULL DEFAULT 'da_pagare',
-      booking_status ENUM('prenotata','confermata','arrivata') NOT NULL DEFAULT 'prenotata',
+      booking_status ENUM('prenotata','confermata','arrivata','conclusa','annullata','no_show') NOT NULL DEFAULT 'prenotata',
       created_by INT UNSIGNED DEFAULT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -354,4 +354,17 @@ function ensure_tramontoday_bookings_table(PDO $pdo): void {
       CONSTRAINT fk_tramontoday_bookings_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   ");
+
+  $stmt = $pdo->query("
+    SELECT COLUMN_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tramontoday_bookings'
+      AND COLUMN_NAME = 'booking_status'
+    LIMIT 1
+  ");
+  $columnType = strtolower((string)$stmt->fetchColumn());
+  if (!str_contains($columnType, "'conclusa'") || !str_contains($columnType, "'annullata'") || !str_contains($columnType, "'no_show'")) {
+    $pdo->exec("ALTER TABLE tramontoday_bookings MODIFY COLUMN booking_status ENUM('prenotata','confermata','arrivata','conclusa','annullata','no_show') NOT NULL DEFAULT 'prenotata'");
+  }
 }
