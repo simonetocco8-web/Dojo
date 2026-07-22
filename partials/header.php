@@ -55,6 +55,71 @@ $utentiMenuOpen = nav_path_is_current(['users.php', 'user_create.php', 'user_edi
         <?php if($user): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
         <?php endif; ?>
+        <?php if($user): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown dojo-desktop-only">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown dojo-tramontoday-menu dojo-desktop-only">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown dojo-tramontoday-menu dojo-desktop-only">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
         <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item dropdown dojo-tramontoday-menu dojo-desktop-only">
           <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
@@ -148,6 +213,71 @@ $utentiMenuOpen = nav_path_is_current(['users.php', 'user_create.php', 'user_edi
           <ul class="navbar-nav me-auto">
             <?php if($user): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
+            <?php endif; ?>
+            <?php if($user): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown dojo-mobile-only">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown dojo-tramontoday-menu dojo-mobile-only">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown dojo-tramontoday-menu dojo-mobile-only">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
             <?php endif; ?>
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item dropdown dojo-tramontoday-menu dojo-mobile-only">
