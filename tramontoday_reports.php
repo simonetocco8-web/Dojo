@@ -15,6 +15,12 @@ if (!$user) {
   exit;
 }
 
+if (!user_is_reception_or_amministrazione($user)) {
+  http_response_code(403);
+  echo 'Accesso negato';
+  exit;
+}
+
 $pdo = db();
 ensure_tramontoday_bookings_table($pdo);
 

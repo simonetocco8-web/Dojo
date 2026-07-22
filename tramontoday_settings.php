@@ -15,7 +15,13 @@ if (!$user) {
   exit;
 }
 
-$canEdit = user_is_amministrazione($user);
+if (!user_is_reception_or_amministrazione($user)) {
+  http_response_code(403);
+  echo 'Accesso negato';
+  exit;
+}
+
+$canEdit = user_is_reception_or_amministrazione($user);
 $pdo = db();
 ensure_system_settings_table($pdo);
 
