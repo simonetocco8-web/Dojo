@@ -36,7 +36,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
           <ul class="dropdown-menu" aria-labelledby="tramontoDaySidebarDropdown">
-            <li><span class="dropdown-item"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></span></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
@@ -130,7 +130,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
               <ul class="dropdown-menu" aria-labelledby="tramontoDayDropdown">
-                <li><span class="dropdown-item"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></span></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>

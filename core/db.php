@@ -368,3 +368,18 @@ function ensure_tramontoday_bookings_table(PDO $pdo): void {
     $pdo->exec("ALTER TABLE tramontoday_bookings MODIFY COLUMN booking_status ENUM('prenotata','confermata','arrivata','conclusa','annullata','no_show') NOT NULL DEFAULT 'prenotata'");
   }
 }
+
+function ensure_tramontoday_availability_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS tramontoday_availability (
+      availability_date DATE NOT NULL PRIMARY KEY,
+      max_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0,
+      is_open TINYINT(1) NOT NULL DEFAULT 1,
+      internal_notes TEXT DEFAULT NULL,
+      updated_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_tramontoday_availability_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
