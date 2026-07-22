@@ -194,6 +194,11 @@ include __DIR__ . '/partials/header.php';
       </div>
     </div>
 
+    <div class="alert alert-info border-info-subtle shadow-sm" role="note">
+      <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Come considerare una postazione</div>
+      <div>Una postazione è rappresentata dalla dotazione di un ombrellone, una sdraio, un lettino e un posto auto. Il numero di persone non è legato alle postazioni, ma è consigliabile mantenere un numero di persone accettabile. Es: 1 postazione x 4 persone totali.</div>
+    </div>
+
     <?php if ($successMessage): ?>
       <div class="alert alert-success"><?= e($successMessage) ?></div>
     <?php endif; ?>
