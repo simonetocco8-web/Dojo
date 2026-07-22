@@ -67,18 +67,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $isOpen = isset($_POST['is_open']) ? 1 : 0;
   $notes = trim((string)($_POST['internal_notes'] ?? ''));
 
+  $extendDaysRaw = trim((string)($_POST['extend_days'] ?? '1'));
+  if ($extendDaysRaw === '' || !ctype_digit($extendDaysRaw)) {
+    $errors[] = 'Inserisci un numero di giorni da prorogare valido.';
+    $extendDays = 1;
+  } else {
+    $extendDays = (int)$extendDaysRaw;
+  }
+
+  if (isset($date) && $date instanceof DateTimeImmutable) {
+    $remainingDays = $dateRaw >= $todayYmd && $dateRaw <= $endYmd ? ((int)$date->diff($endDay)->format('%a') + 1) : 1;
+    if ($extendDays < 1 || $extendDays > $remainingDays) {
+      $errors[] = 'Il numero di giorni da prorogare deve essere compreso tra 1 e ' . $remainingDays . '.';
+    }
+  }
+
   if (!$errors) {
-    $stmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, is_open, internal_notes, updated_by, updated_at)
+    $selectedDayStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, is_open, internal_notes, updated_by, updated_at)
       VALUES (:availability_date, :max_sellable_stations, :is_open, :internal_notes, :updated_by, NOW())
       ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), is_open = VALUES(is_open), internal_notes = VALUES(internal_notes), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
-    $stmt->execute([
+    $selectedDayStmt->execute([
       ':availability_date' => $dateRaw,
       ':max_sellable_stations' => $maxStations,
       ':is_open' => $isOpen,
       ':internal_notes' => $notes === '' ? null : $notes,
       ':updated_by' => $user['id'] ?? null,
     ]);
-    $message = 'Disponibilità aggiornata correttamente.';
+
+    if ($extendDays > 1) {
+      $extendedDaysStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, updated_by, updated_at)
+        VALUES (:availability_date, :max_sellable_stations, :updated_by, NOW())
+        ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
+      for ($i = 1; $i < $extendDays; $i++) {
+        $targetDate = $date->modify('+' . $i . ' days')->format('Y-m-d');
+        $extendedDaysStmt->execute([
+          ':availability_date' => $targetDate,
+          ':max_sellable_stations' => $maxStations,
+          ':updated_by' => $user['id'] ?? null,
+        ]);
+      }
+    }
+
+    $message = $extendDays === 1
+      ? 'Disponibilità aggiornata correttamente.'
+      : 'Disponibilità prorogata correttamente per ' . $extendDays . ' giorni.';
   }
 }
 
@@ -125,6 +157,7 @@ for ($i = 0; $i < 31; $i++) {
     'notes' => (string)($availability['internal_notes'] ?? ''),
     'morning_available' => $isOpen ? max(0, $maxStations - $bookedMorning) : 0,
     'afternoon_available' => $isOpen ? max(0, $maxStations - $bookedAfternoon) : 0,
+    'remaining_days' => 31 - $i,
   ];
 }
 
@@ -168,7 +201,8 @@ include __DIR__ . '/partials/header.php';
         data-display-date="<?= e($day['display_date']) ?>"
         data-max-stations="<?= (int)$day['max_stations'] ?>"
         data-is-open="<?= $day['is_open'] ? '1' : '0' ?>"
-        data-notes="<?= e($day['notes']) ?>">
+        data-notes="<?= e($day['notes']) ?>"
+        data-remaining-days="<?= (int)$day['remaining_days'] ?>">
         <span class="card-body d-block">
           <span class="d-flex justify-content-between align-items-start mb-2">
             <span>
@@ -203,6 +237,11 @@ include __DIR__ . '/partials/header.php';
           <div class="mb-3">
             <label for="max_sellable_stations" class="form-label">Numero massimo di postazioni vendibili</label>
             <input type="number" min="0" step="1" class="form-control" id="max_sellable_stations" name="max_sellable_stations" required>
+          </div>
+          <div class="mb-3">
+            <label for="extend_days" class="form-label">Proroga per giorni</label>
+            <input type="number" min="1" step="1" class="form-control" id="extend_days" name="extend_days" value="1" required>
+            <div class="form-text" id="extendDaysHelp">1 = solo il giorno selezionato.</div>
           </div>
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" role="switch" id="is_open" name="is_open" value="1">
