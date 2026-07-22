@@ -33,3 +33,6 @@ body{min-height:100vh}.card{border-radius:1rem}
 .inventory-chart-wrap--pie { min-height: 360px; }
 .inventory-chart-wrap--line { min-height: 340px; }
 .inventory-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+@media (min-width:992px){.dojo-mobile-only{display:none!important}}
+@media (max-width:991.98px){.dojo-desktop-only{display:none!important}}
