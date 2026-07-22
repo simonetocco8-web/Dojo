@@ -41,7 +41,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
-            <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -135,7 +135,7 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
-                <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
               </ul>
             </li>
             <?php endif; ?>
