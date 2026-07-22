@@ -79,11 +79,13 @@ if ($seasonActive && $can_see_riassetti) {
   $tz = new DateTimeZone('Europe/Rome');
   $todayRiassetto = (new DateTime('today', $tz))->format('Y-m-d');
   $tomorrowRiassetto = (new DateTime('tomorrow', $tz))->format('Y-m-d');
-  $stRi = $pdo->prepare('SELECT id, data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, completed_at
+  $stRi = $pdo->prepare("SELECT id, data_riassetto, room, qty_matrimoniale, qty_singola, qty_set_bagno, pulizia_extra, note, status, completed_at
                           FROM riassetti
                           WHERE data_riassetto IN (?, ?)
-                          ORDER BY data_riassetto ASC, room ASC, id ASC');
-  $stRi->execute([$todayRiassetto, $tomorrowRiassetto]);
+                             OR (data_riassetto < ? AND COALESCE(NULLIF(status, ''), CASE WHEN completed_at IS NULL THEN 'da_preparare' ELSE 'concluso' END) <> 'concluso')
+                          ORDER BY CASE WHEN data_riassetto < ? AND COALESCE(NULLIF(status, ''), CASE WHEN completed_at IS NULL THEN 'da_preparare' ELSE 'concluso' END) <> 'concluso' THEN 0 ELSE 1 END ASC,
+                                   data_riassetto ASC, room ASC, id ASC");
+  $stRi->execute([$todayRiassetto, $tomorrowRiassetto, $todayRiassetto, $todayRiassetto]);
   $riassettiToday = $stRi->fetchAll();
 }
 
@@ -114,6 +116,30 @@ function riassetti_biancheria_short(array $row): string {
   if (!empty($row['qty_singola'])) $parts[] = $row['qty_singola'] . ' Singola';
   if (!empty($row['qty_set_bagno'])) $parts[] = $row['qty_set_bagno'] . ' Set Bagno';
   return $parts ? implode(', ', $parts) : 'Solo controllo';
+}
+
+
+function riassetti_dashboard_is_overdue(array $row): bool {
+  $status = trim((string)($row['status'] ?? ''));
+  if ($status === '') $status = !empty($row['completed_at']) ? 'concluso' : 'da_preparare';
+  if ($status === 'concluso' || empty($row['data_riassetto'])) return false;
+
+  $tz = new DateTimeZone('Europe/Rome');
+  $due = DateTime::createFromFormat('Y-m-d', (string)$row['data_riassetto'], $tz);
+  if (!$due) return false;
+  $due->setTime(0, 0, 0);
+  $today = new DateTime('today', $tz);
+  return $due < $today;
+}
+
+function riassetti_dashboard_delay_days(array $row): int {
+  if (empty($row['data_riassetto'])) return 0;
+  $tz = new DateTimeZone('Europe/Rome');
+  $due = DateTime::createFromFormat('Y-m-d', (string)$row['data_riassetto'], $tz);
+  if (!$due) return 0;
+  $due->setTime(0, 0, 0);
+  $today = new DateTime('today', $tz);
+  return max(0, (int)$due->diff($today)->format('%a'));
 }
 
 function riassetti_dashboard_status_label(array $row): string {
@@ -191,18 +217,30 @@ function riassetti_dashboard_status_class(array $row): string {
       <div class="card shadow-sm h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti oggi/domani</h2>
+            <h2 class="h6 mb-0"><i class="bi bi-house-gear me-1"></i> Riassetti scaduti/oggi/domani</h2>
             <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/riassetti.php" title="Vai alla sezione">Apri</a>
           </div>
           <?php if (empty($riassettiToday)): ?>
-            <div class="text-muted small">Nessun riassetto previsto per oggi o domani.</div>
+            <div class="text-muted small">Nessun riassetto scaduto o previsto per oggi/domani.</div>
           <?php else: ?>
             <ul class="list-group list-group-flush">
               <?php foreach ($riassettiToday as $ri): ?>
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                <?php
+                  $riassettoOverdue = riassetti_dashboard_is_overdue($ri);
+                  $riassettoDelayDays = $riassettoOverdue ? riassetti_dashboard_delay_days($ri) : 0;
+                ?>
+                <li class="list-group-item px-2 d-flex justify-content-between align-items-start <?= $riassettoOverdue ? 'border border-2 border-danger rounded-3 bg-danger-subtle' : '' ?>">
                   <div class="me-2">
-                    <div class="fw-semibold">Camera <?= e($ri['room']) ?></div>
-                    <div class="small text-muted">Data riassetto: <?= it_date($ri['data_riassetto'] ?? '') ?></div>
+                    <div class="fw-semibold <?= $riassettoOverdue ? 'text-danger' : '' ?>">
+                      <?php if ($riassettoOverdue): ?><i class="bi bi-exclamation-triangle-fill me-1"></i><?php endif; ?>
+                      Camera <?= e($ri['room']) ?>
+                    </div>
+                    <div class="small <?= $riassettoOverdue ? 'text-danger fw-semibold' : 'text-muted' ?>">Data riassetto: <?= it_date($ri['data_riassetto'] ?? '') ?></div>
+                    <?php if ($riassettoOverdue): ?>
+                      <div class="small fw-bold text-danger text-uppercase">
+                        <i class="bi bi-alarm-fill me-1"></i>Scaduto da <?= (int)$riassettoDelayDays ?> <?= $riassettoDelayDays === 1 ? 'giorno' : 'giorni' ?>: concludere il riassetto
+                      </div>
+                    <?php endif; ?>
                     <div class="small text-muted">
                       <?= e(riassetti_biancheria_short($ri)) ?>
                       <?php if (!empty($ri['pulizia_extra'])): ?>
