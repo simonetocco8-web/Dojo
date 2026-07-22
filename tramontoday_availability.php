@@ -145,7 +145,15 @@ include __DIR__ . '/partials/header.php';
 
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
   <?php foreach ($days as $day): ?>
-    <?php $cardClass = $day['is_open'] ? 'border-success bg-success-subtle' : 'border-danger bg-danger-subtle'; ?>
+    <?php
+      $hasReducedAvailability = $day['is_open']
+        && $day['max_stations'] > 0
+        && $day['morning_available'] < $day['max_stations']
+        && $day['afternoon_available'] < $day['max_stations'];
+      $cardClass = !$day['is_open']
+        ? 'border-danger bg-danger-subtle'
+        : ($hasReducedAvailability ? 'border-warning bg-warning-subtle' : 'border-success bg-success-subtle');
+    ?>
     <div class="col">
       <button type="button"
         class="card h-100 w-100 text-start shadow-sm <?= e($cardClass) ?>"
