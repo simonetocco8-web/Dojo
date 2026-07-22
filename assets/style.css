@@ -36,3 +36,4 @@ body{min-height:100vh}.card{border-radius:1rem}
 
 @media (min-width:992px){.dojo-mobile-only{display:none!important}}
 @media (max-width:991.98px){.dojo-desktop-only{display:none!important}}
+.dojo-tramontoday-menu ~ .dojo-tramontoday-menu{display:none!important}
