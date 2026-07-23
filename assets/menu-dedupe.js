@@ -10,9 +10,11 @@
     let kept = false;
 
     allMenus.forEach(function (menu) {
+      const isSidebarMenu = Boolean(menu.closest('.dojo-sidebar'));
+      const isNavbarMenu = Boolean(menu.closest('.navbar'));
       const belongsToCurrentLayout = isDesktop
-        ? !menu.classList.contains('dojo-mobile-only')
-        : !menu.classList.contains('dojo-desktop-only');
+        ? (isSidebarMenu || (!isNavbarMenu && !menu.classList.contains('dojo-mobile-only')))
+        : (isNavbarMenu || (!isSidebarMenu && !menu.classList.contains('dojo-desktop-only')));
 
       if (belongsToCurrentLayout && !kept) {
         menu.style.display = '';

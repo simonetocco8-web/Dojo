@@ -89,6 +89,22 @@ if ($seasonActive && $can_see_riassetti) {
   $riassettiToday = $stRi->fetchAll();
 }
 
+$tramontoDayUpcoming = [];
+$can_see_tramontoday = user_is_reception_or_amministrazione($user);
+if ($seasonActive && $can_see_tramontoday) {
+  ensure_tramontoday_bookings_table($pdo);
+  $tz = new DateTimeZone('Europe/Rome');
+  $todayTramontoDay = (new DateTime('today', $tz))->format('Y-m-d');
+  $stTd = $pdo->prepare("SELECT id, booking_date, formula, stations_count, contact_name, final_amount, booking_status
+                         FROM tramontoday_bookings
+                         WHERE booking_date >= ?
+                           AND booking_status NOT IN ('annullata', 'no_show')
+                         ORDER BY booking_date ASC, id ASC
+                         LIMIT 10");
+  $stTd->execute([$todayTramontoDay]);
+  $tramontoDayUpcoming = $stTd->fetchAll();
+}
+
 $title = 'Dashboard';
 include __DIR__ . '/partials/header.php';
 
@@ -165,6 +181,30 @@ function riassetti_dashboard_status_class(array $row): string {
 }
 
 
+
+
+function tramontoday_dashboard_formula_label(string $formula): string {
+  return match ($formula) {
+    'giornata_intera' => 'Giornata intera',
+    'mattina' => 'Mattina',
+    'pomeriggio' => 'Pomeriggio',
+    default => ucfirst(str_replace('_', ' ', $formula)),
+  };
+}
+
+function tramontoday_dashboard_status_label(string $status): string {
+  return match ($status) {
+    'prenotata' => 'Prenotata',
+    'confermata' => 'Confermata',
+    'arrivata' => 'Arrivata',
+    'conclusa' => 'Conclusa',
+    default => ucfirst(str_replace('_', ' ', $status)),
+  };
+}
+
+function tramontoday_dashboard_money($amount): string {
+  return number_format((float)$amount, 2, ',', '.');
+}
 
 
 ?>
@@ -329,6 +369,47 @@ function riassetti_dashboard_status_class(array $row): string {
         </div>
       </div>
     </div>
+
+    <?php if ($can_see_tramontoday): ?>
+    <!-- BOX TRAMONTODAY -->
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0"><i class="bi bi-sun me-1"></i>Prossimi TramontoDay</h2>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/tramontoday_bookings.php" title="Vai alla sezione">Apri</a>
+          </div>
+          <?php if (empty($tramontoDayUpcoming)): ?>
+            <div class="text-muted small">Nessuna prenotazione/accesso TramontoDay imminente.</div>
+          <?php else: ?>
+            <ul class="list-group list-group-flush">
+              <?php foreach ($tramontoDayUpcoming as $td): ?>
+                <?php $isTodayTramontoDay = ($td['booking_date'] ?? '') === ($todayTramontoDay ?? ''); ?>
+                <li class="list-group-item px-2 d-flex justify-content-between align-items-start <?= $isTodayTramontoDay ? 'border border-2 border-warning rounded-3 bg-warning-subtle' : '' ?>">
+                  <div class="me-2">
+                    <div class="fw-semibold <?= $isTodayTramontoDay ? 'text-warning-emphasis' : '' ?>">
+                      <?php if ($isTodayTramontoDay): ?><i class="bi bi-sun-fill me-1"></i><?php endif; ?>
+                      <?= e($td['contact_name']) ?>
+                    </div>
+                    <div class="small <?= $isTodayTramontoDay ? 'text-warning-emphasis fw-semibold' : 'text-muted' ?>">
+                      <?= it_date($td['booking_date'] ?? '') ?> · <?= e(tramontoday_dashboard_formula_label((string)($td['formula'] ?? ''))) ?>
+                    </div>
+                    <div class="small text-muted">
+                      Postazioni: <?= (int)($td['stations_count'] ?? 0) ?> · Tot.: € <?= e(tramontoday_dashboard_money($td['final_amount'] ?? 0)) ?>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <?php if ($isTodayTramontoDay): ?><div class="badge bg-warning text-dark mb-1">Oggi</div><br><?php endif; ?>
+                    <span class="badge bg-light text-dark border"><?= e(tramontoday_dashboard_status_label((string)($td['booking_status'] ?? ''))) ?></span>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
     <?php endif; ?>
   <?php endif; ?>
   
