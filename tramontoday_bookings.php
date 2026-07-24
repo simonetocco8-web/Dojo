@@ -132,6 +132,7 @@ include __DIR__ . '/partials/header.php';
               <th class="text-end">Finale</th>
               <th>Pagamento</th>
               <th>Status</th>
+              <th class="text-center">Modifica</th>
               <th class="text-end">Aggiorna status</th>
             </tr>
           </thead>
@@ -167,6 +168,11 @@ include __DIR__ . '/partials/header.php';
                 </td>
                 <td><?= e($paymentLabels[$booking['payment_status']] ?? $booking['payment_status']) ?></td>
                 <td><span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></td>
+                <td class="text-center">
+                  <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/tramontoday_booking_edit.php?id=<?= (int)$booking['id'] ?>" title="Modifica prenotazione/accesso">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </td>
                 <td class="text-end">
                   <form method="post" class="d-inline-flex gap-2 justify-content-end">
                     <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
