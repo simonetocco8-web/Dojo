@@ -9,6 +9,30 @@ $base = rtrim($env['app']['base_url'] ?? '', '/');
 $logo = $base . '/assets/dojo-logo.svg';
 $favicon = $base . '/assets/favicon.svg';
 $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
+$currentPath = basename(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '');
+function nav_path_is_current(array $paths, string $currentPath): bool {
+  return in_array($currentPath, $paths, true);
+}
+$tramontoDayMenuOpen = nav_path_is_current([
+  'tramontoday_availability.php',
+  'tramontoday_bookings.php',
+  'tramontoday_today.php',
+  'tramontoday_booking_create.php',
+  'tramontoday_booking_edit.php',
+  'tramontoday_settings.php',
+  'tramontoday_reports.php',
+], $currentPath);
+$trasportiMenuOpen = nav_path_is_current(['transfere.php', 'voli.php', 'treni.php'], $currentPath);
+$magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_current([
+  'products.php',
+  'products_inactive.php',
+  'carico.php',
+  'scarico.php',
+  'statistiche.php',
+  'suppliers_list.php',
+], $currentPath);
+$personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php'], $currentPath);
+$utentiMenuOpen = nav_path_is_current(['users.php', 'user_create.php', 'user_edit.php'], $currentPath);
 ?>
 <!doctype html>
 <html lang="it">
@@ -33,10 +57,23 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
         <?php endif; ?>
         <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown dojo-tramontoday-menu dojo-desktop-only">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="trasportiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
-          <ul class="dropdown-menu" aria-labelledby="trasportiSidebarDropdown">
+          <a class="nav-link dropdown-toggle <?= $trasportiMenuOpen ? 'active' : '' ?>" href="#" id="trasportiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $trasportiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
+          <ul class="dropdown-menu <?= $trasportiMenuOpen ? 'show' : '' ?>" aria-labelledby="trasportiSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/treni.php"><i class="bi bi-train-front"></i><span>Treni</span></a></li>
@@ -45,8 +82,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <?php endif; ?>
         <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
-          <ul class="dropdown-menu" aria-labelledby="magazzinoSidebarDropdown">
+          <a class="nav-link dropdown-toggle <?= $magazzinoMenuOpen ? 'active' : '' ?>" href="#" id="magazzinoSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $magazzinoMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
+          <ul class="dropdown-menu <?= $magazzinoMenuOpen ? 'show' : '' ?>" aria-labelledby="magazzinoSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
             <?php if ($user && user_is_amministrazione($user)): ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/product_categories.php"><i class="bi bi-folder2-open"></i><span>Categorie Prodotti</span></a></li>
@@ -61,8 +98,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <?php endif; ?>
         <?php if ($user && user_is_amministrazione($user)): ?>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="personaleSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
-          <ul class="dropdown-menu" aria-labelledby="personaleSidebarDropdown">
+          <a class="nav-link dropdown-toggle <?= $personaleMenuOpen ? 'active' : '' ?>" href="#" id="personaleSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $personaleMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
+          <ul class="dropdown-menu <?= $personaleMenuOpen ? 'show' : '' ?>" aria-labelledby="personaleSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
@@ -83,8 +120,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
         <?php endif; ?>
         <?php if($user && $user['role']==='admin'): ?>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="utentiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
-          <ul class="dropdown-menu" aria-labelledby="utentiSidebarDropdown">
+          <a class="nav-link dropdown-toggle <?= $utentiMenuOpen ? 'active' : '' ?>" href="#" id="utentiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $utentiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
+          <ul class="dropdown-menu <?= $utentiMenuOpen ? 'show' : '' ?>" aria-labelledby="utentiSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Personale</span></a></li>
           </ul>
         </li>
@@ -114,10 +151,23 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/dashboard.php"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a></li>
             <?php endif; ?>
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown dojo-tramontoday-menu dojo-mobile-only">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="trasportiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
-              <ul class="dropdown-menu" aria-labelledby="trasportiDropdown">
+              <a class="nav-link dropdown-toggle <?= $trasportiMenuOpen ? 'active' : '' ?>" href="#" id="trasportiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $trasportiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
+              <ul class="dropdown-menu <?= $trasportiMenuOpen ? 'show' : '' ?>" aria-labelledby="trasportiDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/voli.php"><i class="bi bi-airplane"></i><span>Voli</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/treni.php"><i class="bi bi-train-front"></i><span>Treni</span></a></li>
@@ -126,8 +176,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <?php endif; ?>
             <?php if ($user && user_is_bar_or_amministrazione($user)): ?>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
-              <ul class="dropdown-menu" aria-labelledby="magazzinoDropdown">
+              <a class="nav-link dropdown-toggle <?= $magazzinoMenuOpen ? 'active' : '' ?>" href="#" id="magazzinoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $magazzinoMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-box-seam"></i><span>Magazzino</span></a>
+              <ul class="dropdown-menu <?= $magazzinoMenuOpen ? 'show' : '' ?>" aria-labelledby="magazzinoDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/products.php"><i class="bi bi-tags"></i><span>Prodotti</span></a></li>
                 <?php if ($user && user_is_amministrazione($user)): ?>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/product_categories.php"><i class="bi bi-folder2-open"></i><span>Categorie Prodotti</span></a></li>
@@ -142,8 +192,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <?php endif; ?>
             <?php if ($user && user_is_amministrazione($user)): ?>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="personaleDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
-              <ul class="dropdown-menu" aria-labelledby="personaleDropdown">
+              <a class="nav-link dropdown-toggle <?= $personaleMenuOpen ? 'active' : '' ?>" href="#" id="personaleDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $personaleMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-person-lines-fill"></i><span>Personale</span></a>
+              <ul class="dropdown-menu <?= $personaleMenuOpen ? 'show' : '' ?>" aria-labelledby="personaleDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
@@ -164,8 +214,8 @@ $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
             <?php endif; ?>
             <?php if($user && $user['role']==='admin'): ?>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="utentiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
-              <ul class="dropdown-menu" aria-labelledby="utentiDropdown">
+              <a class="nav-link dropdown-toggle <?= $utentiMenuOpen ? 'active' : '' ?>" href="#" id="utentiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $utentiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-person-gear"></i><span>Utenti</span></a>
+              <ul class="dropdown-menu <?= $utentiMenuOpen ? 'show' : '' ?>" aria-labelledby="utentiDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/users.php"><i class="bi bi-people"></i><span>Personale</span></a></li>
               </ul>
             </li>
