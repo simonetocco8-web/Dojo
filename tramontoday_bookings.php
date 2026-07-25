@@ -119,21 +119,16 @@ include __DIR__ . '/partials/header.php';
     <?php if (!$bookings): ?>
       <p class="text-muted mb-0">Nessuna prenotazione/accesso TramontoDay presente.</p>
     <?php else: ?>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
+      <div>
+        <table class="table table-sm align-middle mb-0 tramontoday-bookings-table">
           <thead>
             <tr>
-              <th>Data</th>
+              <th>Prenotazione</th>
               <th>Referente</th>
-              <th>Formula</th>
-              <th class="text-center">Post.</th>
-              <th>Partecipanti</th>
-              <th class="text-end">Totale</th>
-              <th class="text-end">Finale</th>
-              <th>Pagamento</th>
+              <th>Ospiti</th>
+              <th>Importo</th>
               <th>Status</th>
-              <th class="text-center">Modifica</th>
-              <th class="text-end">Aggiorna status</th>
+              <th class="text-end">Azioni</th>
             </tr>
           </thead>
           <tbody>
@@ -144,45 +139,34 @@ include __DIR__ . '/partials/header.php';
                 $statusClass = $statusClasses[$currentStatus] ?? 'bg-secondary';
               ?>
               <tr>
-                <td class="text-nowrap"><?= e(tramontoday_format_date($booking['booking_date'] ?? '')) ?></td>
+                <td>
+                  <div class="fw-semibold"><?= e(tramontoday_format_date($booking['booking_date'] ?? '')) ?></div>
+                  <div class="small text-muted"><?= e($formulaLabels[$booking['formula']] ?? $booking['formula']) ?> · <?= (int)$booking['stations_count'] ?> post.</div>
+                </td>
                 <td>
                   <div class="fw-semibold"><?= e($booking['contact_name']) ?></div>
-                  <div class="small text-muted">
-                    <?= e($booking['phone']) ?><?php if (!empty($booking['email'])): ?> · <?= e($booking['email']) ?><?php endif; ?>
-                  </div>
-                  <?php if (!empty(trim((string)($booking['notes'] ?? '')))): ?>
-                    <div class="small text-muted">Note: <?= e($booking['notes']) ?></div>
-                  <?php endif; ?>
+                  <div class="small text-muted"><?= e($booking['phone']) ?></div>
                 </td>
-                <td><?= e($formulaLabels[$booking['formula']] ?? $booking['formula']) ?></td>
-                <td class="text-center"><?= (int)$booking['stations_count'] ?></td>
-                <td class="small text-nowrap">
-                  Ad. <?= (int)$booking['adults_count'] ?> · Bamb. <?= (int)$booking['children_count'] ?> · Inf. <?= (int)$booking['infants_count'] ?> · Sdraio +<?= (int)$booking['extra_sunbeds_count'] ?>
+                <td class="small">
+                  <div>A <?= (int)$booking['adults_count'] ?> · B <?= (int)$booking['children_count'] ?> · I <?= (int)$booking['infants_count'] ?></div>
+                  <?php if ((int)$booking['extra_sunbeds_count'] > 0): ?><div class="text-muted">Sdraio +<?= (int)$booking['extra_sunbeds_count'] ?></div><?php endif; ?>
                 </td>
-                <td class="text-end text-nowrap">€ <?= e(tramontoday_format_money($booking['total_amount'])) ?></td>
-                <td class="text-end text-nowrap">
+                <td>
                   <div class="fw-semibold">€ <?= e(tramontoday_format_money($booking['final_amount'])) ?></div>
-                  <?php if ((float)$booking['discount_percent'] > 0): ?>
-                    <div class="small text-muted">Sconto <?= e(tramontoday_format_money($booking['discount_percent'])) ?>%</div>
-                  <?php endif; ?>
+                  <div class="small text-muted"><?= e($paymentLabels[$booking['payment_status']] ?? $booking['payment_status']) ?><?php if ((float)$booking['discount_percent'] > 0): ?> · −<?= e(tramontoday_format_money($booking['discount_percent'])) ?>%<?php endif; ?></div>
                 </td>
-                <td><?= e($paymentLabels[$booking['payment_status']] ?? $booking['payment_status']) ?></td>
                 <td><span class="badge <?= e($statusClass) ?>"><?= e($statusLabel) ?></span></td>
-                <td class="text-center">
-                  <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/tramontoday_booking_edit.php?id=<?= (int)$booking['id'] ?>" title="Modifica prenotazione/accesso">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                </td>
                 <td class="text-end">
-                  <form method="post" class="d-inline-flex gap-2 justify-content-end">
+                  <form method="post" class="d-flex flex-wrap gap-1 justify-content-end">
                     <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="id" value="<?= (int)$booking['id'] ?>">
-                    <select class="form-select form-select-sm" name="booking_status" aria-label="Aggiorna status prenotazione #<?= (int)$booking['id'] ?>">
+                    <select class="form-select form-select-sm w-auto" name="booking_status" aria-label="Aggiorna status prenotazione #<?= (int)$booking['id'] ?>">
                       <?php foreach ($statusOptions as $value => $label): ?>
                         <option value="<?= e($value) ?>" <?= $currentStatus === $value ? 'selected' : '' ?>><?= e($label) ?></option>
                       <?php endforeach; ?>
                     </select>
-                    <button type="submit" class="btn btn-sm btn-outline-primary">Salva</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Salva status" aria-label="Salva status"><i class="bi bi-check-lg"></i></button>
+                    <a class="btn btn-sm btn-outline-secondary" href="<?= e($base) ?>/tramontoday_booking_edit.php?id=<?= (int)$booking['id'] ?>" title="Modifica prenotazione/accesso" aria-label="Modifica prenotazione/accesso"><i class="bi bi-pencil"></i></a>
                   </form>
                 </td>
               </tr>

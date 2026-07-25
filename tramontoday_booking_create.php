@@ -23,6 +23,7 @@ if (!user_is_reception_or_amministrazione($user)) {
 
 $pdo = db();
 ensure_tramontoday_bookings_table($pdo);
+ensure_tramontoday_availability_table($pdo);
 
 $settingKeys = [
   'tramontoday_adult_full_day_price',
@@ -144,30 +145,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $finalAmount = round($totalAmount - ($totalAmount * ($discountPercent ?? 0) / 100), 2);
 
   if (!$errors) {
-    $stmt = $pdo->prepare("INSERT INTO tramontoday_bookings
+    $pdo->beginTransaction();
+
+    $availabilityStmt = $pdo->prepare('SELECT max_sellable_stations, is_open FROM tramontoday_availability WHERE availability_date = ? FOR UPDATE');
+    $availabilityStmt->execute([$values['booking_date']]);
+    $availability = $availabilityStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$availability || (int)$availability['is_open'] !== 1) {
+      $errors[] = 'Impossibile caricare la prenotazione/accesso: il servizio TramontoDay non è disponibile nella data selezionata.';
+    } else {
+      $bookedStmt = $pdo->prepare('SELECT
+        COALESCE(SUM(CASE WHEN formula IN ("giornata_intera", "mattina") THEN stations_count ELSE 0 END), 0) AS booked_morning,
+        COALESCE(SUM(CASE WHEN formula IN ("giornata_intera", "pomeriggio") THEN stations_count ELSE 0 END), 0) AS booked_afternoon
+        FROM tramontoday_bookings
+        WHERE booking_date = ? AND booking_status NOT IN ("annullata", "no_show")');
+      $bookedStmt->execute([$values['booking_date']]);
+      $booked = $bookedStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+      $maxStations = (int)$availability['max_sellable_stations'];
+      $morningAvailable = max(0, $maxStations - (int)($booked['booked_morning'] ?? 0));
+      $afternoonAvailable = max(0, $maxStations - (int)($booked['booked_afternoon'] ?? 0));
+      $formulaAvailability = match ($values['formula']) {
+        'mattina' => $morningAvailable,
+        'pomeriggio' => $afternoonAvailable,
+        default => min($morningAvailable, $afternoonAvailable),
+      };
+
+      if ($stationsCount > $formulaAvailability) {
+        $errors[] = 'Impossibile caricare la prenotazione/accesso: per la formula selezionata sono disponibili solo ' . $formulaAvailability . ' postazioni.';
+      }
+    }
+
+    if ($errors) {
+      $pdo->rollBack();
+    } else {
+      $stmt = $pdo->prepare("INSERT INTO tramontoday_bookings
       (booking_date, formula, stations_count, contact_name, phone, email, adults_count, children_count, infants_count, extra_sunbeds_count, notes, total_amount, discount_percent, final_amount, payment_status, booking_status, created_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([
-      $values['booking_date'],
-      $values['formula'],
-      $stationsCount,
-      $values['contact_name'],
-      $values['phone'],
-      $values['email'] === '' ? null : $values['email'],
-      $adultsCount,
-      $childrenCount,
-      $infantsCount,
-      $extraSunbedsCount,
-      $values['notes'] === '' ? null : $values['notes'],
-      $totalAmount,
-      $discountPercent,
-      $finalAmount,
-      $values['payment_status'],
-      $values['booking_status'],
-      $user['id'] ?? null,
-    ]);
-    $successMessage = 'Prenotazione/accesso TramontoDay creato correttamente. ID #' . $pdo->lastInsertId();
-    $values = [
+      $stmt->execute([
+        $values['booking_date'],
+        $values['formula'],
+        $stationsCount,
+        $values['contact_name'],
+        $values['phone'],
+        $values['email'] === '' ? null : $values['email'],
+        $adultsCount,
+        $childrenCount,
+        $infantsCount,
+        $extraSunbedsCount,
+        $values['notes'] === '' ? null : $values['notes'],
+        $totalAmount,
+        $discountPercent,
+        $finalAmount,
+        $values['payment_status'],
+        $values['booking_status'],
+        $user['id'] ?? null,
+      ]);
+      $newBookingId = $pdo->lastInsertId();
+      $pdo->commit();
+      $successMessage = 'Prenotazione/accesso TramontoDay creato correttamente. ID #' . $newBookingId;
+      $values = [
       'booking_date' => '',
       'formula' => 'giornata_intera',
       'stations_count' => '1',
@@ -182,9 +218,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       'discount_percent' => '0',
       'payment_status' => 'da_pagare',
       'booking_status' => 'prenotata',
-    ];
-    $totalAmount = 0.00;
-    $finalAmount = 0.00;
+      ];
+      $totalAmount = 0.00;
+      $finalAmount = 0.00;
+    }
   }
 }
 
