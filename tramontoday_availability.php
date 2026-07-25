@@ -185,13 +185,14 @@ include __DIR__ . '/partials/header.php';
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3">
   <?php foreach ($days as $day): ?>
     <?php
-      $hasReducedAvailability = $day['is_open']
-        && $day['max_stations'] > 0
-        && $day['morning_available'] < $day['max_stations']
-        && $day['afternoon_available'] < $day['max_stations'];
+      $isSoldOut = $day['is_open']
+        && $day['morning_available'] === 0
+        && $day['afternoon_available'] === 0;
       $cardClass = !$day['is_open']
         ? 'border-danger bg-danger-subtle'
-        : ($hasReducedAvailability ? 'border-warning bg-warning-subtle' : 'border-success bg-success-subtle');
+        : ($isSoldOut ? 'border-warning bg-warning-subtle' : 'border-success bg-success-subtle');
+      $statusBadgeClass = !$day['is_open'] ? 'bg-danger' : ($isSoldOut ? 'bg-warning text-dark' : 'bg-success');
+      $statusLabel = !$day['is_open'] ? 'Chiuso' : ($isSoldOut ? 'Esaurito' : 'Aperto');
     ?>
     <div class="col">
       <button type="button"
@@ -209,7 +210,7 @@ include __DIR__ . '/partials/header.php';
               <span class="fw-bold d-block"><?= e($day['weekday']) ?> <?= e($day['day_number']) ?></span>
               <span class="small text-muted"><?= e($day['display_date']) ?></span>
             </span>
-            <span class="badge <?= $day['is_open'] ? 'bg-success' : 'bg-danger' ?>"><?= $day['is_open'] ? 'Aperto' : 'Chiuso' ?></span>
+            <span class="badge <?= e($statusBadgeClass) ?>"><?= e($statusLabel) ?></span>
           </span>
           <span class="small d-block">Max postazioni vendibili: <strong><?= (int)$day['max_stations'] ?></strong></span>
           <span class="small d-block">Disponibilità mattina: <strong><?= (int)$day['morning_available'] ?></strong></span>
