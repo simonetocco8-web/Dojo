@@ -158,6 +158,25 @@ function generate_daily_summary_pdf(
         $externalTransfers = [];
     }
 
+    // --- TramontoDay bookings/accesses ---
+    if ($showFullSummary && $pdo instanceof PDO) {
+        ensure_tramontoday_bookings_table($pdo);
+        $tramontoDayStmt = $pdo->prepare(
+            "SELECT contact_name, phone, formula, stations_count,
+                    adults_count, children_count, infants_count,
+                    extra_sunbeds_count, final_amount, payment_status, booking_status
+             FROM tramontoday_bookings
+             WHERE booking_date = ?
+               AND booking_status IN ('prenotata', 'confermata')
+             ORDER BY FIELD(booking_status, 'confermata', 'prenotata'),
+                      contact_name ASC, id ASC"
+        );
+        $tramontoDayStmt->execute([$dayYmd]);
+        $tramontoDayBookings = $tramontoDayStmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $tramontoDayBookings = [];
+    }
+
     // --- Days off ---
     if ($showFullSummary && $pdo instanceof PDO) {
         $daysOffStmt = $pdo->prepare(
@@ -225,6 +244,36 @@ function generate_daily_summary_pdf(
             'da_preparare' => 'Da Preparare',
             'da_consegnare' => 'Da Consegnare',
             'concluso' => 'Concluso',
+            default => ucfirst(str_replace('_', ' ', $status)),
+        };
+    };
+
+    $tramontoDayFormulaLabel = static function (string $formula): string {
+        return match ($formula) {
+            'giornata_intera' => 'Giornata intera',
+            'mattina' => 'Mattina',
+            'pomeriggio' => 'Pomeriggio',
+            default => ucfirst(str_replace('_', ' ', $formula)),
+        };
+    };
+
+    $tramontoDayStatusLabel = static function (string $status): string {
+        return match ($status) {
+            'prenotata' => 'Prenotata',
+            'confermata' => 'Confermata',
+            'arrivata' => 'Arrivata',
+            'conclusa' => 'Conclusa',
+            'annullata' => 'Annullata',
+            'no_show' => 'No-show',
+            default => ucfirst(str_replace('_', ' ', $status)),
+        };
+    };
+
+    $tramontoDayPaymentLabel = static function (string $status): string {
+        return match ($status) {
+            'da_pagare' => 'Da pagare',
+            'acconto' => 'Acconto',
+            'pagato' => 'Pagato',
             default => ucfirst(str_replace('_', ' ', $status)),
         };
     };
@@ -384,6 +433,47 @@ function generate_daily_summary_pdf(
   </table>
   <?php else: ?>
     <p class="muted">Nessun transfer esterno per oggi.</p>
+  <?php endif; ?>
+
+  <h2>TramontoDay</h2>
+  <?php if ($tramontoDayBookings): ?>
+  <table>
+    <thead>
+      <tr>
+        <th>Referente</th>
+        <th>Formula</th>
+        <th>Postazioni</th>
+        <th>Ospiti</th>
+        <th>Sdraio extra</th>
+        <th>Importo finale</th>
+        <th>Pagamento</th>
+        <th>Stato</th>
+      </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($tramontoDayBookings as $row): ?>
+      <tr>
+        <td>
+          <?= e($row['contact_name'] ?? '') ?>
+          <?php if (!empty($row['phone'])): ?><br><span class="small"><?= e($row['phone']) ?></span><?php endif; ?>
+        </td>
+        <td><?= e($tramontoDayFormulaLabel((string)($row['formula'] ?? ''))) ?></td>
+        <td><?= e((string)($row['stations_count'] ?? 0)) ?></td>
+        <td>
+          <?= e((string)($row['adults_count'] ?? 0)) ?> adulti,<br>
+          <?= e((string)($row['children_count'] ?? 0)) ?> bambini,
+          <?= e((string)($row['infants_count'] ?? 0)) ?> infant
+        </td>
+        <td><?= e((string)($row['extra_sunbeds_count'] ?? 0)) ?></td>
+        <td>&euro; <?= e(number_format((float)($row['final_amount'] ?? 0), 2, ',', '.')) ?></td>
+        <td><?= e($tramontoDayPaymentLabel((string)($row['payment_status'] ?? ''))) ?></td>
+        <td><?= e($tramontoDayStatusLabel((string)($row['booking_status'] ?? ''))) ?></td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+  <?php else: ?>
+    <p class="muted">Nessun TramontoDay prenotato o confermato per oggi.</p>
   <?php endif; ?>
 
   <h2>Giorni liberi</h2>
