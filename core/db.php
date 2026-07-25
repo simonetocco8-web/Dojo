@@ -324,3 +324,62 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN departure_train_number VARCHAR(80) DEFAULT NULL AFTER departure_flight_number");
   }
 }
+
+function ensure_tramontoday_bookings_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS tramontoday_bookings (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      booking_date DATE NOT NULL,
+      formula ENUM('giornata_intera','mattina','pomeriggio') NOT NULL,
+      stations_count INT UNSIGNED NOT NULL DEFAULT 1,
+      contact_name VARCHAR(190) NOT NULL,
+      phone VARCHAR(50) NOT NULL,
+      email VARCHAR(190) DEFAULT NULL,
+      adults_count INT UNSIGNED NOT NULL DEFAULT 0,
+      children_count INT UNSIGNED NOT NULL DEFAULT 0,
+      infants_count INT UNSIGNED NOT NULL DEFAULT 0,
+      extra_sunbeds_count INT UNSIGNED NOT NULL DEFAULT 0,
+      notes TEXT DEFAULT NULL,
+      total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      discount_percent DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+      final_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      payment_status ENUM('da_pagare','acconto','pagato') NOT NULL DEFAULT 'da_pagare',
+      booking_status ENUM('prenotata','confermata','arrivata','conclusa','annullata','no_show') NOT NULL DEFAULT 'prenotata',
+      created_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_tramontoday_bookings_date (booking_date),
+      INDEX idx_tramontoday_bookings_status (booking_status),
+      INDEX idx_tramontoday_bookings_payment (payment_status),
+      CONSTRAINT fk_tramontoday_bookings_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $stmt = $pdo->query("
+    SELECT COLUMN_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tramontoday_bookings'
+      AND COLUMN_NAME = 'booking_status'
+    LIMIT 1
+  ");
+  $columnType = strtolower((string)$stmt->fetchColumn());
+  if (!str_contains($columnType, "'conclusa'") || !str_contains($columnType, "'annullata'") || !str_contains($columnType, "'no_show'")) {
+    $pdo->exec("ALTER TABLE tramontoday_bookings MODIFY COLUMN booking_status ENUM('prenotata','confermata','arrivata','conclusa','annullata','no_show') NOT NULL DEFAULT 'prenotata'");
+  }
+}
+
+function ensure_tramontoday_availability_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS tramontoday_availability (
+      availability_date DATE NOT NULL PRIMARY KEY,
+      max_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0,
+      is_open TINYINT(1) NOT NULL DEFAULT 1,
+      internal_notes TEXT DEFAULT NULL,
+      updated_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      CONSTRAINT fk_tramontoday_availability_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
