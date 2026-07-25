@@ -167,7 +167,8 @@ function generate_daily_summary_pdf(
                     extra_sunbeds_count, final_amount, payment_status, booking_status
              FROM tramontoday_bookings
              WHERE booking_date = ?
-             ORDER BY FIELD(booking_status, 'arrivata', 'confermata', 'prenotata', 'conclusa', 'annullata', 'no_show'),
+               AND booking_status IN ('prenotata', 'confermata')
+             ORDER BY FIELD(booking_status, 'confermata', 'prenotata'),
                       contact_name ASC, id ASC"
         );
         $tramontoDayStmt->execute([$dayYmd]);
@@ -472,7 +473,7 @@ function generate_daily_summary_pdf(
     </tbody>
   </table>
   <?php else: ?>
-    <p class="muted">Nessuna prenotazione o accesso TramontoDay per oggi.</p>
+    <p class="muted">Nessun TramontoDay prenotato o confermato per oggi.</p>
   <?php endif; ?>
 
   <h2>Giorni liberi</h2>
