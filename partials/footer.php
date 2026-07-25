@@ -35,9 +35,11 @@
 <?php
 $confirmDeleteVersion = @filemtime(__DIR__ . '/../assets/confirm-delete.js') ?: time();
 $waitFeedbackVersion = @filemtime(__DIR__ . '/../assets/wait-feedback.js') ?: time();
+$menuDedupeVersion = @filemtime(__DIR__ . '/../assets/menu-dedupe.js') ?: time();
 $footerBase = $base ?? '';
 ?>
 <script src="<?= e($footerBase) ?>/assets/confirm-delete.js?v=<?= (int)$confirmDeleteVersion ?>"></script>
 <script src="<?= e($footerBase) ?>/assets/wait-feedback.js?v=<?= (int)$waitFeedbackVersion ?>"></script>
+<script src="<?= e($footerBase) ?>/assets/menu-dedupe.js?v=<?= (int)$menuDedupeVersion ?>"></script>
 </body>
 </html>
