@@ -30,6 +30,10 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
   'scarico.php',
   'statistiche.php',
   'suppliers_list.php',
+  'order_create.php',
+  'orders.php',
+  'order_edit.php',
+  'order_pdf.php',
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'send_sms.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php'], $currentPath);
@@ -228,6 +232,19 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
         </li>
         <?php endif; ?>
         <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+        <li class="nav-item dropdown dojo-tramontoday-menu dojo-desktop-only">
+          <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDaySidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+          <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDaySidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if($user && user_is_reception_or_amministrazione($user)): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= $trasportiMenuOpen ? 'active' : '' ?>" href="#" id="trasportiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $trasportiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
@@ -251,6 +268,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/statistiche.php"><i class="bi bi-graph-up"></i><span>Statistiche</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/order_create.php"><i class="bi bi-cart-plus"></i><span>Nuovo Ordine</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/orders.php"><i class="bi bi-clipboard-check"></i><span>Ordini</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -482,6 +501,19 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             </li>
             <?php endif; ?>
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
+            <li class="nav-item dropdown dojo-tramontoday-menu dojo-mobile-only">
+              <a class="nav-link dropdown-toggle <?= $tramontoDayMenuOpen ? 'active' : '' ?>" href="#" id="tramontoDayDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $tramontoDayMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-sun"></i><span>TramontoDay</span></a>
+              <ul class="dropdown-menu <?= $tramontoDayMenuOpen ? 'show' : '' ?>" aria-labelledby="tramontoDayDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_availability.php"><i class="bi bi-calendar-week"></i><span>Calendario disponibilità</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_bookings.php"><i class="bi bi-journal-check"></i><span>Prenotazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_today.php"><i class="bi bi-door-open"></i><span>Accessi di oggi</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_booking_create.php"><i class="bi bi-plus-circle"></i><span>Nuova prenotazione/accesso</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_settings.php"><i class="bi bi-sliders"></i><span>Tariffe e impostazioni</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/tramontoday_reports.php"><i class="bi bi-bar-chart-line"></i><span>Report</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle <?= $trasportiMenuOpen ? 'active' : '' ?>" href="#" id="trasportiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $trasportiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
@@ -505,6 +537,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/scarico.php"><i class="bi bi-box-arrow-up"></i><span>Scarico</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/statistiche.php"><i class="bi bi-graph-up"></i><span>Statistiche</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/suppliers/suppliers_list.php"><i class="bi bi-truck"></i><span>Fornitori</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/order_create.php"><i class="bi bi-cart-plus"></i><span>Nuovo Ordine</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/inventory/orders.php"><i class="bi bi-clipboard-check"></i><span>Ordini</span></a></li>
               </ul>
             </li>
             <?php endif; ?>

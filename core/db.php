@@ -383,3 +383,50 @@ function ensure_tramontoday_availability_table(PDO $pdo): void {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   ");
 }
+
+function ensure_inventory_orders_tables(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS inventory_orders (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      supplier_id INT UNSIGNED NOT NULL,
+      status ENUM('generato','inviato','consegnato','variato','annullato') NOT NULL DEFAULT 'generato',
+      delivery_warehouse VARCHAR(50) DEFAULT NULL,
+      delivered_at DATETIME DEFAULT NULL,
+      created_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_inventory_orders_supplier (supplier_id),
+      INDEX idx_inventory_orders_status (status),
+      INDEX idx_inventory_orders_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS inventory_order_items (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      order_id INT UNSIGNED NOT NULL,
+      product_id INT UNSIGNED NOT NULL,
+      quantity DECIMAL(12,3) NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      product_unit VARCHAR(50) DEFAULT NULL,
+      product_supplier_id INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_inventory_order_product (order_id, product_id),
+      INDEX idx_inventory_order_items_product (product_id),
+      CONSTRAINT fk_inventory_order_items_order FOREIGN KEY (order_id) REFERENCES inventory_orders(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS inventory_order_revisions (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      order_id INT UNSIGNED NOT NULL,
+      previous_items LONGTEXT NOT NULL,
+      revised_items LONGTEXT NOT NULL,
+      revised_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_inventory_order_revisions_order (order_id),
+      CONSTRAINT fk_inventory_order_revisions_order FOREIGN KEY (order_id) REFERENCES inventory_orders(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
