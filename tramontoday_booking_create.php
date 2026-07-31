@@ -84,6 +84,13 @@ $values = [
   'payment_status' => 'da_pagare',
   'booking_status' => 'prenotata',
 ];
+$requestedBookingDate = trim((string)($_GET['booking_date'] ?? ''));
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $requestedBookingDate !== '') {
+  $requestedDate = DateTimeImmutable::createFromFormat('!Y-m-d', $requestedBookingDate);
+  if ($requestedDate && $requestedDate->format('Y-m-d') === $requestedBookingDate) {
+    $values['booking_date'] = $requestedBookingDate;
+  }
+}
 $errors = [];
 $successMessage = '';
 $totalAmount = 0.00;
