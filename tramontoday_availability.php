@@ -171,6 +171,24 @@ include __DIR__ . '/partials/header.php';
   </div>
 </div>
 
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form id="tramontoDayAvailabilitySearch" class="row g-2 align-items-end">
+      <div class="col-12 col-md-6 col-lg-4">
+        <label for="availabilitySearchDate" class="form-label fw-semibold">Cerca disponibilità per data</label>
+        <input type="date" class="form-control" id="availabilitySearchDate"
+          min="<?= e($todayYmd) ?>" max="<?= e($endYmd) ?>" required>
+      </div>
+      <div class="col-12 col-md-auto">
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="bi bi-search me-1"></i>Cerca disponibilità
+        </button>
+      </div>
+    </form>
+    <div class="form-text mt-2">La ricerca è disponibile per i 31 giorni mostrati nel calendario.</div>
+  </div>
+</div>
+
 <?php if ($message): ?>
   <div class="alert alert-success"><?= e($message) ?></div>
 <?php endif; ?>
@@ -202,6 +220,8 @@ include __DIR__ . '/partials/header.php';
         data-display-date="<?= e($day['display_date']) ?>"
         data-max-stations="<?= (int)$day['max_stations'] ?>"
         data-is-open="<?= $day['is_open'] ? '1' : '0' ?>"
+        data-morning-available="<?= (int)$day['morning_available'] ?>"
+        data-afternoon-available="<?= (int)$day['afternoon_available'] ?>"
         data-notes="<?= e($day['notes']) ?>"
         data-remaining-days="<?= (int)$day['remaining_days'] ?>">
         <span class="card-body d-block">
@@ -222,6 +242,25 @@ include __DIR__ . '/partials/header.php';
       </button>
     </div>
   <?php endforeach; ?>
+</div>
+
+<div class="modal fade" id="tramontoDayAvailabilitySearchModal" tabindex="-1" aria-labelledby="tramontoDayAvailabilitySearchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="tramontoDayAvailabilitySearchModalLabel">Disponibilità TramontoDay</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body" id="availabilitySearchResult" aria-live="polite"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Chiudi</button>
+        <a class="btn btn-primary" id="availabilitySearchBookingLink"
+          data-booking-url="<?= e($base) ?>/tramontoday_booking_create.php" href="<?= e($base) ?>/tramontoday_booking_create.php">
+          <i class="bi bi-calendar-check me-1"></i>Prenota Data
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="tramontoDayAvailabilityModal" tabindex="-1" aria-labelledby="tramontoDayAvailabilityModalLabel" aria-hidden="true">
