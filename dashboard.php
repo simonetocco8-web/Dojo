@@ -16,6 +16,7 @@ $seasonActive = is_today_within_summer_season($pdo);
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
 ensure_products_active_column($pdo);
+ensure_products_default_warehouse_column($pdo);
 ensure_riassetti_status_column($pdo);
 
 // Ruolo e dipartimento
@@ -478,20 +479,34 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
 if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || user_has_department($user, 'Bar'))) {
 
   $sql = "
-    SELECT 
-      p.id,
-      p.title,
-      p.category,
-      p.min_qty,
-      COALESCE(SUM(sl.qty), 0) AS total_qty,
-      COALESCE(SUM(CASE WHEN sl.warehouse='Tizzo' THEN sl.qty ELSE 0 END), 0)    AS qty_tizzo,
-      COALESCE(SUM(CASE WHEN sl.warehouse='Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
-    FROM products p
-    LEFT JOIN stock_levels sl ON sl.product_id = p.id
-    WHERE COALESCE(p.is_active, 1) = 1
-    GROUP BY p.id, p.title, p.category, p.min_qty
-    HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty
-    ORDER BY total_qty ASC, p.title ASC
+    SELECT inventory.*,
+      CASE
+        WHEN inventory.default_warehouse = 'Tramonto'
+         AND inventory.qty_tramonto < inventory.min_qty
+         AND inventory.qty_tizzo > 0
+        THEN 'Da Trasferire'
+        ELSE 'Sottoscorta'
+      END AS stock_status
+    FROM (
+      SELECT
+        p.id,
+        p.title,
+        p.category,
+        p.min_qty,
+        p.default_warehouse,
+        COALESCE(SUM(sl.qty), 0) AS total_qty,
+        COALESCE(SUM(CASE WHEN sl.warehouse='Tizzo' THEN sl.qty ELSE 0 END), 0) AS qty_tizzo,
+        COALESCE(SUM(CASE WHEN sl.warehouse='Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
+      FROM products p
+      LEFT JOIN stock_levels sl ON sl.product_id = p.id
+      WHERE COALESCE(p.is_active, 1) = 1
+      GROUP BY p.id, p.title, p.category, p.min_qty, p.default_warehouse
+    ) inventory
+    WHERE inventory.total_qty < inventory.min_qty
+       OR (inventory.default_warehouse = 'Tramonto' AND inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0)
+    ORDER BY (inventory.default_warehouse = 'Tramonto' AND inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0) DESC,
+             inventory.qty_tramonto ASC,
+             inventory.title ASC
     LIMIT 10
   ";
   $stmt = $pdo->query($sql);
@@ -513,8 +528,9 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
             <thead>
               <tr>
                 <th>Prodotto</th>
-                <th class="text-center" style="width:105px;">Tot</th>
+                <th class="text-center" style="width:105px;">Tramonto</th>
                 <th class="text-center" style="width:105px;">Min</th>
+                <th class="text-center" style="width:120px;">Stato</th>
               </tr>
             </thead>
             <tbody>
@@ -526,10 +542,15 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
                   </td>
                   <td class="text-center">
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                      <?= (float)$r['total_qty'] ?>
+                      <?= (float)$r['qty_tramonto'] ?>
                     </span>
                   </td>
                   <td class="text-center"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
+                  <td class="text-center">
+                    <span class="badge <?= $r['stock_status'] === 'Da Trasferire' ? 'bg-warning text-dark' : 'bg-danger' ?>">
+                      <?= e($r['stock_status']) ?>
+                    </span>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>

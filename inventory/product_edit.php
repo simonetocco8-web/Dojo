@@ -11,6 +11,7 @@ $env  = require __DIR__ . '/../config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_products_url_column($pdo);
+ensure_products_default_warehouse_column($pdo);
 ensure_suppliers_active_column($pdo);
 ensure_product_categories_table($pdo);
 $user = current_user();
@@ -32,7 +33,7 @@ $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) { http_response_code(400); exit('ID non valido.'); }
 
 // --- Carica prodotto ---
-$st = $pdo->prepare("SELECT id, title, ean13, min_qty, max_qty, category, unit, supplier_id, product_url FROM products WHERE id = ?");
+$st = $pdo->prepare("SELECT id, title, ean13, min_qty, max_qty, category, unit, supplier_id, product_url, default_warehouse FROM products WHERE id = ?");
 $st->execute([$id]);
 $product = $st->fetch(PDO::FETCH_ASSOC);
 if (!$product) { http_response_code(404); exit('Prodotto non trovato.'); }
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $supplier_id = isset($_POST['supplier_id']) && $_POST['supplier_id'] !== '' ? (int)$_POST['supplier_id'] : null;
     $product_url = trim((string)($_POST['product_url'] ?? ''));
     $product_url = $product_url !== '' ? $product_url : null;
+    $defaultWarehouse = trim((string)($_POST['default_warehouse'] ?? ''));
     $isInternetSupplier = $supplier_id !== null && strcasecmp((string)($supplierNameById[$supplier_id] ?? ''), 'Internet') === 0;
 
     // 2) Validazioni base
@@ -84,6 +86,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if ($unit !== '' && !in_array($unit, $UNITS, true)) {
       $errors[] = 'Unità di misura non valida.';
+    }
+    if (!in_array($defaultWarehouse, ['Tizzo', 'Tramonto'], true)) {
+      $errors[] = 'Magazzino predefinito non valido.';
     }
     $min_qty = ($min_qty === '') ? null : (float)$min_qty;
     $max_qty = ($max_qty === '') ? null : (float)$max_qty;
@@ -123,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       try {
         $upd = $pdo->prepare("
           UPDATE products
-          SET title = ?, ean13 = ?, category = ?, unit = ?, min_qty = ?, max_qty = ?, supplier_id = ?, product_url = ?
+          SET title = ?, ean13 = ?, category = ?, unit = ?, min_qty = ?, max_qty = ?, supplier_id = ?, product_url = ?, default_warehouse = ?
           WHERE id = ?
         ");
         $upd->execute([
@@ -135,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $max_qty,
           $supplier_id,
           $product_url,
+          $defaultWarehouse,
           $id
         ]);
 
@@ -216,6 +222,15 @@ include __DIR__ . '/../partials/header.php';
             <option value="">— Nessuna —</option>
             <?php foreach ($UNITS as $u): ?>
               <option value="<?= e($u) ?>" <?= ($product['unit'] === $u ? 'selected' : '') ?>><?= e($u) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Magazzino predefinito</label>
+          <select name="default_warehouse" class="form-select" required>
+            <?php foreach (['Tizzo', 'Tramonto'] as $warehouse): ?>
+              <option value="<?= e($warehouse) ?>" <?= ($product['default_warehouse'] ?? 'Tizzo') === $warehouse ? 'selected' : '' ?>><?= e($warehouse) ?></option>
             <?php endforeach; ?>
           </select>
         </div>

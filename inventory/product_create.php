@@ -5,6 +5,7 @@ if (!is_amministrazione()) { header($_SERVER['SERVER_PROTOCOL'].' 403 Forbidden'
 
 ensure_products_active_column($pdo);
 ensure_products_url_column($pdo);
+ensure_products_default_warehouse_column($pdo);
 ensure_suppliers_active_column($pdo);
 ensure_product_categories_table($pdo);
 
@@ -25,6 +26,7 @@ $form = [
   'max_qty' => '0',
   'supplier_id' => '',
   'product_url' => '',
+  'default_warehouse' => 'Tizzo',
 ];
 
 $suppliers = $pdo->query("SELECT id, name FROM suppliers WHERE COALESCE(is_active, 1) = 1 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -98,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     'max_qty' => (string)($_POST['max_qty'] ?? '0'),
     'supplier_id' => trim((string)($_POST['supplier_id'] ?? '')),
     'product_url' => trim((string)($_POST['product_url'] ?? '')),
+    'default_warehouse' => trim((string)($_POST['default_warehouse'] ?? 'Tizzo')),
   ]);
 
   if (!csrf_check($_POST['csrf'] ?? '')) {
@@ -112,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
     $max   = (float)$form['max_qty'];
     $supplier_id = $form['supplier_id'] !== '' ? (int)$form['supplier_id'] : null;
     $product_url = $form['product_url'] !== '' ? $form['product_url'] : null;
+    $defaultWarehouse = $form['default_warehouse'];
     $isInternetSupplier = $supplier_id !== null && strcasecmp((string)($supplierNameById[$supplier_id] ?? ''), 'Internet') === 0;
     $confirmSimilar = ($_POST['confirm_similar'] ?? '') === '1';
 
@@ -120,6 +124,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
       $messageType = 'danger';
     } elseif (!in_array($unit, $units, true)) {
       $message = 'Unità di misura non valida.';
+      $messageType = 'danger';
+    } elseif (!in_array($defaultWarehouse, ['Tizzo', 'Tramonto'], true)) {
+      $message = 'Magazzino predefinito non valido.';
       $messageType = 'danger';
     } elseif (!$title) {
       $message = 'Inserire un titolo prodotto.';
@@ -152,11 +159,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
           $messageType = 'warning';
         } else {
           $stmt = $pdo->prepare("
-          INSERT INTO products (title, ean13, category, supplier_id, product_url, unit, min_qty, max_qty, created_by)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO products (title, ean13, category, supplier_id, product_url, default_warehouse, unit, min_qty, max_qty, created_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
           try {
-            $stmt->execute([$title, $ean, $cat, $supplier_id, $product_url, $unit, $min, $max, $user['id']]);
+            $stmt->execute([$title, $ean, $cat, $supplier_id, $product_url, $defaultWarehouse, $unit, $min, $max, $user['id']]);
             header('Location: ' . inventory_products_redirect_url());
             exit;
           } catch (PDOException $e) {
@@ -229,6 +236,14 @@ include __DIR__ . '/../partials/header.php';
               <label class="form-label">Unità</label>
               <select name="unit" class="form-select">
                 <?php foreach($units as $u): ?><option value="<?= e($u) ?>" <?= $form['unit']===$u?'selected':'' ?>><?= e($u) ?></option><?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Magazzino predefinito</label>
+              <select name="default_warehouse" class="form-select" required>
+                <?php foreach (['Tizzo', 'Tramonto'] as $warehouse): ?>
+                  <option value="<?= e($warehouse) ?>" <?= $form['default_warehouse'] === $warehouse ? 'selected' : '' ?>><?= e($warehouse) ?></option>
+                <?php endforeach; ?>
               </select>
             </div>
             <div class="col-md-2">

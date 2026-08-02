@@ -169,6 +169,22 @@ function ensure_products_url_column(PDO $pdo): void {
 }
 
 
+function ensure_products_default_warehouse_column(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'products'
+      AND COLUMN_NAME = 'default_warehouse'
+    LIMIT 1
+  ");
+  if (!$stmt->fetch()) {
+    $pdo->exec("ALTER TABLE products ADD COLUMN default_warehouse ENUM('Tizzo','Tramonto') NOT NULL DEFAULT 'Tizzo' AFTER product_url");
+    $pdo->exec("UPDATE products SET default_warehouse = 'Tizzo'");
+  }
+}
+
+
 function ensure_product_categories_table(PDO $pdo): void {
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS product_categories (
@@ -374,6 +390,8 @@ function ensure_tramontoday_availability_table(PDO $pdo): void {
     CREATE TABLE IF NOT EXISTS tramontoday_availability (
       availability_date DATE NOT NULL PRIMARY KEY,
       max_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0,
+      morning_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0,
+      afternoon_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0,
       is_open TINYINT(1) NOT NULL DEFAULT 1,
       internal_notes TEXT DEFAULT NULL,
       updated_by INT UNSIGNED DEFAULT NULL,
@@ -382,6 +400,23 @@ function ensure_tramontoday_availability_table(PDO $pdo): void {
       CONSTRAINT fk_tramontoday_availability_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   ");
+
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tramontoday_availability'
+      AND COLUMN_NAME IN ('morning_sellable_stations', 'afternoon_sellable_stations')
+  ");
+  $availabilityColumns = array_fill_keys($stmt->fetchAll(PDO::FETCH_COLUMN), true);
+  if (!isset($availabilityColumns['morning_sellable_stations'])) {
+    $pdo->exec("ALTER TABLE tramontoday_availability ADD COLUMN morning_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0 AFTER max_sellable_stations");
+    $pdo->exec("UPDATE tramontoday_availability SET morning_sellable_stations = max_sellable_stations");
+  }
+  if (!isset($availabilityColumns['afternoon_sellable_stations'])) {
+    $pdo->exec("ALTER TABLE tramontoday_availability ADD COLUMN afternoon_sellable_stations INT UNSIGNED NOT NULL DEFAULT 0 AFTER morning_sellable_stations");
+    $pdo->exec("UPDATE tramontoday_availability SET afternoon_sellable_stations = max_sellable_stations");
+  }
 }
 
 function ensure_inventory_orders_tables(PDO $pdo): void {
