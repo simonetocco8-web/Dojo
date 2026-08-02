@@ -193,7 +193,27 @@ function generate_daily_summary_pdf(
         ensure_products_active_column($pdo);
 
         $lowStockStmt = $pdo->query(
-            "SELECT\n            p.title,\n            p.category,\n            p.min_qty,\n            COALESCE(SUM(sl.qty), 0) AS total_qty\n         FROM products p\n         LEFT JOIN stock_levels sl ON sl.product_id = p.id\n         WHERE COALESCE(p.is_active, 1) = 1\n         GROUP BY p.id, p.title, p.category, p.min_qty\n         HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty\n         ORDER BY total_qty ASC, p.title ASC\n         LIMIT 10"
+            "SELECT
+                p.title,
+                p.category,
+                p.min_qty,
+                COALESCE(SUM(sl.qty), 0) AS total_qty,
+                COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0) AS qty_tizzo,
+                COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto,
+                CASE
+                    WHEN COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) < p.min_qty
+                     AND COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0) > 0
+                    THEN 'Da Trasferire'
+                    ELSE 'Sottoscorta'
+                END AS stock_status
+             FROM products p
+             LEFT JOIN stock_levels sl ON sl.product_id = p.id
+             WHERE COALESCE(p.is_active, 1) = 1
+             GROUP BY p.id, p.title, p.category, p.min_qty
+             HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty
+                 OR (qty_tramonto < p.min_qty AND qty_tizzo > 0)
+             ORDER BY (stock_status = 'Da Trasferire') DESC, qty_tramonto ASC, p.title ASC
+             LIMIT 10"
         );
         $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
     } else {
@@ -507,8 +527,10 @@ function generate_daily_summary_pdf(
       <tr>
         <th>Prodotto</th>
         <th>Categoria</th>
-        <th>Disponibilità</th>
+        <th>Tramonto</th>
+        <th>Tizzo</th>
         <th>Scorta minima</th>
+        <th>Stato</th>
       </tr>
     </thead>
     <tbody>
@@ -516,8 +538,10 @@ function generate_daily_summary_pdf(
       <tr>
         <td><?= e($row['title'] ?? '') ?></td>
         <td><?= e($row['category'] ?? '') ?></td>
-        <td><?= e(format_daily_summary_quantity($row['total_qty'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['qty_tramonto'] ?? 0)) ?></td>
+        <td><?= e(format_daily_summary_quantity($row['qty_tizzo'] ?? 0)) ?></td>
         <td><?= e(format_daily_summary_quantity($row['min_qty'] ?? 0)) ?></td>
+        <td><?= e($row['stock_status'] ?? 'Sottoscorta') ?></td>
       </tr>
     <?php endforeach; ?>
     </tbody>

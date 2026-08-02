@@ -170,14 +170,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $booked = $bookedStmt->fetch(PDO::FETCH_ASSOC) ?: [];
       $morningAvailable = max(0, (int)$availability['morning_sellable_stations'] - (int)($booked['booked_morning'] ?? 0));
       $afternoonAvailable = max(0, (int)$availability['afternoon_sellable_stations'] - (int)($booked['booked_afternoon'] ?? 0));
+      $fullDayAvailable = min($morningAvailable, $afternoonAvailable);
       $formulaAvailability = match ($values['formula']) {
         'mattina' => $morningAvailable,
         'pomeriggio' => $afternoonAvailable,
-        default => min($morningAvailable, $afternoonAvailable),
+        default => $fullDayAvailable,
       };
 
       if ($stationsCount > $formulaAvailability) {
-        $errors[] = 'Impossibile caricare la prenotazione/accesso: per la formula selezionata sono disponibili solo ' . $formulaAvailability . ' postazioni.';
+        $errors[] = 'Impossibile caricare la prenotazione/accesso: le postazioni richieste superano la disponibilità. Disponibilità residue della giornata per formula: giornata intera ' . $fullDayAvailable . ', mattina ' . $morningAvailable . ', pomeriggio ' . $afternoonAvailable . '.';
       }
     }
 
