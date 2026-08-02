@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!$errors) {
     $pdo->beginTransaction();
 
-    $availabilityStmt = $pdo->prepare('SELECT max_sellable_stations, is_open FROM tramontoday_availability WHERE availability_date = ? FOR UPDATE');
+    $availabilityStmt = $pdo->prepare('SELECT morning_sellable_stations, afternoon_sellable_stations, is_open FROM tramontoday_availability WHERE availability_date = ? FOR UPDATE');
     $availabilityStmt->execute([$values['booking_date']]);
     $availability = $availabilityStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -168,17 +168,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         WHERE booking_date = ? AND booking_status NOT IN ("annullata", "no_show")');
       $bookedStmt->execute([$values['booking_date']]);
       $booked = $bookedStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-      $maxStations = (int)$availability['max_sellable_stations'];
-      $morningAvailable = max(0, $maxStations - (int)($booked['booked_morning'] ?? 0));
-      $afternoonAvailable = max(0, $maxStations - (int)($booked['booked_afternoon'] ?? 0));
+      $morningAvailable = max(0, (int)$availability['morning_sellable_stations'] - (int)($booked['booked_morning'] ?? 0));
+      $afternoonAvailable = max(0, (int)$availability['afternoon_sellable_stations'] - (int)($booked['booked_afternoon'] ?? 0));
+      $fullDayAvailable = min($morningAvailable, $afternoonAvailable);
       $formulaAvailability = match ($values['formula']) {
         'mattina' => $morningAvailable,
         'pomeriggio' => $afternoonAvailable,
-        default => min($morningAvailable, $afternoonAvailable),
+        default => $fullDayAvailable,
       };
 
       if ($stationsCount > $formulaAvailability) {
-        $errors[] = 'Impossibile caricare la prenotazione/accesso: per la formula selezionata sono disponibili solo ' . $formulaAvailability . ' postazioni.';
+        $errors[] = 'Impossibile caricare la prenotazione/accesso: le postazioni richieste superano la disponibilità. Disponibilità residue della giornata per formula: giornata intera ' . $fullDayAvailable . ', mattina ' . $morningAvailable . ', pomeriggio ' . $afternoonAvailable . '.';
       }
     }
 
