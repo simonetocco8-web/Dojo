@@ -16,6 +16,7 @@ $seasonActive = is_today_within_summer_season($pdo);
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
 ensure_products_active_column($pdo);
+ensure_products_default_warehouse_column($pdo);
 ensure_riassetti_status_column($pdo);
 
 // Ruolo e dipartimento
@@ -480,7 +481,9 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
   $sql = "
     SELECT inventory.*,
       CASE
-        WHEN inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0
+        WHEN inventory.default_warehouse = 'Tramonto'
+         AND inventory.qty_tramonto < inventory.min_qty
+         AND inventory.qty_tizzo > 0
         THEN 'Da Trasferire'
         ELSE 'Sottoscorta'
       END AS stock_status
@@ -490,17 +493,18 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
         p.title,
         p.category,
         p.min_qty,
+        p.default_warehouse,
         COALESCE(SUM(sl.qty), 0) AS total_qty,
         COALESCE(SUM(CASE WHEN sl.warehouse='Tizzo' THEN sl.qty ELSE 0 END), 0) AS qty_tizzo,
         COALESCE(SUM(CASE WHEN sl.warehouse='Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
       FROM products p
       LEFT JOIN stock_levels sl ON sl.product_id = p.id
       WHERE COALESCE(p.is_active, 1) = 1
-      GROUP BY p.id, p.title, p.category, p.min_qty
+      GROUP BY p.id, p.title, p.category, p.min_qty, p.default_warehouse
     ) inventory
     WHERE inventory.total_qty < inventory.min_qty
-       OR (inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0)
-    ORDER BY (inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0) DESC,
+       OR (inventory.default_warehouse = 'Tramonto' AND inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0)
+    ORDER BY (inventory.default_warehouse = 'Tramonto' AND inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0) DESC,
              inventory.qty_tramonto ASC,
              inventory.title ASC
     LIMIT 10

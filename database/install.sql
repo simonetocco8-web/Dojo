@@ -72,6 +72,10 @@ ALTER TABLE suppliers
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS product_url VARCHAR(2048) DEFAULT NULL AFTER supplier_id;
 
+-- Magazzino predefinito prodotti
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS default_warehouse ENUM('Tizzo','Tramonto') NOT NULL DEFAULT 'Tizzo' AFTER product_url;
+
 CREATE TABLE IF NOT EXISTS product_categories (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,

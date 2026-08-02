@@ -169,6 +169,22 @@ function ensure_products_url_column(PDO $pdo): void {
 }
 
 
+function ensure_products_default_warehouse_column(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'products'
+      AND COLUMN_NAME = 'default_warehouse'
+    LIMIT 1
+  ");
+  if (!$stmt->fetch()) {
+    $pdo->exec("ALTER TABLE products ADD COLUMN default_warehouse ENUM('Tizzo','Tramonto') NOT NULL DEFAULT 'Tizzo' AFTER product_url");
+    $pdo->exec("UPDATE products SET default_warehouse = 'Tizzo'");
+  }
+}
+
+
 function ensure_product_categories_table(PDO $pdo): void {
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS product_categories (
