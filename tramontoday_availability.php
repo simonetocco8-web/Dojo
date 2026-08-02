@@ -56,12 +56,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors[] = 'Puoi modificare solo i prossimi 31 giorni del calendario.';
   }
 
-  $maxStationsRaw = trim((string)($_POST['max_sellable_stations'] ?? ''));
-  if ($maxStationsRaw === '' || !ctype_digit($maxStationsRaw)) {
-    $errors[] = 'Inserisci un numero massimo di postazioni vendibili valido.';
-    $maxStations = 0;
+  $morningStationsRaw = trim((string)($_POST['morning_sellable_stations'] ?? ''));
+  $afternoonStationsRaw = trim((string)($_POST['afternoon_sellable_stations'] ?? ''));
+  if ($morningStationsRaw === '' || !ctype_digit($morningStationsRaw)) {
+    $errors[] = 'Inserisci un numero di disponibilità per la mattina valido.';
+    $morningStations = 0;
   } else {
-    $maxStations = (int)$maxStationsRaw;
+    $morningStations = (int)$morningStationsRaw;
+  }
+  if ($afternoonStationsRaw === '' || !ctype_digit($afternoonStationsRaw)) {
+    $errors[] = 'Inserisci un numero di disponibilità per il pomeriggio valido.';
+    $afternoonStations = 0;
+  } else {
+    $afternoonStations = (int)$afternoonStationsRaw;
   }
 
   $isOpen = isset($_POST['is_open']) ? 1 : 0;
@@ -83,26 +90,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   if (!$errors) {
-    $selectedDayStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, is_open, internal_notes, updated_by, updated_at)
-      VALUES (:availability_date, :max_sellable_stations, :is_open, :internal_notes, :updated_by, NOW())
-      ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), is_open = VALUES(is_open), internal_notes = VALUES(internal_notes), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
+    $selectedDayStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, morning_sellable_stations, afternoon_sellable_stations, is_open, internal_notes, updated_by, updated_at)
+      VALUES (:availability_date, :max_sellable_stations, :morning_sellable_stations, :afternoon_sellable_stations, :is_open, :internal_notes, :updated_by, NOW())
+      ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), morning_sellable_stations = VALUES(morning_sellable_stations), afternoon_sellable_stations = VALUES(afternoon_sellable_stations), is_open = VALUES(is_open), internal_notes = VALUES(internal_notes), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
     $selectedDayStmt->execute([
       ':availability_date' => $dateRaw,
-      ':max_sellable_stations' => $maxStations,
+      ':max_sellable_stations' => max($morningStations, $afternoonStations),
+      ':morning_sellable_stations' => $morningStations,
+      ':afternoon_sellable_stations' => $afternoonStations,
       ':is_open' => $isOpen,
       ':internal_notes' => $notes === '' ? null : $notes,
       ':updated_by' => $user['id'] ?? null,
     ]);
 
     if ($extendDays > 1) {
-      $extendedDaysStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, updated_by, updated_at)
-        VALUES (:availability_date, :max_sellable_stations, :updated_by, NOW())
-        ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
+      $extendedDaysStmt = $pdo->prepare('INSERT INTO tramontoday_availability (availability_date, max_sellable_stations, morning_sellable_stations, afternoon_sellable_stations, updated_by, updated_at)
+        VALUES (:availability_date, :max_sellable_stations, :morning_sellable_stations, :afternoon_sellable_stations, :updated_by, NOW())
+        ON DUPLICATE KEY UPDATE max_sellable_stations = VALUES(max_sellable_stations), morning_sellable_stations = VALUES(morning_sellable_stations), afternoon_sellable_stations = VALUES(afternoon_sellable_stations), updated_by = VALUES(updated_by), updated_at = VALUES(updated_at)');
       for ($i = 1; $i < $extendDays; $i++) {
         $targetDate = $date->modify('+' . $i . ' days')->format('Y-m-d');
         $extendedDaysStmt->execute([
           ':availability_date' => $targetDate,
-          ':max_sellable_stations' => $maxStations,
+          ':max_sellable_stations' => max($morningStations, $afternoonStations),
+          ':morning_sellable_stations' => $morningStations,
+          ':afternoon_sellable_stations' => $afternoonStations,
           ':updated_by' => $user['id'] ?? null,
         ]);
       }
@@ -114,7 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
-$stmt = $pdo->prepare('SELECT availability_date, max_sellable_stations, is_open, internal_notes FROM tramontoday_availability WHERE availability_date BETWEEN ? AND ?');
+$stmt = $pdo->prepare('SELECT availability_date, morning_sellable_stations, afternoon_sellable_stations, is_open, internal_notes FROM tramontoday_availability WHERE availability_date BETWEEN ? AND ?');
 $stmt->execute([$todayYmd, $endYmd]);
 $availabilityRows = [];
 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -143,7 +154,8 @@ for ($i = 0; $i < 31; $i++) {
   $date = $today->modify('+' . $i . ' days');
   $ymd = $date->format('Y-m-d');
   $availability = $availabilityRows[$ymd] ?? null;
-  $maxStations = $availability ? (int)$availability['max_sellable_stations'] : 0;
+  $morningStations = $availability ? (int)$availability['morning_sellable_stations'] : 0;
+  $afternoonStations = $availability ? (int)$availability['afternoon_sellable_stations'] : 0;
   $isOpen = $availability ? (int)$availability['is_open'] === 1 : true;
   $bookedMorning = $bookedByDate[$ymd]['morning'] ?? 0;
   $bookedAfternoon = $bookedByDate[$ymd]['afternoon'] ?? 0;
@@ -152,11 +164,12 @@ for ($i = 0; $i < 31; $i++) {
     'display_date' => tramontoday_availability_date_it($ymd, $tz),
     'weekday' => tramontoday_availability_weekday_it($date),
     'day_number' => $date->format('d'),
-    'max_stations' => $maxStations,
+    'morning_stations' => $morningStations,
+    'afternoon_stations' => $afternoonStations,
     'is_open' => $isOpen,
     'notes' => (string)($availability['internal_notes'] ?? ''),
-    'morning_available' => $isOpen ? max(0, $maxStations - $bookedMorning) : 0,
-    'afternoon_available' => $isOpen ? max(0, $maxStations - $bookedAfternoon) : 0,
+    'morning_available' => $isOpen ? max(0, $morningStations - $bookedMorning) : 0,
+    'afternoon_available' => $isOpen ? max(0, $afternoonStations - $bookedAfternoon) : 0,
     'remaining_days' => 31 - $i,
   ];
 }
@@ -218,7 +231,8 @@ include __DIR__ . '/partials/header.php';
         data-tramontoday-availability-day="1"
         data-date="<?= e($day['date']) ?>"
         data-display-date="<?= e($day['display_date']) ?>"
-        data-max-stations="<?= (int)$day['max_stations'] ?>"
+        data-morning-stations="<?= (int)$day['morning_stations'] ?>"
+        data-afternoon-stations="<?= (int)$day['afternoon_stations'] ?>"
         data-is-open="<?= $day['is_open'] ? '1' : '0' ?>"
         data-morning-available="<?= (int)$day['morning_available'] ?>"
         data-afternoon-available="<?= (int)$day['afternoon_available'] ?>"
@@ -232,7 +246,6 @@ include __DIR__ . '/partials/header.php';
             </span>
             <span class="badge <?= e($statusBadgeClass) ?>"><?= e($statusLabel) ?></span>
           </span>
-          <span class="small d-block">Max postazioni vendibili: <strong><?= (int)$day['max_stations'] ?></strong></span>
           <span class="small d-block">Disponibilità mattina: <strong><?= (int)$day['morning_available'] ?></strong></span>
           <span class="small d-block">Disponibilità pomeriggio: <strong><?= (int)$day['afternoon_available'] ?></strong></span>
           <?php if (trim($day['notes']) !== ''): ?>
@@ -274,9 +287,15 @@ include __DIR__ . '/partials/header.php';
         <div class="modal-body">
           <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
           <input type="hidden" name="availability_date" id="availability_date" value="">
-          <div class="mb-3">
-            <label for="max_sellable_stations" class="form-label">Numero massimo di postazioni vendibili</label>
-            <input type="number" min="0" step="1" class="form-control" id="max_sellable_stations" name="max_sellable_stations" required>
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="morning_sellable_stations" class="form-label">Disponibilità mattina</label>
+              <input type="number" min="0" step="1" class="form-control" id="morning_sellable_stations" name="morning_sellable_stations" required>
+            </div>
+            <div class="col-sm-6">
+              <label for="afternoon_sellable_stations" class="form-label">Disponibilità pomeriggio</label>
+              <input type="number" min="0" step="1" class="form-control" id="afternoon_sellable_stations" name="afternoon_sellable_stations" required>
+            </div>
           </div>
           <div class="mb-3">
             <label for="extend_days" class="form-label">Proroga per giorni</label>
