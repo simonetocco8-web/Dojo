@@ -193,26 +193,31 @@ function generate_daily_summary_pdf(
         ensure_products_active_column($pdo);
 
         $lowStockStmt = $pdo->query(
-            "SELECT
-                p.title,
-                p.category,
-                p.min_qty,
-                COALESCE(SUM(sl.qty), 0) AS total_qty,
-                COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0) AS qty_tizzo,
-                COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto,
+            "SELECT inventory.*,
                 CASE
-                    WHEN COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) < p.min_qty
-                     AND COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0) > 0
+                    WHEN inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0
                     THEN 'Da Trasferire'
                     ELSE 'Sottoscorta'
                 END AS stock_status
-             FROM products p
-             LEFT JOIN stock_levels sl ON sl.product_id = p.id
-             WHERE COALESCE(p.is_active, 1) = 1
-             GROUP BY p.id, p.title, p.category, p.min_qty
-             HAVING COALESCE(SUM(sl.qty), 0) < p.min_qty
-                 OR (qty_tramonto < p.min_qty AND qty_tizzo > 0)
-             ORDER BY (stock_status = 'Da Trasferire') DESC, qty_tramonto ASC, p.title ASC
+             FROM (
+                 SELECT
+                     p.id,
+                     p.title,
+                     p.category,
+                     p.min_qty,
+                     COALESCE(SUM(sl.qty), 0) AS total_qty,
+                     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tizzo' THEN sl.qty ELSE 0 END), 0) AS qty_tizzo,
+                     COALESCE(SUM(CASE WHEN sl.warehouse = 'Tramonto' THEN sl.qty ELSE 0 END), 0) AS qty_tramonto
+                 FROM products p
+                 LEFT JOIN stock_levels sl ON sl.product_id = p.id
+                 WHERE COALESCE(p.is_active, 1) = 1
+                 GROUP BY p.id, p.title, p.category, p.min_qty
+             ) inventory
+             WHERE inventory.total_qty < inventory.min_qty
+                OR (inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0)
+             ORDER BY (inventory.qty_tramonto < inventory.min_qty AND inventory.qty_tizzo > 0) DESC,
+                      inventory.qty_tramonto ASC,
+                      inventory.title ASC
              LIMIT 10"
         );
         $lowStock = $lowStockStmt->fetchAll(PDO::FETCH_ASSOC);
