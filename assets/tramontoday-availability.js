@@ -6,7 +6,8 @@
     const modal = new bootstrap.Modal(modalEl);
     const dateInput = document.getElementById('availability_date');
     const dateLabel = document.getElementById('availabilityDateLabel');
-    const maxInput = document.getElementById('max_sellable_stations');
+    const morningInput = document.getElementById('morning_sellable_stations');
+    const afternoonInput = document.getElementById('afternoon_sellable_stations');
     const isOpenInput = document.getElementById('is_open');
     const notesInput = document.getElementById('internal_notes');
     const extendDaysInput = document.getElementById('extend_days');
@@ -16,7 +17,8 @@
       button.addEventListener('click', function () {
         if (dateInput) dateInput.value = button.dataset.date || '';
         if (dateLabel) dateLabel.textContent = button.dataset.displayDate || '';
-        if (maxInput) maxInput.value = button.dataset.maxStations || '0';
+        if (morningInput) morningInput.value = button.dataset.morningStations || '0';
+        if (afternoonInput) afternoonInput.value = button.dataset.afternoonStations || '0';
         if (isOpenInput) isOpenInput.checked = button.dataset.isOpen === '1';
         if (notesInput) notesInput.value = button.dataset.notes || '';
         if (extendDaysInput) {
