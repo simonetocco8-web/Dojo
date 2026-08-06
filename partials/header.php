@@ -35,7 +35,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
   'order_edit.php',
   'order_pdf.php',
 ], $currentPath);
-$personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'send_sms.php'], $currentPath);
+$personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
 $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione($user));
@@ -280,6 +280,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <?php if (user_is_amministrazione($user)): ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/absence.php"><i class="bi bi-calendar-x"></i><span>Assenze</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
             <?php endif; ?>
             <?php if (user_can_send_sms($user)): ?>
@@ -549,6 +550,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <?php if (user_is_amministrazione($user)): ?>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/days_off_list.php"><i class="bi bi-calendar-heart"></i><span>Giorni liberi</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/overtime.php"><i class="bi bi-clock-history"></i><span>Straordinari</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/absence.php"><i class="bi bi-calendar-x"></i><span>Assenze</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/overtime_monthly.php"><i class="bi bi-calculator"></i><span>Calcolo Mensile</span></a></li>
                 <?php endif; ?>
                 <?php if (user_can_send_sms($user)): ?>

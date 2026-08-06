@@ -263,6 +263,27 @@ function ensure_overtime_entries_table(PDO $pdo): void {
   ");
 }
 
+function ensure_absence_entries_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS absence_entries (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      user_id INT UNSIGNED NOT NULL,
+      absence_date DATE NOT NULL,
+      hours DECIMAL(6,2) NOT NULL,
+      note TEXT DEFAULT NULL,
+      created_by INT UNSIGNED DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      deleted_at DATETIME DEFAULT NULL,
+      INDEX idx_absence_entries_user_date (user_id, absence_date),
+      INDEX idx_absence_entries_absence_date (absence_date),
+      INDEX idx_absence_entries_deleted_at (deleted_at),
+      CONSTRAINT fk_absence_entries_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      CONSTRAINT fk_absence_entries_created_by FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+}
+
 function ensure_transfer_external_travel_columns(PDO $pdo): void {
   $pdo->exec("ALTER TABLE transfers_external MODIFY COLUMN type VARCHAR(32) NOT NULL DEFAULT 'arrivo'");
   $pdo->exec("ALTER TABLE transfers_external MODIFY COLUMN status VARCHAR(32) NOT NULL DEFAULT 'attivo'");
