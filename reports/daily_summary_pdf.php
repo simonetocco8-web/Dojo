@@ -9,6 +9,7 @@ require_once __DIR__ . '/../core/db.php';
 require_once __DIR__ . '/../core/roles.php';
 require_once __DIR__ . '/../core/security.php';
 require_once __DIR__ . '/../core/settings.php';
+require_once __DIR__ . '/../core/mailer.php';
 require_once __DIR__ . '/../dompdf/vendor/autoload.php';
 
 
@@ -718,6 +719,7 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
 
     $fromHeader   = encode_mime_header_utf8($fromName) . " <{$fromEmail}>";
     $subjectFinal = encode_mime_header_utf8($subject);
+    $envelopeSender = mail_envelope_sender_argument($fromEmail);
 
     $safeFilename = preg_replace('/[^A-Za-z0-9._-]/', '_', $attachmentFilename);
     if ($safeFilename === '') {
@@ -767,7 +769,9 @@ function send_daily_summary_pdf_email(array $recipients, string $subject, string
         $message = implode("\r\n", $messageParts);
         $headerString = implode("\r\n", $headers);
 
-        $ok = @mail($email, $subjectFinal, $message, $headerString);
+        $ok = $envelopeSender !== ''
+            ? @mail($email, $subjectFinal, $message, $headerString, $envelopeSender)
+            : @mail($email, $subjectFinal, $message, $headerString);
         if (!$ok) {
             $result['failed'][] = $email;
             log_mail_fallback($email, $subject, $htmlBody . "\n[allegato: " . $safeFilename . ']');
