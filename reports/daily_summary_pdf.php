@@ -442,6 +442,7 @@ function generate_daily_summary_pdf(
     <thead>
       <tr>
         <th>Ora</th>
+        <th>Pickup</th>
         <th>Tipo</th>
         <th>Luogo</th>
         <th>Camera</th>
@@ -453,6 +454,7 @@ function generate_daily_summary_pdf(
       <?php $dt = $row['date_time'] ? new DateTime($row['date_time'], $tz) : null; ?>
       <tr>
         <td><?= $dt ? e($dt->format('H:i')) : '—' ?></td>
+        <td><?= !empty($row['pickup_time']) ? e(substr((string)$row['pickup_time'], 0, 5)) : '—' ?></td>
         <td><?= e(ucfirst($row['type'] ?? '')) ?></td>
         <td><?= e($row['place'] ?? '') ?></td>
         <td><?= e($row['room_number'] ?? '') ?></td>
