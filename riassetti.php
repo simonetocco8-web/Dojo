@@ -51,7 +51,7 @@ $sql = 'SELECT r.*, uc.email AS created_by_email, ucomp.email AS completed_by_em
 if ($where) {
   $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY r.data_riassetto ASC, r.room ASC, r.id ASC';
+$sql .= ' ORDER BY r.data_riassetto DESC, r.room ASC, r.id ASC';
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);

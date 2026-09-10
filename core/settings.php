@@ -83,6 +83,25 @@ function get_summer_season_range(?PDO $pdo = null): array {
 }
 
 /**
+ * Return the unit costs used to calculate linen expenses for room resets.
+ *
+ * @return array{matrimoniale:float,singola:float,set_bagno:float}
+ */
+function get_riassetti_linen_costs(?PDO $pdo = null): array {
+  $settings = get_settings([
+    'riassetti_cost_matrimoniale',
+    'riassetti_cost_singola',
+    'riassetti_cost_set_bagno',
+  ], $pdo);
+
+  return [
+    'matrimoniale' => max(0, (float)($settings['riassetti_cost_matrimoniale'] ?? 0)),
+    'singola' => max(0, (float)($settings['riassetti_cost_singola'] ?? 0)),
+    'set_bagno' => max(0, (float)($settings['riassetti_cost_set_bagno'] ?? 0)),
+  ];
+}
+
+/**
  * Determine whether the provided date falls within the configured summer season range.
  */
 function is_date_within_summer_season(DateTimeInterface $date, ?PDO $pdo = null): bool {

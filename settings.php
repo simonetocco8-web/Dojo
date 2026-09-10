@@ -28,6 +28,7 @@ $errors = [];
 $messages = [];
 $startValue = null;
 $endValue = null;
+$linenCostValues = null;
 
 function save_departments_setting(PDO $pdo, array $departments): void {
   $departments = normalize_departments_list($departments);
@@ -106,6 +107,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $messages[] = 'Nota: esistono ancora ' . $usage['users'] . ' utenti e ' . $usage['tasks'] . ' task collegati a questo dipartimento nei dati storici.';
       }
     }
+  } elseif ($action === 'linen_costs') {
+    $linenCostValues = [];
+    $linenCostFields = [
+      'matrimoniale' => 'lenzuolo matrimoniale',
+      'singola' => 'lenzuolo singolo',
+      'set_bagno' => 'set da bagno',
+    ];
+
+    foreach ($linenCostFields as $key => $label) {
+      $rawValue = str_replace(',', '.', trim((string)($_POST['cost_' . $key] ?? '')));
+      if ($rawValue === '' || !is_numeric($rawValue) || !is_finite((float)$rawValue) || (float)$rawValue < 0) {
+        $errors[] = 'Inserisci un costo valido e non negativo per ' . $label . '.';
+        continue;
+      }
+      $linenCostValues[$key] = (float)$rawValue;
+    }
+
+    if (!$errors) {
+      foreach ($linenCostValues as $key => $value) {
+        set_setting('riassetti_cost_' . $key, number_format($value, 2, '.', ''), $pdo);
+      }
+      $messages[] = 'Costi della biancheria salvati correttamente.';
+    }
   } else {
     $summerStart = trim($_POST['summer_season_start'] ?? '');
     $summerEnd   = trim($_POST['summer_season_end'] ?? '');
@@ -141,6 +165,10 @@ $currentSettings = get_summer_season_range($pdo);
 $currentStart = $currentSettings['start'];
 $currentEnd   = $currentSettings['end'];
 $departments = available_departments();
+$linenCosts = get_riassetti_linen_costs($pdo);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errors && (($_POST['action'] ?? '') === 'linen_costs')) {
+  $linenCosts = array_merge($linenCosts, $linenCostValues ?? []);
+}
 $departmentUsages = [];
 foreach ($departments as $department) {
   $departmentUsages[$department] = department_usage_counts($pdo, $department);
@@ -284,6 +312,43 @@ include __DIR__ . '/partials/header.php';
           </table>
         </div>
         <div class="form-text mt-2">L’eliminazione rimuove il dipartimento dalle nuove selezioni. Eventuali utenti o task già collegati mantengono il valore storico finché non vengono modificati.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-10">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-1">Costi biancheria riassetti</h2>
+        <p class="text-muted small mb-3">Imposta i costi unitari utilizzati nella pagina Statistiche dei riassetti.</p>
+        <form method="post" class="row g-3" novalidate>
+          <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+          <input type="hidden" name="action" value="linen_costs">
+          <div class="col-12 col-md-4">
+            <label for="cost_matrimoniale" class="form-label">Lenzuolo matrimoniale</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_matrimoniale" name="cost_matrimoniale" min="0" step="0.01" value="<?= e(number_format($linenCosts['matrimoniale'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="cost_singola" class="form-label">Lenzuolo singolo</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_singola" name="cost_singola" min="0" step="0.01" value="<?= e(number_format($linenCosts['singola'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="cost_set_bagno" class="form-label">Set da bagno</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_set_bagno" name="cost_set_bagno" min="0" step="0.01" value="<?= e(number_format($linenCosts['set_bagno'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Salva costi</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
