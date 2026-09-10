@@ -36,6 +36,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
   'order_pdf.php',
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
+$riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
 $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione($user));
@@ -290,7 +291,13 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
         </li>
         <?php endif; ?>
         <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
-        <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $riassettiMenuOpen ? 'active' : '' ?>" href="#" id="riassettiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $riassettiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-stars"></i><span>Riassetti</span></a>
+          <ul class="dropdown-menu <?= $riassettiMenuOpen ? 'show' : '' ?>" aria-labelledby="riassettiSidebarDropdown">
+            <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-list-check"></i><span>Elenco</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti_statistiche.php"><i class="bi bi-bar-chart-line"></i><span>Statistiche</span></a></li>
+          </ul>
+        </li>
         <?php endif; ?>
         <?php if($user): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
@@ -560,7 +567,13 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             </li>
             <?php endif; ?>
             <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
-            <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-stars"></i><span>Riassetti</span></a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $riassettiMenuOpen ? 'active' : '' ?>" href="#" id="riassettiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $riassettiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-stars"></i><span>Riassetti</span></a>
+              <ul class="dropdown-menu <?= $riassettiMenuOpen ? 'show' : '' ?>" aria-labelledby="riassettiDropdown">
+                <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-list-check"></i><span>Elenco</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti_statistiche.php"><i class="bi bi-bar-chart-line"></i><span>Statistiche</span></a></li>
+              </ul>
+            </li>
             <?php endif; ?>
             <?php if($user): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
