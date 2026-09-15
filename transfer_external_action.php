@@ -49,6 +49,12 @@ try {
         }
       }
       break;
+    case 'set_room_number':
+      $roomNumber = trim((string)($_POST['room_number'] ?? ''));
+      if ($roomNumber !== '') {
+        $pdo->prepare('UPDATE transfers_external SET room_number=? WHERE id=? AND deleted_at IS NULL')->execute([$roomNumber, $id]);
+      }
+      break;
     case 'delete':
       $pdo->prepare('UPDATE transfers_external SET deleted_at=NOW() WHERE id=? AND deleted_at IS NULL')->execute([$id]);
       break;
