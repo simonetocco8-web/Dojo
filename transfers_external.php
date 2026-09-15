@@ -15,6 +15,7 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      JOIN users u ON u.id = t.created_by
                      WHERE t.deleted_at IS NULL
                      ORDER BY COALESCE(t.date_time, t.arrival_date_time, t.departure_date_time) DESC, t.id DESC')->fetchAll();
+$todayYmd = (new DateTimeImmutable('now', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
 
 $supplierTotals = [];
 foreach ($rows as $r) {
@@ -119,6 +120,12 @@ include __DIR__ . '/partials/header.php';
             if (!empty($r['date_time'])) {
               $dateLabel = (new DateTime($r['date_time']))->format('d/m/y H:i');
             }
+            $rowDateTime = $r['date_time'] ?? $r['arrival_date_time'] ?? $r['departure_date_time'] ?? null;
+            $rowDateYmd = is_string($rowDateTime) ? substr($rowDateTime, 0, 10) : '';
+            $rowClass = '';
+            if ($rowDateYmd !== '') {
+              $rowClass = $rowDateYmd < $todayYmd ? 'table-secondary' : ($rowDateYmd === $todayYmd ? 'table-success' : '');
+            }
             $referenceParts = [];
             if ($isRoundTrip) {
               if (!empty($r['arrival_flight_number'])) $referenceParts[] = $flightReferenceLink('Volo arrivo', (string)$r['arrival_flight_number']);
@@ -130,7 +137,7 @@ include __DIR__ . '/partials/header.php';
               if (!empty($r['train_number'])) $referenceParts[] = e('Treno: ' . $r['train_number']);
             }
           ?>
-          <tr>
+          <tr<?= $rowClass !== '' ? ' class="' . e($rowClass) . '"' : '' ?>>
             <td class="text-center">
               <?php if ($typeIcons): ?>
                 <span class="d-inline-flex align-items-center justify-content-center gap-1" title="<?= e($typeLabel) ?>" aria-label="<?= e($typeLabel) ?>">
