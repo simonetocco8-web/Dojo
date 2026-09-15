@@ -2,6 +2,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/roles.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -9,6 +10,7 @@ $pdo  = db();
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
+ensure_task_recurrence_series_column($pdo);
 
 $stmt = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id = ? LIMIT 1');
 $stmt->execute([$user['id']]);
@@ -17,7 +19,8 @@ $my_deps = user_departments($me);
 $my_dep = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
 $is_admin = ($me['role'] ?? '') === 'admin';
-$myTaskCondition = '((NOT EXISTS (SELECT 1 FROM task_user_assignments tv WHERE tv.task_id = t.id) AND t.dipartimento IN ('.$myDepPlaceholders.')) OR tua_me.user_id IS NOT NULL)';
+$myTaskCondition = '((NOT EXISTS (SELECT 1 FROM task_user_assignments tv WHERE tv.task_id = t.id) AND t.dipartimento IN ('.$myDepPlaceholders.')) OR tua_me.user_id IS NOT NULL OR t.created_by = ?)';
+$myTaskArgs = array_merge($my_deps, [(int)$user['id']]);
 
 $msg = $_GET['msg'] ?? '';
 $view = $_GET['view'] ?? 'mio';
@@ -29,20 +32,20 @@ $args = [$user['id']];
 
 if ($view === 'mio') {
   $where[] = 't.deleted_at IS NULL AND t.status IN ("aperto") AND (' . $myTaskCondition . ')';
-  $args = array_merge($args, $my_deps);
+  $args = array_merge($args, $myTaskArgs);
 } elseif ($view === 'tutti') {
   if ($is_admin) {
     $where[] = 't.deleted_at IS NULL AND t.status!="completato"';
   } else {
     $where[] = 't.deleted_at IS NULL AND (' . $myTaskCondition . ') AND t.status!="completato"';
-    $args = array_merge($args, $my_deps);
+    $args = array_merge($args, $myTaskArgs);
   }
 } elseif ($view === 'completati') {
   $where[] = 't.deleted_at IS NULL AND t.status="completato"';
-  if (!$is_admin) { $where[] = '(' . $myTaskCondition . ')'; $args = array_merge($args, $my_deps); }
+  if (!$is_admin) { $where[] = '(' . $myTaskCondition . ')'; $args = array_merge($args, $myTaskArgs); }
 } elseif ($view === 'nonfattibili') {
   $where[] = 't.deleted_at IS NULL AND t.status="non_fattibile"';
-  if (!$is_admin) { $where[] = '(' . $myTaskCondition . ')'; $args = array_merge($args, $my_deps); }
+  if (!$is_admin) { $where[] = '(' . $myTaskCondition . ')'; $args = array_merge($args, $myTaskArgs); }
 } elseif ($view === 'cestino') {
   if (!$is_admin) { header('Location: ' . $base . '/tasks.php'); exit; }
   $where[] = 't.deleted_at IS NOT NULL';
@@ -90,6 +93,10 @@ function badge_status($s){
 
 <?php if ($msg === 'created'): ?>
   <div class="alert alert-success">Task creato e SMS inviato ai destinatari.</div>
+<?php elseif ($msg === 'recurrence_updated'): ?>
+  <div class="alert alert-success">Task ricorrente aggiornato.</div>
+<?php elseif ($msg === 'recurrence_deleted'): ?>
+  <div class="alert alert-success">Task ricorrente e relative occorrenze future eliminati.</div>
 <?php elseif (strpos($msg, 'created_sms_error:') === 0): ?>
   <div class="alert alert-warning">Task creato, ma SMS non inviato: <?= e(substr($msg, strlen('created_sms_error:'))) ?></div>
 <?php endif; ?>
@@ -119,6 +126,7 @@ function badge_status($s){
       <div class="small text-muted">
         <i class="bi bi-check2-circle text-success"></i> Completa &nbsp;|&nbsp;
         <i class="bi bi-slash-circle text-dark"></i> Non fattibile &nbsp;|&nbsp;
+        <i class="bi bi-pencil-square text-primary"></i> Modifica ricorrenza &nbsp;|&nbsp;
         <i class="bi bi-trash text-danger"></i> Cestina &nbsp;|&nbsp;
         <i class="bi bi-arrow-counterclockwise text-secondary"></i> Ripristina
       </div>
@@ -148,6 +156,8 @@ function badge_status($s){
             $assignedIds = array_filter(explode(',', (string)($t['assigned_user_ids'] ?? '')));
             $hasAssignedUsers = !empty($assignedIds);
             $canAct = $is_admin || (!$hasAssignedUsers && in_array($t['dipartimento'], $my_deps, true)) || in_array((string)$user['id'], $assignedIds, true);
+            $isRecurring = ($t['recurrence'] ?? 'nessuna') !== 'nessuna';
+            $canManageRecurring = user_is_amministrazione($me) || (int)$t['created_by'] === (int)$user['id'];
             $recipientLabel = !empty($t['assigned_user_names']) ? $t['assigned_user_names'] : $t['dipartimento'];
           ?>
           <tr>
@@ -192,6 +202,21 @@ function badge_status($s){
             <td><?= e(ucfirst($t['recurrence'])) ?></td>
             <td><?= badge_status($t['status']) ?></td>
            <td class="text-nowrap">
+              <?php if ($isRecurring && $canManageRecurring && $t['deleted_at'] === null): ?>
+                <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/task_edit.php?id=<?= (int)$t['id'] ?>&view=<?= e($view) ?>" title="Modifica task ricorrente" aria-label="Modifica task ricorrente">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <form method="post" action="<?= e($base) ?>/task_status.php" class="d-inline ms-1"
+                      data-confirm-message="Eliminando questo task ricorrente verranno eliminati anche tutti i task futuri della serie. Vuoi continuare?">
+                  <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                  <input type="hidden" name="id" value="<?= (int)$t['id'] ?>">
+                  <input type="hidden" name="action" value="delete_recurrence">
+                  <input type="hidden" name="return_view" value="<?= e($view) ?>">
+                  <button class="btn btn-sm btn-outline-danger" title="Elimina task ricorrente" aria-label="Elimina task ricorrente">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              <?php endif; ?>
               <?php
                 if ($t['status']==='aperto' && $canAct):
               ?>
@@ -224,7 +249,7 @@ function badge_status($s){
                 </div>
               <?php endif; ?>
             
-              <?php if($is_admin && $t['deleted_at']===null): ?>
+              <?php if($is_admin && !$isRecurring && $t['deleted_at']===null): ?>
                 <!-- Cestina -->
                 <form method="post" action="<?= e($base) ?>/task_status.php" class="d-inline ms-1"
                       data-confirm-message="Spostare nel cestino questo compito?">
