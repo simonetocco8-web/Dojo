@@ -14,6 +14,7 @@ if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
 ensure_task_user_assignments_table($pdo);
 ensure_task_sms_reminders_table($pdo);
+ensure_task_recurrence_series_column($pdo);
 
 $allowedDeps = available_departments();
 $allowedPri  = ['bassa','media','alta','urgente'];
@@ -107,6 +108,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
               VALUES (?,?,?,?,?,?,?)';
         $pdo->prepare($q)->execute([$title, $description, $priority, $dip, $due_date, $recurrence, $user['id']]);
         $taskId = (int)$pdo->lastInsertId();
+        if ($recurrence !== 'nessuna') {
+          $pdo->prepare('UPDATE tasks SET recurrence_series_id=? WHERE id=?')->execute([$taskId, $taskId]);
+        }
 
         if ($targetType === 'users') {
           $assign = $pdo->prepare('INSERT IGNORE INTO task_user_assignments (task_id, user_id) VALUES (?, ?)');
