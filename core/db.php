@@ -102,6 +102,35 @@ function ensure_task_sms_reminders_table(PDO $pdo): void {
 }
 
 
+function ensure_task_recurrence_series_column(PDO $pdo): void {
+  $stmt = $pdo->query("
+    SELECT COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tasks'
+      AND COLUMN_NAME = 'recurrence_series_id'
+    LIMIT 1
+  ");
+  if (!$stmt->fetch()) {
+    $pdo->exec("ALTER TABLE tasks ADD COLUMN recurrence_series_id INT UNSIGNED DEFAULT NULL AFTER recurrence");
+  }
+
+  $indexStmt = $pdo->query("
+    SELECT INDEX_NAME
+    FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'tasks'
+      AND INDEX_NAME = 'idx_tasks_recurrence_series'
+    LIMIT 1
+  ");
+  if (!$indexStmt->fetch()) {
+    $pdo->exec("ALTER TABLE tasks ADD INDEX idx_tasks_recurrence_series (recurrence_series_id, due_date)");
+  }
+
+  $pdo->exec("UPDATE tasks SET recurrence_series_id = id WHERE recurrence <> 'nessuna' AND recurrence_series_id IS NULL");
+}
+
+
 
 function ensure_transfer_internal_details_columns(PDO $pdo): void {
   $columns = array();

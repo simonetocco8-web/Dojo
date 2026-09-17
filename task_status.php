@@ -2,6 +2,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/roles.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -9,6 +10,7 @@ $pdo  = db();
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 ensure_task_user_assignments_table($pdo);
+ensure_task_recurrence_series_column($pdo);
 
 $allowedViews = ['mio','tutti','completati','nonfattibili','cestino'];
 $returnView = $_POST['return_view'] ?? $_GET['view'] ?? 'mio';
@@ -33,6 +35,7 @@ $st = $pdo->prepare('SELECT dipartimento, role FROM users WHERE id=? LIMIT 1');
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
+$canManageRecurring = user_is_amministrazione($me) || (int)$task['created_by'] === (int)$user['id'];
 $assignmentCount = $pdo->prepare('SELECT COUNT(*) FROM task_user_assignments WHERE task_id = ?');
 $assignmentCount->execute([$id]);
 $hasAssignments = (int)$assignmentCount->fetchColumn() > 0;
@@ -51,9 +54,9 @@ try {
         case 'mensile': $due->modify('+1 month'); break;
         case 'annuale': $due->modify('+1 year'); break;
       }
-      $pdo->prepare('INSERT INTO tasks (title, description, priority, dipartimento, due_date, recurrence, created_by)
-                     VALUES (?,?,?,?,?,?,?)')->execute([
-        $task['title'], $task['description'], $task['priority'], $task['dipartimento'], $due->format('Y-m-d'), $task['recurrence'], $user['id']
+      $pdo->prepare('INSERT INTO tasks (title, description, priority, dipartimento, due_date, recurrence, recurrence_series_id, created_by)
+                     VALUES (?,?,?,?,?,?,?,?)')->execute([
+        $task['title'], $task['description'], $task['priority'], $task['dipartimento'], $due->format('Y-m-d'), $task['recurrence'], $task['recurrence_series_id'] ?: $task['id'], $task['created_by']
       ]);
       $newTaskId = (int)$pdo->lastInsertId();
       $copyAssignments = $pdo->prepare('INSERT IGNORE INTO task_user_assignments (task_id, user_id) SELECT ?, user_id FROM task_user_assignments WHERE task_id = ?');
@@ -70,7 +73,13 @@ try {
     if ($dt && $dt->format('Y-m-d') === $due) {
       $pdo->prepare('UPDATE tasks SET due_date=? WHERE id=?')->execute([$due, $id]);
     }
-  } elseif ($action === 'trash' && $is_admin) {
+  } elseif ($action === 'delete_recurrence' && $task['recurrence'] !== 'nessuna' && $canManageRecurring) {
+    $seriesId = (int)($task['recurrence_series_id'] ?: $task['id']);
+    $pdo->prepare('UPDATE tasks SET deleted_at=NOW() WHERE recurrence_series_id=? AND due_date>=? AND deleted_at IS NULL')
+        ->execute([$seriesId, $task['due_date']]);
+    header('Location: ' . $returnUrl . '&msg=recurrence_deleted');
+    exit;
+  } elseif ($action === 'trash' && $is_admin && $task['recurrence'] === 'nessuna') {
     $pdo->prepare('UPDATE tasks SET deleted_at=NOW() WHERE id=? AND deleted_at IS NULL')->execute([$id]);
   } elseif ($action === 'restore' && $is_admin) {
     $pdo->prepare('UPDATE tasks SET deleted_at=NULL WHERE id=? AND deleted_at IS NOT NULL')->execute([$id]);
