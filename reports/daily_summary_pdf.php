@@ -32,9 +32,9 @@ function format_daily_summary_quantity(mixed $value): string
  * Generate the daily PDF summary for the given date (defaults to today).
  *
  * The PDF contains the top 10 tasks due on the selected day, all room makeups,
- * internal and external transfers, days off, the top 10 low-stock products and
- * the suppliers accepting orders. It returns the filesystem path of the saved
- * PDF so it can be consumed by a CRON job or any other automation.
+ * internal and external transfers, days off and the top 10 low-stock products.
+ * It returns the filesystem path of the saved PDF so it can be consumed by a
+ * CRON job or any other automation.
  *
  * @param string|null    $dateYmd            Date in Y-m-d format or null for today.
  * @param string|null    $outputPath         Absolute path where the PDF should be saved.
@@ -229,22 +229,6 @@ function generate_daily_summary_pdf(
     } else {
         $lowStock = [];
     }
-
-    // --- Suppliers accepting orders today ---
-    $weekdayIndex = (int)$date->format('w'); // 0=Sun ... 6=Sat in PHP
-    if ($showFullSummary && $pdo instanceof PDO) {
-        ensure_suppliers_active_column($pdo);
-        $supplierStmt = $pdo->prepare(
-            "SELECT s.name, s.phone\n         FROM suppliers s\n         JOIN supplier_days d\n           ON d.supplier_id = s.id\n          AND d.kind = 'order'\n          AND d.day = :day\n         WHERE COALESCE(s.is_active, 1) = 1\n         ORDER BY s.name ASC"
-        );
-        $supplierStmt->execute([':day' => $weekdayIndex]);
-        $suppliersToday = $supplierStmt->fetchAll(PDO::FETCH_ASSOC);
-    } else {
-        $suppliersToday = [];
-    }
-
-    $weekdayLabels = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-    $weekdayName   = $weekdayLabels[$weekdayIndex] ?? '';
 
     $priorityLabel = static function (string $priority): string {
         return match ($priority) {
@@ -562,27 +546,6 @@ function generate_daily_summary_pdf(
     <p class="muted">Nessun prodotto risulta sottoscorta.</p>
   <?php endif; ?>
 
-  <h2>Fornitori che accettano ordini (<?= e($weekdayName) ?>)</h2>
-  <?php if ($suppliersToday): ?>
-  <table>
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Telefono</th>
-      </tr>
-    </thead>
-    <tbody>
-    <?php foreach ($suppliersToday as $row): ?>
-      <tr>
-        <td><?= e($row['name'] ?? '') ?></td>
-        <td><?= $row['phone'] ? e($row['phone']) : '—' ?></td>
-      </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table>
-  <?php else: ?>
-    <p class="muted">Nessun fornitore accetta ordini oggi.</p>
-  <?php endif; ?>
   <?php endif; ?>
 </body>
 </html>

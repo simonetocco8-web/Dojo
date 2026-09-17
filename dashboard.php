@@ -529,6 +529,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
               <tr>
                 <th>Prodotto</th>
                 <th class="text-center" style="width:105px;">Tramonto</th>
+                <th class="text-center" style="width:105px;">Tizzo</th>
                 <th class="text-center" style="width:105px;">Min</th>
                 <th class="text-center" style="width:120px;">Stato</th>
               </tr>
@@ -543,6 +544,11 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
                   <td class="text-center">
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
                       <?= (float)$r['qty_tramonto'] ?>
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-light text-dark border">
+                      <?= (float)$r['qty_tizzo'] ?>
                     </span>
                   </td>
                   <td class="text-center"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
