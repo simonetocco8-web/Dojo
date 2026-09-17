@@ -529,6 +529,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
               <tr>
                 <th>Prodotto</th>
                 <th class="text-center" style="width:105px;">Tramonto</th>
+                <th class="text-center" style="width:105px;">Tizzo</th>
                 <th class="text-center" style="width:105px;">Min</th>
                 <th class="text-center" style="width:120px;">Stato</th>
               </tr>
@@ -545,11 +546,20 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
                       <?= (float)$r['qty_tramonto'] ?>
                     </span>
                   </td>
+                  <td class="text-center">
+                    <span class="badge bg-light text-dark border">
+                      <?= (float)$r['qty_tizzo'] ?>
+                    </span>
+                  </td>
                   <td class="text-center"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
                   <td class="text-center">
-                    <span class="badge <?= $r['stock_status'] === 'Da Trasferire' ? 'bg-warning text-dark' : 'bg-danger' ?>">
-                      <?= e($r['stock_status']) ?>
-                    </span>
+                    <?php if ($r['stock_status'] === 'Da Trasferire'): ?>
+                      <span class="badge bg-warning text-dark">Da Trasferire</span>
+                    <?php else: ?>
+                      <span class="text-danger" title="Sottoscorta" aria-label="Sottoscorta">
+                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                      </span>
+                    <?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; ?>

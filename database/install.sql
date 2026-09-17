@@ -144,6 +144,14 @@ CREATE TABLE IF NOT EXISTS task_sms_reminders (
   CONSTRAINT fk_task_sms_reminders_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Collega le occorrenze appartenenti allo stesso task ricorrente
+ALTER TABLE tasks
+  ADD COLUMN IF NOT EXISTS recurrence_series_id INT UNSIGNED DEFAULT NULL AFTER recurrence;
+
+UPDATE tasks
+SET recurrence_series_id = id
+WHERE recurrence <> 'nessuna' AND recurrence_series_id IS NULL;
+
 
 
 -- Dettagli transfer interni

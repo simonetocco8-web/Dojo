@@ -14,7 +14,8 @@ $rows = $pdo->query('SELECT t.*, u.email AS created_by_email
                      FROM transfers_external t
                      JOIN users u ON u.id = t.created_by
                      WHERE t.deleted_at IS NULL
-                     ORDER BY t.date_time ASC, t.id DESC')->fetchAll();
+                     ORDER BY COALESCE(t.date_time, t.arrival_date_time, t.departure_date_time) DESC, t.id DESC')->fetchAll();
+$todayYmd = (new DateTimeImmutable('now', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
 
 $supplierTotals = [];
 foreach ($rows as $r) {
@@ -119,6 +120,12 @@ include __DIR__ . '/partials/header.php';
             if (!empty($r['date_time'])) {
               $dateLabel = (new DateTime($r['date_time']))->format('d/m/y H:i');
             }
+            $rowDateTime = $r['date_time'] ?? $r['arrival_date_time'] ?? $r['departure_date_time'] ?? null;
+            $rowDateYmd = is_string($rowDateTime) ? substr($rowDateTime, 0, 10) : '';
+            $rowClass = '';
+            if ($rowDateYmd !== '') {
+              $rowClass = $rowDateYmd < $todayYmd ? 'table-secondary' : ($rowDateYmd === $todayYmd ? 'table-success' : '');
+            }
             $referenceParts = [];
             if ($isRoundTrip) {
               if (!empty($r['arrival_flight_number'])) $referenceParts[] = $flightReferenceLink('Volo arrivo', (string)$r['arrival_flight_number']);
@@ -130,7 +137,7 @@ include __DIR__ . '/partials/header.php';
               if (!empty($r['train_number'])) $referenceParts[] = e('Treno: ' . $r['train_number']);
             }
           ?>
-          <tr>
+          <tr<?= $rowClass !== '' ? ' class="' . e($rowClass) . '"' : '' ?>>
             <td class="text-center">
               <?php if ($typeIcons): ?>
                 <span class="d-inline-flex align-items-center justify-content-center gap-1" title="<?= e($typeLabel) ?>" aria-label="<?= e($typeLabel) ?>">
@@ -167,7 +174,35 @@ include __DIR__ . '/partials/header.php';
               <?php endif; ?>
             </td>
             <td><?= $referenceParts ? implode(' · ', $referenceParts) : '—' ?></td>
-            <td><?= e($r['room_number']) ?></td>
+            <td>
+              <span><?= e($r['room_number']) ?></span>
+              <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" title="Modifica numero camera" aria-label="Modifica numero camera" data-bs-toggle="modal" data-bs-target="#roomNumberModal_<?= (int)$r['id'] ?>">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <div class="modal fade" id="roomNumberModal_<?= (int)$r['id'] ?>" tabindex="-1" aria-labelledby="roomNumberModalLabel_<?= (int)$r['id'] ?>" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content text-start">
+                    <form method="post" action="<?= e($base) ?>/transfer_external_action.php">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="roomNumberModalLabel_<?= (int)$r['id'] ?>">Modifica numero camera</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                      </div>
+                      <div class="modal-body">
+                        <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+                        <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                        <input type="hidden" name="action" value="set_room_number">
+                        <label class="form-label" for="roomNumber_<?= (int)$r['id'] ?>">Numero camera</label>
+                        <input type="text" class="form-control" id="roomNumber_<?= (int)$r['id'] ?>" name="room_number" value="<?= e($r['room_number']) ?>" required autofocus>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                        <button type="submit" class="btn btn-primary">Salva</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </td>
             <td><?= e($r['guest_name']) ?></td>
             <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
             <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
