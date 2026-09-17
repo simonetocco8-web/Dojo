@@ -553,9 +553,13 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
                   </td>
                   <td class="text-center"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
                   <td class="text-center">
-                    <span class="badge <?= $r['stock_status'] === 'Da Trasferire' ? 'bg-warning text-dark' : 'bg-danger' ?>">
-                      <?= e($r['stock_status']) ?>
-                    </span>
+                    <?php if ($r['stock_status'] === 'Da Trasferire'): ?>
+                      <span class="badge bg-warning text-dark">Da Trasferire</span>
+                    <?php else: ?>
+                      <span class="text-danger" title="Sottoscorta" aria-label="Sottoscorta">
+                        <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                      </span>
+                    <?php endif; ?>
                   </td>
                 </tr>
               <?php endforeach; ?>
