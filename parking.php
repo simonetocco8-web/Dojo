@@ -126,5 +126,5 @@ include __DIR__ . '/partials/header.php';
     <div class="col-12" id="parkingAssignmentDetailWrap"><label class="form-label" id="parkingAssignmentDetailLabel" for="parkingAssignmentDetail">Dettaglio</label><input class="form-control" name="assignment_detail" id="parkingAssignmentDetail" maxlength="190"><div class="form-text" id="parkingAssignmentHelp"></div></div></div>
   </div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button><button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Salva modifiche</button></div></form>
 </div></div></div>
-<script src="<?= e($base) ?>/assets/parking.js?v=<?= (int)(@filemtime(__DIR__ . '/assets/parking.js') ?: time()) ?>"></script>
+<?php $pageScripts = ['assets/parking.js']; ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>
