@@ -527,11 +527,11 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
           <table class="table table-sm align-middle mb-0">
             <thead>
               <tr>
-                <th>Prodotto</th>
-                <th class="text-center" style="width:105px;">Tramonto</th>
-                <th class="text-center" style="width:105px;">Tizzo</th>
-                <th class="text-center" style="width:105px;">Min</th>
-                <th class="text-center" style="width:120px;">Stato</th>
+                <th style="width:100%;">Prodotto</th>
+                <th class="text-center text-nowrap" style="width:1%;">Tramonto</th>
+                <th class="text-center text-nowrap" style="width:1%;">Tizzo</th>
+                <th class="text-center text-nowrap" style="width:1%;">Min</th>
+                <th class="text-center text-nowrap" style="width:1%;">Stato</th>
               </tr>
             </thead>
             <tbody>
@@ -541,18 +541,18 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
                     <div class="fw-semibold"><?= e($r['title']) ?></div>
                     <div class="text-muted small"><?= e($r['category'] ?? '') ?></div>
                   </td>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap">
                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
                       <?= (float)$r['qty_tramonto'] ?>
                     </span>
                   </td>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap">
                     <span class="badge bg-light text-dark border">
                       <?= (float)$r['qty_tizzo'] ?>
                     </span>
                   </td>
-                  <td class="text-center"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
-                  <td class="text-center">
+                  <td class="text-center text-nowrap"><span class="badge bg-light text-dark"><?= (float)$r['min_qty'] ?></span></td>
+                  <td class="text-center text-nowrap">
                     <?php if ($r['stock_status'] === 'Da Trasferire'): ?>
                       <span class="badge bg-warning text-dark">Da Trasferire</span>
                     <?php else: ?>
