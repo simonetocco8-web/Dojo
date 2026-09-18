@@ -65,13 +65,14 @@ $assignmentLabels = [
   'tramontoday' => 'TramontoDay', 'sunset_beach_bar' => 'SunSet Beach Bar', 'altro' => 'Altro',
 ];
 $positions = [
-  'P1'=>[265,145],'P2'=>[265,215],'P3'=>[265,285],'P4'=>[265,355],'P5'=>[265,425],
-  'P6'=>[575,155],'P7'=>[575,230],'P8'=>[575,305],'P9'=>[575,380],'P10'=>[575,455],'P11'=>[575,525],'P12'=>[575,590],
-  'P13'=>[730,675],'P14'=>[730,750],'P15'=>[730,825],'P16'=>[730,900],
-  'P17'=>[75,365],'P18'=>[92,470],'P19'=>[98,590],'P20'=>[250,585],'P21'=>[270,660],'P22'=>[245,735],
-  'P23'=>[105,815],'P24'=>[155,920],'P25'=>[235,935],'P26'=>[315,950],'P27'=>[395,975],
-  'S1'=>[895,135],'S2'=>[895,210],'S3'=>[895,285],'S4'=>[895,360],'S5'=>[895,435],'S6'=>[895,510],
-  'S7'=>[895,585],'S8'=>[895,660],'S9'=>[895,735],'S10'=>[895,810],'S11'=>[895,885],
+  // Coordinate ricavate dai centri dei marcatori gialli della planimetria di riferimento.
+  'P1'=>[264,149],'P2'=>[264,214],'P3'=>[264,278],'P4'=>[264,343],'P5'=>[264,406],
+  'P6'=>[570,159],'P7'=>[570,231],'P8'=>[570,321],'P9'=>[570,385],'P10'=>[570,488],'P11'=>[570,553],
+  'P12'=>[471,635],'P13'=>[712,640],'P14'=>[711,711],'P15'=>[711,781],
+  'P16'=>[73,324],'P17'=>[90,419],'P18'=>[95,532],'P19'=>[239,528],'P20'=>[259,596],'P21'=>[233,660],
+  'P22'=>[101,733],'P23'=>[153,824],'P24'=>[222,838],'P25'=>[290,854],'P26'=>[352,880],'P27'=>[403,915],
+  'S1'=>[877,141],'S2'=>[877,205],'S3'=>[877,269],'S4'=>[877,333],'S5'=>[877,397],'S6'=>[877,461],
+  'S7'=>[877,525],'S8'=>[877,589],'S9'=>[877,653],'S10'=>[877,717],'S11'=>[877,781],
 ];
 $title = 'Parcheggi';
 include __DIR__ . '/partials/header.php';
@@ -108,12 +109,13 @@ include __DIR__ . '/partials/header.php';
         <path d="M500 620H790V925H500Q540 865 520 790Z" fill="url(#asphalt)" stroke="#f2f0e9" stroke-width="9"/>
         <path d="M185 92L670 118V610H430M790 95H940V875Q940 925 890 925H790" fill="none" stroke="#0b94ff" stroke-width="8" stroke-linejoin="round"/>
         <g class="parking-lines" aria-hidden="true">
-          <?php foreach ([180,250,320,390,460] as $y): ?><path d="M195 <?= $y ?>h155"/><path d="M500 <?= $y + 10 ?>h165"/><?php endforeach; ?>
-          <path d="M500 540h165M500 605h165M500 620v105"/>
-          <?php foreach ([175,250,325,400,475,550,625,700,775,850] as $y): ?><path d="M840 <?= $y ?>h100"/><?php endforeach; ?>
+          <?php foreach ([181,246,310,375,438] as $y): ?><path d="M195 <?= $y ?>h145"/><?php endforeach; ?>
+          <?php foreach ([195,267,357,421,524,589] as $y): ?><path d="M500 <?= $y ?>h165"/><?php endforeach; ?>
+          <path d="M500 620v78"/>
+          <?php foreach ([173,237,301,365,429,493,557,621,685,749,813] as $y): ?><path d="M830 <?= $y ?>h110"/><?php endforeach; ?>
           <?php foreach ([[55,410,105,345],[55,530,110,450],[55,690,125,600],[65,875,140,780],[145,925,190,815],[225,930,260,825],[305,950,335,840],[385,980,410,875],[665,650,790,650],[665,725,790,725],[665,800,790,800],[665,875,790,875]] as $line): ?><path d="M<?= $line[0] ?> <?= $line[1] ?>L<?= $line[2] ?> <?= $line[3] ?>"/><?php endforeach; ?>
         </g>
-        <path d="M335 300h160v315H335l-125-90V455q45 55 125 35Z" fill="#faf9f5" stroke="#111" stroke-width="4" filter="url(#mapShadow)"/>
+        <path d="M335 300h160v315H335l-50-90V455q25 35 50 35Z" fill="#faf9f5" stroke="#111" stroke-width="4" filter="url(#mapShadow)"/>
         <path d="M335 300h160v315H335" fill="#f4f2ed"/><path d="M410 390v85q0 45 42 45h43" fill="none" stroke="#111" stroke-width="4"/>
         <text x="410" y="575" text-anchor="middle" class="building-label">EDIFICIO</text>
         <rect x="515" y="935" width="250" height="165" fill="#f8f7f3" stroke="#222" stroke-width="4"/><rect x="70" y="990" width="225" height="110" fill="#f8f7f3" stroke="#222" stroke-width="4"/>
@@ -121,7 +123,7 @@ include __DIR__ . '/partials/header.php';
         <text x="205" y="120" class="map-zone-title">PARCHEGGIO PRIMARIO</text><text x="815" y="120" class="map-zone-title">SECONDARIO</text>
         <?php foreach ($positions as $id => [$x, $y]): $space = $spacesById[$id]; $assignment = $assignmentLabels[$space['assignment_type']] ?? 'Nessuna'; if ($space['assignment_detail']) $assignment .= ': ' . $space['assignment_detail']; ?>
           <g class="parking-space status-<?= e($space['status']) ?>" tabindex="0" role="button" aria-label="<?= e($id . ', ' . $space['status'] . ', ' . $assignment) ?>" data-space='<?= e(json_encode($space, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
-            <circle cx="<?= $x ?>" cy="<?= $y ?>" r="24"/><text x="<?= $x ?>" y="<?= $y + 5 ?>" text-anchor="middle"><?= e($id) ?></text><title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment) ?></title>
+            <circle cx="<?= $x ?>" cy="<?= $y ?>" r="19"/><text x="<?= $x ?>" y="<?= $y + 4 ?>" text-anchor="middle"><?= e($id) ?></text><title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment) ?></title>
           </g>
         <?php endforeach; ?>
       </svg>
