@@ -104,6 +104,24 @@ CREATE TABLE IF NOT EXISTS system_settings (
 INSERT IGNORE INTO system_settings (setting_key, setting_value)
 VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
 
+CREATE TABLE IF NOT EXISTS parking_spaces (
+  space_id VARCHAR(4) NOT NULL PRIMARY KEY,
+  parking ENUM('primario','secondario') NOT NULL,
+  size ENUM('piccolo','medio','grande') NOT NULL DEFAULT 'medio',
+  is_covered TINYINT(1) NOT NULL DEFAULT 0,
+  status ENUM('libero','occupato','riservato') NOT NULL DEFAULT 'libero',
+  assignment_type ENUM('nessuna','appartamento','personale','tramontoday','sunset_beach_bar','altro') NOT NULL DEFAULT 'nessuna',
+  assignment_detail VARCHAR(190) DEFAULT NULL,
+  updated_by INT UNSIGNED DEFAULT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_parking_spaces_parking_status (parking, status),
+  CONSTRAINT fk_parking_spaces_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO parking_spaces (space_id, parking) VALUES
+('P1','primario'),('P2','primario'),('P3','primario'),('P4','primario'),('P5','primario'),('P6','primario'),('P7','primario'),('P8','primario'),('P9','primario'),('P10','primario'),('P11','primario'),('P12','primario'),('P13','primario'),('P14','primario'),('P15','primario'),('P16','primario'),('P17','primario'),('P18','primario'),('P19','primario'),('P20','primario'),('P21','primario'),('P22','primario'),('P23','primario'),('P24','primario'),('P25','primario'),('P26','primario'),('P27','primario'),
+('S1','secondario'),('S2','secondario'),('S3','secondario'),('S4','secondario'),('S5','secondario'),('S6','secondario'),('S7','secondario'),('S8','secondario'),('S9','secondario'),('S10','secondario'),('S11','secondario');
+
 
 CREATE TABLE IF NOT EXISTS sms_history (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
