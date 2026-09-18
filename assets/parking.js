@@ -1,7 +1,32 @@
 (() => {
   const modalElement = document.getElementById('parkingSpaceModal');
   if (!modalElement) return;
-  const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+  const bootstrapModal = typeof window.bootstrap !== 'undefined' && window.bootstrap.Modal
+    ? window.bootstrap.Modal.getOrCreateInstance(modalElement)
+    : null;
+  let fallbackBackdrop = null;
+  const modal = {
+    show() {
+      if (bootstrapModal) { bootstrapModal.show(); return; }
+      modalElement.classList.add('show', 'parking-modal-fallback');
+      modalElement.removeAttribute('aria-hidden');
+      modalElement.setAttribute('aria-modal', 'true');
+      document.body.classList.add('modal-open');
+      fallbackBackdrop = document.createElement('div');
+      fallbackBackdrop.className = 'modal-backdrop fade show';
+      document.body.appendChild(fallbackBackdrop);
+      modalElement.querySelector('.btn-close')?.focus();
+    },
+    hide() {
+      if (bootstrapModal) { bootstrapModal.hide(); return; }
+      modalElement.classList.remove('show', 'parking-modal-fallback');
+      modalElement.setAttribute('aria-hidden', 'true');
+      modalElement.removeAttribute('aria-modal');
+      document.body.classList.remove('modal-open');
+      fallbackBackdrop?.remove();
+      fallbackBackdrop = null;
+    }
+  };
   const fields = {
     id: document.getElementById('parkingSpaceId'), status: document.getElementById('parkingStatus'),
     size: document.getElementById('parkingSize'), covered: document.getElementById('parkingCovered'),
@@ -21,6 +46,9 @@
     if (setting) { fields.label.textContent = setting[0]; fields.help.textContent = setting[1]; fields.detail.type = setting[2]; }
   };
   fields.type.addEventListener('change', updateDetail);
+  modalElement.querySelectorAll('[data-bs-dismiss="modal"]').forEach((button) => button.addEventListener('click', () => modal.hide()));
+  modalElement.addEventListener('click', (event) => { if (event.target === modalElement) modal.hide(); });
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && modalElement.classList.contains('show')) modal.hide(); });
 
   document.querySelectorAll('.parking-space').forEach((space) => {
     const open = () => {
