@@ -68,8 +68,8 @@ $positions = [
   // Coordinate ricavate dai centri dei marcatori gialli della planimetria di riferimento.
   'P1'=>[264,149],'P2'=>[264,214],'P3'=>[264,278],'P4'=>[264,343],'P5'=>[264,406],
   'P6'=>[570,159],'P7'=>[570,231],'P8'=>[570,321],'P9'=>[570,385],'P10'=>[570,488],'P11'=>[570,553],
-  'P12'=>[471,635],'P13'=>[712,640],'P14'=>[711,711],'P15'=>[711,781],
-  'P16'=>[73,324],'P17'=>[90,419],'P18'=>[95,532],'P19'=>[239,528],'P20'=>[259,596],'P21'=>[233,660],
+  'P12'=>[535,659],'P13'=>[712,687],'P14'=>[711,762],'P15'=>[711,837],
+  'P16'=>[73,324],'P17'=>[90,419],'P18'=>[95,532],'P19'=>[238,526],'P20'=>[247,595],'P21'=>[225,669],
   'P22'=>[101,733],'P23'=>[153,824],'P24'=>[222,838],'P25'=>[290,854],'P26'=>[352,880],'P27'=>[403,915],
   'S1'=>[877,141],'S2'=>[877,205],'S3'=>[877,269],'S4'=>[877,333],'S5'=>[877,397],'S6'=>[877,461],
   'S7'=>[877,525],'S8'=>[877,589],'S9'=>[877,653],'S10'=>[877,717],'S11'=>[877,781],
@@ -113,13 +113,13 @@ include __DIR__ . '/partials/header.php';
           <?php foreach ([195,267,357,421,524,589] as $y): ?><path d="M500 <?= $y ?>h165"/><?php endforeach; ?>
           <path d="M500 620v78"/>
           <?php foreach ([173,237,301,365,429,493,557,621,685,749,813] as $y): ?><path d="M830 <?= $y ?>h110"/><?php endforeach; ?>
-          <?php foreach ([[55,410,105,345],[55,530,110,450],[55,690,125,600],[65,875,140,780],[145,925,190,815],[225,930,260,825],[305,950,335,840],[385,980,410,875],[665,650,790,650],[665,725,790,725],[665,800,790,800],[665,875,790,875]] as $line): ?><path d="M<?= $line[0] ?> <?= $line[1] ?>L<?= $line[2] ?> <?= $line[3] ?>"/><?php endforeach; ?>
+          <?php foreach ([[55,410,105,345],[55,530,110,450],[55,690,125,600],[205,565,295,545],[190,625,285,640],[175,700,260,720],[65,875,140,780],[145,925,190,815],[225,930,260,825],[305,950,335,840],[385,980,410,875],[665,650,790,650],[665,725,790,725],[665,800,790,800],[665,875,790,875]] as $line): ?><path d="M<?= $line[0] ?> <?= $line[1] ?>L<?= $line[2] ?> <?= $line[3] ?>"/><?php endforeach; ?>
         </g>
         <path d="M335 300h160v315H335l-50-90V455q25 35 50 35Z" fill="#faf9f5" stroke="#111" stroke-width="4" filter="url(#mapShadow)"/>
         <path d="M335 300h160v315H335" fill="#f4f2ed"/><path d="M410 390v85q0 45 42 45h43" fill="none" stroke="#111" stroke-width="4"/>
         <text x="410" y="575" text-anchor="middle" class="building-label">EDIFICIO</text>
         <rect x="515" y="935" width="250" height="165" fill="#f8f7f3" stroke="#222" stroke-width="4"/><rect x="70" y="990" width="225" height="110" fill="#f8f7f3" stroke="#222" stroke-width="4"/>
-        <g aria-hidden="true"><use href="#tree" x="735" y="175"/><use href="#tree" x="735" y="320"/><use href="#tree" x="735" y="470"/><use href="#tree" x="285" y="585"/><use href="#tree" x="235" y="780"/><use href="#tree" x="135" y="1015"/><use href="#tree" x="220" y="1020"/></g>
+        <g aria-hidden="true"><use href="#tree" x="735" y="175"/><use href="#tree" x="735" y="320"/><use href="#tree" x="735" y="470"/><use href="#tree" x="300" y="525"/><use href="#tree" x="235" y="780"/><use href="#tree" x="135" y="1015"/><use href="#tree" x="220" y="1020"/></g>
         <text x="205" y="120" class="map-zone-title">PARCHEGGIO PRIMARIO</text><text x="815" y="120" class="map-zone-title">SECONDARIO</text>
         <?php foreach ($positions as $id => [$x, $y]): $space = $spacesById[$id]; $assignment = $assignmentLabels[$space['assignment_type']] ?? 'Nessuna'; if ($space['assignment_detail']) $assignment .= ': ' . $space['assignment_detail']; ?>
           <g class="parking-space status-<?= e($space['status']) ?>" tabindex="0" role="button" aria-label="<?= e($id . ', ' . $space['status'] . ', ' . $assignment) ?>" data-space='<?= e(json_encode($space, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
