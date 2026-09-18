@@ -65,14 +65,13 @@ $assignmentLabels = [
   'tramontoday' => 'TramontoDay', 'sunset_beach_bar' => 'SunSet Beach Bar', 'altro' => 'Altro',
 ];
 $positions = [
-  'P1'=>[95,105],'P2'=>[95,175],'P3'=>[95,245],'P4'=>[95,315],'P5'=>[95,385],
-  'P6'=>[250,115],'P7'=>[250,190],'P8'=>[250,265],'P9'=>[250,340],'P10'=>[250,415],
-  'P11'=>[405,115],'P12'=>[405,190],'P13'=>[405,265],'P14'=>[405,340],'P15'=>[405,415],
-  'P16'=>[560,115],'P17'=>[560,190],'P18'=>[560,265],'P19'=>[560,340],'P20'=>[560,415],
-  'P21'=>[715,115],'P22'=>[715,190],'P23'=>[715,265],'P24'=>[715,340],'P25'=>[715,415],
-  'P26'=>[420,535],'P27'=>[575,535],
-  'S1'=>[95,690],'S2'=>[165,690],'S3'=>[235,690],'S4'=>[305,690],'S5'=>[375,690],'S6'=>[445,690],
-  'S7'=>[515,690],'S8'=>[585,690],'S9'=>[655,690],'S10'=>[725,690],'S11'=>[795,690],
+  'P1'=>[265,145],'P2'=>[265,215],'P3'=>[265,285],'P4'=>[265,355],'P5'=>[265,425],
+  'P6'=>[575,155],'P7'=>[575,230],'P8'=>[575,305],'P9'=>[575,380],'P10'=>[575,455],'P11'=>[575,525],'P12'=>[575,590],
+  'P13'=>[730,675],'P14'=>[730,750],'P15'=>[730,825],'P16'=>[730,900],
+  'P17'=>[75,365],'P18'=>[92,470],'P19'=>[98,590],'P20'=>[250,585],'P21'=>[270,660],'P22'=>[245,735],
+  'P23'=>[105,815],'P24'=>[155,920],'P25'=>[235,935],'P26'=>[315,950],'P27'=>[395,975],
+  'S1'=>[895,135],'S2'=>[895,210],'S3'=>[895,285],'S4'=>[895,360],'S5'=>[895,435],'S6'=>[895,510],
+  'S7'=>[895,585],'S8'=>[895,660],'S9'=>[895,735],'S10'=>[895,810],'S11'=>[895,885],
 ];
 $title = 'Parcheggi';
 include __DIR__ . '/partials/header.php';
@@ -93,21 +92,36 @@ include __DIR__ . '/partials/header.php';
   </div>
   <div class="card shadow-sm border-0"><div class="card-body p-2 p-md-4">
     <div class="parking-map-scroll">
-      <svg class="parking-map" viewBox="0 0 900 780" role="img" aria-labelledby="parkingMapTitle parkingMapDescription">
+      <svg class="parking-map" viewBox="0 0 1000 1100" role="img" aria-labelledby="parkingMapTitle parkingMapDescription">
         <title id="parkingMapTitle">Mappa interattiva dei parcheggi</title><desc id="parkingMapDescription">Ventisette posti nel parcheggio primario e undici nel secondario. Seleziona un posto per modificarlo.</desc>
-        <defs><pattern id="asphalt" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#26323a"/><circle cx="3" cy="5" r="1" fill="#34434c"/><circle cx="14" cy="15" r="1" fill="#1d282f"/></pattern></defs>
-        <rect x="25" y="35" width="850" height="580" rx="35" fill="url(#asphalt)" stroke="#dce6ea" stroke-width="10"/>
-        <rect x="25" y="635" width="850" height="115" rx="25" fill="url(#asphalt)" stroke="#dce6ea" stroke-width="10"/>
-        <path d="M40 625 H860" stroke="#7cc34b" stroke-width="14"/><text x="55" y="70" class="map-zone-title">PARCHEGGIO PRIMARIO</text><text x="55" y="665" class="map-zone-title">SECONDARIO</text>
+        <defs>
+          <pattern id="asphalt" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="#30383d"/><circle cx="3" cy="5" r=".8" fill="#475158"/><circle cx="13" cy="14" r=".8" fill="#20292e"/></pattern>
+          <pattern id="lawn" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#58b927"/><path d="M2 20L8 5M13 21l6-14" stroke="#65c936" stroke-width="2" opacity=".55"/></pattern>
+          <filter id="mapShadow"><feDropShadow dx="3" dy="5" stdDeviation="4" flood-opacity=".35"/></filter>
+          <g id="tree"><circle r="28" fill="#173f13" opacity=".35"/><circle cy="-4" r="23" fill="#277c19" stroke="#123b0e" stroke-width="3"/><circle cx="-10" cy="-8" r="12" fill="#62bd24"/><circle cx="9" cy="-7" r="13" fill="#55aa1d"/><circle cy="8" r="13" fill="#3f9718"/></g>
+        </defs>
+        <rect width="1000" height="1100" fill="#3e464b"/>
+        <path d="M170 55L780 85V45H970V925Q970 970 925 970H790V1040H420L285 955H45L25 315L175 280Z" fill="url(#lawn)" stroke="#10181b" stroke-width="8"/>
+        <path d="M190 95L670 120V610H430Q420 760 350 820L420 875V1010L285 925H55L48 330L185 295Z" fill="url(#asphalt)" stroke="#f2f0e9" stroke-width="9" filter="url(#mapShadow)"/>
+        <path d="M790 95H940V875Q940 925 890 925H790Z" fill="url(#asphalt)" stroke="#f2f0e9" stroke-width="9" filter="url(#mapShadow)"/>
+        <path d="M670 95H790V630H670Z" fill="url(#lawn)" stroke="#f2f0e9" stroke-width="8"/>
+        <path d="M500 620H790V925H500Q540 865 520 790Z" fill="url(#asphalt)" stroke="#f2f0e9" stroke-width="9"/>
+        <path d="M185 92L670 118V610H430M790 95H940V875Q940 925 890 925H790" fill="none" stroke="#0b94ff" stroke-width="8" stroke-linejoin="round"/>
         <g class="parking-lines" aria-hidden="true">
-          <?php foreach ([130,285,440,595,750] as $x): ?><path d="M<?= $x ?> 90v350"/><?php endforeach; ?>
-          <?php foreach ([145,220,295,370,445] as $y): ?><path d="M55 <?= $y ?>h720"/><?php endforeach; ?>
-          <?php foreach ([130,200,270,340,410,480,550,620,690,760,830] as $x): ?><path d="M<?= $x ?> 675v65"/><?php endforeach; ?>
+          <?php foreach ([180,250,320,390,460] as $y): ?><path d="M195 <?= $y ?>h155"/><path d="M500 <?= $y + 10 ?>h165"/><?php endforeach; ?>
+          <path d="M500 540h165M500 605h165M500 620v105"/>
+          <?php foreach ([175,250,325,400,475,550,625,700,775,850] as $y): ?><path d="M840 <?= $y ?>h100"/><?php endforeach; ?>
+          <?php foreach ([[55,410,105,345],[55,530,110,450],[55,690,125,600],[65,875,140,780],[145,925,190,815],[225,930,260,825],[305,950,335,840],[385,980,410,875],[665,650,790,650],[665,725,790,725],[665,800,790,800],[665,875,790,875]] as $line): ?><path d="M<?= $line[0] ?> <?= $line[1] ?>L<?= $line[2] ?> <?= $line[3] ?>"/><?php endforeach; ?>
         </g>
-        <rect x="300" y="475" width="90" height="105" rx="8" fill="#edf1f2"/><path d="M315 490h60v60h-60z" fill="#fff"/><text x="345" y="568" text-anchor="middle" class="building-label">INGRESSO</text>
+        <path d="M335 300h160v315H335l-125-90V455q45 55 125 35Z" fill="#faf9f5" stroke="#111" stroke-width="4" filter="url(#mapShadow)"/>
+        <path d="M335 300h160v315H335" fill="#f4f2ed"/><path d="M410 390v85q0 45 42 45h43" fill="none" stroke="#111" stroke-width="4"/>
+        <text x="410" y="575" text-anchor="middle" class="building-label">EDIFICIO</text>
+        <rect x="515" y="935" width="250" height="165" fill="#f8f7f3" stroke="#222" stroke-width="4"/><rect x="70" y="990" width="225" height="110" fill="#f8f7f3" stroke="#222" stroke-width="4"/>
+        <g aria-hidden="true"><use href="#tree" x="735" y="175"/><use href="#tree" x="735" y="320"/><use href="#tree" x="735" y="470"/><use href="#tree" x="285" y="585"/><use href="#tree" x="235" y="780"/><use href="#tree" x="135" y="1015"/><use href="#tree" x="220" y="1020"/></g>
+        <text x="205" y="120" class="map-zone-title">PARCHEGGIO PRIMARIO</text><text x="815" y="120" class="map-zone-title">SECONDARIO</text>
         <?php foreach ($positions as $id => [$x, $y]): $space = $spacesById[$id]; $assignment = $assignmentLabels[$space['assignment_type']] ?? 'Nessuna'; if ($space['assignment_detail']) $assignment .= ': ' . $space['assignment_detail']; ?>
           <g class="parking-space status-<?= e($space['status']) ?>" tabindex="0" role="button" aria-label="<?= e($id . ', ' . $space['status'] . ', ' . $assignment) ?>" data-space='<?= e(json_encode($space, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
-            <rect x="<?= $x - 29 ?>" y="<?= $y - 24 ?>" width="58" height="48" rx="10"/><text x="<?= $x ?>" y="<?= $y + 5 ?>" text-anchor="middle"><?= e($id) ?></text><title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment) ?></title>
+            <circle cx="<?= $x ?>" cy="<?= $y ?>" r="24"/><text x="<?= $x ?>" y="<?= $y + 5 ?>" text-anchor="middle"><?= e($id) ?></text><title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment) ?></title>
           </g>
         <?php endforeach; ?>
       </svg>
