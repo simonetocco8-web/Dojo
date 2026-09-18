@@ -24,17 +24,14 @@ $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $spaceId = strtoupper(trim((string)($_POST['space_id'] ?? '')));
-  $size = (string)($_POST['size'] ?? '');
   $status = (string)($_POST['status'] ?? '');
   $assignmentType = (string)($_POST['assignment_type'] ?? '');
   $assignmentDetail = trim((string)($_POST['assignment_detail'] ?? ''));
-  $validSizes = ['piccolo', 'medio', 'grande'];
   $validStatuses = ['libero', 'occupato', 'riservato'];
   $validAssignments = ['nessuna', 'appartamento', 'personale', 'tramontoday', 'sunset_beach_bar', 'altro'];
 
   if (!csrf_check($_POST['csrf_token'] ?? '')) $errors[] = 'Sessione scaduta: ricarica la pagina e riprova.';
   if (!preg_match('/^(P(?:[1-9]|1[0-9]|2[0-7])|S(?:[1-9]|1[01]))$/', $spaceId)) $errors[] = 'Posto auto non valido.';
-  if (!in_array($size, $validSizes, true)) $errors[] = 'Dimensione non valida.';
   if (!in_array($status, $validStatuses, true)) $errors[] = 'Stato non valido.';
   if (!in_array($assignmentType, $validAssignments, true)) $errors[] = 'Assegnazione non valida.';
   if ($assignmentType === 'appartamento' && ($assignmentDetail === '' || !ctype_digit($assignmentDetail))) $errors[] = 'Inserisci il numero dell’appartamento.';
@@ -43,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if (!$errors) {
     if ($assignmentType === 'nessuna') $assignmentDetail = '';
-    $stmt = $pdo->prepare('UPDATE parking_spaces SET size=?, is_covered=?, status=?, assignment_type=?, assignment_detail=?, updated_by=? WHERE space_id=?');
-    $stmt->execute([$size, isset($_POST['is_covered']) ? 1 : 0, $status, $assignmentType, $assignmentDetail ?: null, $user['id'], $spaceId]);
+    $stmt = $pdo->prepare('UPDATE parking_spaces SET status=?, assignment_type=?, assignment_detail=?, updated_by=? WHERE space_id=?');
+    $stmt->execute([$status, $assignmentType, $assignmentDetail ?: null, $user['id'], $spaceId]);
     $_SESSION['parking_flash'] = 'Posto ' . $spaceId . ' aggiornato correttamente.';
     header('Location: ' . $base . '/parking.php');
     exit;
@@ -135,9 +132,7 @@ include __DIR__ . '/partials/header.php';
 <div class="modal fade" id="parkingSpaceModal" tabindex="-1" aria-labelledby="parkingSpaceModalTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
   <form method="post"><div class="modal-header"><div><div class="text-muted small">Gestione posto auto</div><h2 class="modal-title h4" id="parkingSpaceModalTitle">Posto</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button></div>
   <div class="modal-body"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="space_id" id="parkingSpaceId">
-    <div class="row g-3"><div class="col-6"><label class="form-label" for="parkingStatus">Stato</label><select class="form-select" name="status" id="parkingStatus" required><option value="libero">Libero</option><option value="occupato">Occupato</option><option value="riservato">Riservato</option></select></div>
-    <div class="col-6"><label class="form-label" for="parkingSize">Dimensione</label><select class="form-select" name="size" id="parkingSize" required><option value="piccolo">Piccolo</option><option value="medio">Medio</option><option value="grande">Grande</option></select></div>
-    <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="is_covered" value="1" id="parkingCovered"><label class="form-check-label" for="parkingCovered">Posto coperto</label></div></div>
+    <div class="row g-3"><div class="col-12"><label class="form-label" for="parkingStatus">Stato</label><select class="form-select" name="status" id="parkingStatus" required><option value="libero">Libero</option><option value="occupato">Occupato</option><option value="riservato">Riservato</option></select></div>
     <div class="col-12"><label class="form-label" for="parkingAssignmentType">Assegnazione</label><select class="form-select" name="assignment_type" id="parkingAssignmentType" required><?php foreach ($assignmentLabels as $value => $label): ?><option value="<?= e($value) ?>"><?= e($label) ?></option><?php endforeach; ?></select></div>
     <div class="col-12" id="parkingAssignmentDetailWrap"><label class="form-label" id="parkingAssignmentDetailLabel" for="parkingAssignmentDetail">Dettaglio</label><input class="form-control" name="assignment_detail" id="parkingAssignmentDetail" maxlength="190"><div class="form-text" id="parkingAssignmentHelp"></div></div></div>
   </div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button><button class="btn btn-primary" type="submit"><i class="bi bi-check2 me-1"></i>Salva modifiche</button></div></form>
