@@ -92,6 +92,8 @@ if ($seasonActive && $can_see_riassetti) {
 
 $tramontoDayUpcoming = [];
 $can_see_tramontoday = user_is_reception_or_amministrazione($user);
+$parkingFreeCounts = ['primario' => 0, 'secondario' => 0];
+$can_see_parking = user_is_reception_or_amministrazione($user);
 if ($seasonActive && $can_see_tramontoday) {
   ensure_tramontoday_bookings_table($pdo);
   $tz = new DateTimeZone('Europe/Rome');
@@ -104,6 +106,17 @@ if ($seasonActive && $can_see_tramontoday) {
                          LIMIT 10");
   $stTd->execute([$todayTramontoDay]);
   $tramontoDayUpcoming = $stTd->fetchAll();
+}
+
+if ($can_see_parking) {
+  ensure_parking_spaces_table($pdo);
+  $stParking = $pdo->query("SELECT parking, COUNT(*) AS free_spaces FROM parking_spaces WHERE status = 'libero' GROUP BY parking");
+  foreach ($stParking->fetchAll() as $parkingSummary) {
+    $parkingKey = (string)($parkingSummary['parking'] ?? '');
+    if (array_key_exists($parkingKey, $parkingFreeCounts)) {
+      $parkingFreeCounts[$parkingKey] = (int)$parkingSummary['free_spaces'];
+    }
+  }
 }
 
 $title = 'Dashboard';
@@ -407,6 +420,30 @@ function tramontoday_dashboard_money($amount): string {
               <?php endforeach; ?>
             </ul>
           <?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($can_see_parking): ?>
+    <!-- BOX PARCHEGGI -->
+    <div class="col-12 col-xl-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 mb-0"><i class="bi bi-p-square me-1"></i>Situazione Parcheggi</h2>
+            <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/parking.php" title="Vai alla mappa parcheggi">Apri</a>
+          </div>
+          <?php foreach ([['primario', 'Primario', 27], ['secondario', 'Secondario', 11]] as [$parkingKey, $parkingLabel, $parkingTotal]): ?>
+            <?php $parkingFree = $parkingFreeCounts[$parkingKey]; ?>
+            <div class="d-flex justify-content-between align-items-center <?= $parkingKey === 'primario' ? 'mb-3' : '' ?>">
+              <div><div class="fw-semibold">Parcheggio <?= e($parkingLabel) ?></div><div class="small text-muted"><?= $parkingTotal - $parkingFree ?> posti non disponibili</div></div>
+              <div class="text-end"><span class="display-6 fw-semibold text-success"><?= $parkingFree ?></span><div class="small text-muted">liberi su <?= $parkingTotal ?></div></div>
+            </div>
+            <div class="progress <?= $parkingKey === 'primario' ? 'mb-4' : '' ?>" role="progressbar" aria-label="Posti liberi parcheggio <?= e($parkingLabel) ?>" aria-valuenow="<?= $parkingFree ?>" aria-valuemin="0" aria-valuemax="<?= $parkingTotal ?>" style="height: 7px">
+              <div class="progress-bar bg-success" style="width: <?= (int)round(($parkingFree / $parkingTotal) * 100) ?>%"></div>
+            </div>
+          <?php endforeach; ?>
         </div>
       </div>
     </div>
