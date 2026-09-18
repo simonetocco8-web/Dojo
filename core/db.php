@@ -13,6 +13,31 @@ function db(): PDO {
   return $pdo;
 }
 
+function ensure_parking_spaces_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS parking_spaces (
+      space_id VARCHAR(4) NOT NULL PRIMARY KEY,
+      parking ENUM('primario','secondario') NOT NULL,
+      size ENUM('piccolo','medio','grande') NOT NULL DEFAULT 'medio',
+      is_covered TINYINT(1) NOT NULL DEFAULT 0,
+      status ENUM('libero','occupato','riservato') NOT NULL DEFAULT 'libero',
+      assignment_type ENUM('nessuna','appartamento','personale','tramontoday','sunset_beach_bar','altro') NOT NULL DEFAULT 'nessuna',
+      assignment_detail VARCHAR(190) DEFAULT NULL,
+      updated_by INT UNSIGNED DEFAULT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_parking_spaces_parking_status (parking, status),
+      CONSTRAINT fk_parking_spaces_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $insert = $pdo->prepare('INSERT IGNORE INTO parking_spaces (space_id, parking) VALUES (?, ?)');
+  foreach (['P' => ['primario', 27], 'S' => ['secondario', 11]] as $prefix => $definition) {
+    for ($number = 1; $number <= $definition[1]; $number++) {
+      $insert->execute([$prefix . $number, $definition[0]]);
+    }
+  }
+}
+
 
 function ensure_system_settings_table(PDO $pdo): void {
   $pdo->exec("
