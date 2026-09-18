@@ -78,7 +78,7 @@ include __DIR__ . '/partials/header.php';
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <div><h1 class="h3 mb-1">Parcheggi</h1><p class="text-muted mb-0">Seleziona un posto sulla mappa per gestirlo.</p></div>
     <div class="parking-legend" aria-label="Legenda stati">
-      <span><i class="parking-dot status-libero"></i> Libero</span><span><i class="parking-dot status-occupato"></i> Occupato</span><span><i class="parking-dot status-riservato"></i> Riservato</span>
+      <span><i class="parking-dot status-libero"></i> Libero</span><span><i class="parking-dot status-occupato"></i> Occupato</span><span><i class="parking-dot status-riservato"></i> Riservato</span><span><i class="bi bi-lightning-charge-fill text-primary"></i> Ricarica elettrica</span>
     </div>
   </div>
   <?php if ($flash): ?><div class="alert alert-success" role="status"><?= e($flash) ?></div><?php endif; ?>
@@ -118,9 +118,11 @@ include __DIR__ . '/partials/header.php';
         <rect x="515" y="935" width="250" height="165" fill="#f8f7f3" stroke="#222" stroke-width="4"/><rect x="70" y="990" width="225" height="110" fill="#f8f7f3" stroke="#222" stroke-width="4"/>
         <g aria-hidden="true"><use href="#tree" x="735" y="175"/><use href="#tree" x="735" y="320"/><use href="#tree" x="735" y="470"/><use href="#tree" x="300" y="525"/><use href="#tree" x="235" y="780"/><use href="#tree" x="135" y="1015"/><use href="#tree" x="220" y="1020"/></g>
         <text x="205" y="120" class="map-zone-title">PARCHEGGIO PRIMARIO</text><text x="815" y="120" class="map-zone-title">SECONDARIO</text>
-        <?php foreach ($positions as $id => [$x, $y]): $space = $spacesById[$id]; $assignment = $assignmentLabels[$space['assignment_type']] ?? 'Nessuna'; if ($space['assignment_detail']) $assignment .= ': ' . $space['assignment_detail']; ?>
-          <g class="parking-space status-<?= e($space['status']) ?>" tabindex="0" role="button" aria-label="<?= e($id . ', ' . $space['status'] . ', ' . $assignment) ?>" data-space='<?= e(json_encode($space, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
-            <circle cx="<?= $x ?>" cy="<?= $y ?>" r="19"/><text x="<?= $x ?>" y="<?= $y + 4 ?>" text-anchor="middle"><?= e($id) ?></text><title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment) ?></title>
+        <?php foreach ($positions as $id => [$x, $y]): $space = $spacesById[$id]; $assignment = $assignmentLabels[$space['assignment_type']] ?? 'Nessuna'; if ($space['assignment_detail']) $assignment .= ': ' . $space['assignment_detail']; $hasEvCharging = in_array($id, ['P1', 'P2', 'P3'], true); ?>
+          <g class="parking-space status-<?= e($space['status']) ?>" tabindex="0" role="button" aria-label="<?= e($id . ', ' . $space['status'] . ', ' . $assignment . ($hasEvCharging ? ', ricarica auto elettrica' : '')) ?>" data-space='<?= e(json_encode($space, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>'>
+            <circle cx="<?= $x ?>" cy="<?= $y ?>" r="19"/><text x="<?= $x ?>" y="<?= $y + 4 ?>" text-anchor="middle"><?= e($id) ?></text>
+            <?php if ($hasEvCharging): ?><g class="parking-ev-icon" aria-hidden="true"><circle cx="<?= $x + 17 ?>" cy="<?= $y - 17 ?>" r="9"/><path d="M<?= $x + 18 ?> <?= $y - 24 ?>l-7 9h5l-2 7 8-10h-5z"/></g><?php endif; ?>
+            <title><?= e($id . ' · ' . ucfirst($space['status']) . ' · ' . $assignment . ($hasEvCharging ? ' · Ricarica auto elettrica' : '')) ?></title>
           </g>
         <?php endforeach; ?>
       </svg>
