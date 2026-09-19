@@ -57,7 +57,8 @@ $tex = [];
 
 if ($seasonActive) {
   // --- Prossimi 5 TRANSFER INTERNI ---
-  $qInt = $pdo->prepare('SELECT id, room_number, direction, location, when_at
+  ensure_transfer_internal_details_columns($pdo);
+  $qInt = $pdo->prepare('SELECT id, room_number, direction, location, when_at, note
                          FROM transfers_internal
                          WHERE deleted_at IS NULL AND when_at >= NOW()
                          ORDER BY when_at ASC, id DESC
@@ -340,6 +341,9 @@ function tramontoday_dashboard_money($amount): string {
                     <div class="small text-muted">
                       <?= it_dt($r['when_at']) ?>
                     </div>
+                    <?php if (trim((string)($r['note'] ?? '')) !== ''): ?>
+                      <div class="small mt-1"><i class="bi bi-sticky me-1 text-muted" aria-hidden="true"></i><?= nl2br(e($r['note'])) ?></div>
+                    <?php endif; ?>
                   </div>
                 </li>
               <?php endforeach; ?>
