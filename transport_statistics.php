@@ -14,6 +14,7 @@ if (!user_is_reception_or_amministrazione($user)) { http_response_code(403); ech
 
 $pdo = db();
 ensure_transfer_internal_details_columns($pdo);
+ensure_transfer_locations_table($pdo);
 ensure_transfer_external_travel_columns($pdo);
 $range = get_summer_season_range($pdo);
 $tz = new DateTimeZone('Europe/Rome');
@@ -32,6 +33,10 @@ $internalStmt = $pdo->prepare("SELECT DATE(when_at) AS transfer_day, COUNT(*) AS
 $internalStmt->execute([$dateFrom, $dateTo]);
 foreach ($internalStmt->fetchAll() as $row) if (isset($internalDaily[$row['transfer_day']])) $internalDaily[$row['transfer_day']] = (int)$row['total'];
 $internalTotal = array_sum($internalDaily);
+
+$internalKmStmt = $pdo->prepare("SELECT COALESCE(SUM(tl.distance_km * 2), 0) AS total_km FROM transfers_internal ti LEFT JOIN transfer_locations tl ON tl.name = ti.location WHERE ti.deleted_at IS NULL AND ti.when_at >= ? AND ti.when_at < DATE_ADD(?, INTERVAL 1 DAY) AND ti.when_at <= NOW()");
+$internalKmStmt->execute([$dateFrom, $dateTo]);
+$internalTotalKm = (float)$internalKmStmt->fetchColumn();
 
 $topLocationsStmt = $pdo->prepare("SELECT COALESCE(NULLIF(TRIM(location), ''), 'Non specificata') AS location_name, COUNT(*) AS total FROM transfers_internal WHERE deleted_at IS NULL AND when_at >= ? AND when_at < DATE_ADD(?, INTERVAL 1 DAY) AND when_at <= NOW() GROUP BY COALESCE(NULLIF(TRIM(location), ''), 'Non specificata') ORDER BY total DESC, location_name ASC LIMIT 3");
 $topLocationsStmt->execute([$dateFrom, $dateTo]);
@@ -61,9 +66,12 @@ include __DIR__ . '/partials/header.php';
   <section class="mb-5" aria-labelledby="internalStatisticsTitle">
     <h2 class="h4 mb-3" id="internalStatisticsTitle">Transfer interni</h2>
     <div class="row g-3 mb-3">
-      <div class="col-12 col-md-3"><div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Transfer eseguiti</div><div class="display-6 fw-semibold"><?= $internalTotal ?></div></div></div></div>
+      <div class="col-12 col-md-6"><div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Transfer eseguiti</div><div class="display-6 fw-semibold"><?= $internalTotal ?></div></div></div></div>
+      <div class="col-12 col-md-6"><div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Km complessivi percorsi</div><div class="display-6 fw-semibold text-success"><?= e(number_format($internalTotalKm, 2, ',', '.')) ?> km</div><div class="small text-muted">Andata e ritorno: distanza località × 2 per transfer</div></div></div></div>
+    </div>
+    <div class="row g-3 mb-3">
       <?php for ($rank = 0; $rank < 3; $rank++): $location = $topLocations[$rank] ?? null; ?>
-        <div class="col-12 col-md-3"><div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Top <?= $rank + 1 ?> località</div><div class="h5 mb-1"><?= e($location['location_name'] ?? '—') ?></div><div class="text-primary fw-semibold"><?= (int)($location['total'] ?? 0) ?> transfer</div></div></div></div>
+        <div class="col-12 col-md-4"><div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Top <?= $rank + 1 ?> località</div><div class="h5 mb-1"><?= e($location['location_name'] ?? '—') ?></div><div class="text-primary fw-semibold"><?= (int)($location['total'] ?? 0) ?> transfer</div></div></div></div>
       <?php endfor; ?>
     </div>
     <div class="card shadow-sm"><div class="card-body"><h3 class="h6">Andamento giornaliero</h3><div class="transport-chart-wrap"><canvas data-transport-chart data-color="#0d6efd" data-labels="<?= e(json_encode($chartLabels)) ?>" data-values="<?= e(json_encode(array_values($internalDaily))) ?>"></canvas></div></div></div>
