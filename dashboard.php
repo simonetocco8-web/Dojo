@@ -337,7 +337,7 @@ function tramontoday_dashboard_money($amount): string {
                 <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
                   <div class="me-2">
                     <div class="fw-semibold">
-                      <?php if ($isEarlyInternalTransfer): ?><i class="bi bi-exclamation-triangle-fill text-warning me-1" title="Transfer previsto prima delle 08:00" aria-label="Attenzione: transfer previsto prima delle 08:00"></i><?php endif; ?>
+                      <?php if ($isEarlyInternalTransfer): ?><i class="bi bi-clock-fill text-danger me-1" title="Transfer previsto prima delle 08:00" aria-label="Transfer previsto prima delle 08:00"></i><?php endif; ?>
                       Cam. <?= e($r['room_number']) ?> · <?= e(strtoupper($r['direction'])) ?> <?= e($r['location']) ?>
                     </div>
                     <div class="small text-muted">
