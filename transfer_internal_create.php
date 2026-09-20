@@ -9,10 +9,13 @@ $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_transfer_internal_details_columns($pdo);
+ensure_transfer_locations_table($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
-$predef = ['Coop','Stazione Ricadi','Ristorante La Notte','Ristorante Europa','Ristorante Campagnola','Ristorante da Mimma'];
+$locationRows = $pdo->query('SELECT name, distance_km FROM transfer_locations WHERE is_active = 1 ORDER BY name ASC')->fetchAll();
+$predef = array_column($locationRows, 'name');
+$hasPredefinedLocations = !empty($predef);
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -21,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   } else {
     $room = trim($_POST['room_number'] ?? '');
     $direction = $_POST['direction'] ?? 'da';
-    $use_predef = $_POST['loc_mode'] ?? 'predef';
+    $use_predef = $_POST['loc_mode'] ?? ($hasPredefinedLocations ? 'predef' : 'custom');
     $location = '';
     if ($use_predef === 'predef') {
       $lp = $_POST['location_predef'] ?? '';
@@ -147,20 +150,21 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-8">
               <label class="form-label">Località</label>
               <div class="d-flex gap-2">
-                <select name="location_predef" class="form-select" id="loc_predef">
+                <select name="location_predef" class="form-select" id="loc_predef" <?= !$hasPredefinedLocations ? 'disabled' : '' ?>>
                   <?php foreach($predef as $p): ?>
-                    <option value="<?= e($p) ?>"><?= e($p) ?></option>
+                    <?php $locationRow = $locationRows[array_search($p, $predef, true)] ?? null; ?>
+                    <option value="<?= e($p) ?>"><?= e($p) ?><?= $locationRow ? ' · ' . e(number_format((float)$locationRow['distance_km'], 2, ',', '.')) . ' km' : '' ?></option>
                   <?php endforeach; ?>
                 </select>
                 <div class="form-check d-flex align-items-center">
-                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" checked>
+                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" <?= $hasPredefinedLocations ? 'checked' : 'disabled' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_predef">Predef.</label>
                 </div>
               </div>
               <div class="d-flex gap-2 mt-2">
                 <input type="text" name="location_custom" class="form-control" placeholder="Oppure inserisci manualmente...">
                 <div class="form-check d-flex align-items-center">
-                  <input class="form-check-input" type="radio" name="loc_mode" value="custom" id="loc_mode_custom">
+                  <input class="form-check-input" type="radio" name="loc_mode" value="custom" id="loc_mode_custom" <?= !$hasPredefinedLocations ? 'checked' : '' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_custom">Manuale</label>
                 </div>
               </div>
