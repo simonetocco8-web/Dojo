@@ -178,6 +178,24 @@ function ensure_transfer_internal_details_columns(PDO $pdo): void {
   }
 }
 
+function ensure_transfer_locations_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS transfer_locations (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(190) NOT NULL UNIQUE,
+      distance_km DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $insert = $pdo->prepare('INSERT IGNORE INTO transfer_locations (name, distance_km, is_active) VALUES (?, 0.00, 1)');
+  foreach (['Coop', 'Stazione Ricadi', 'Ristorante La Notte', 'Ristorante Europa', 'Ristorante Campagnola', 'Ristorante da Mimma'] as $name) {
+    $insert->execute([$name]);
+  }
+}
+
 
 function ensure_transfer_internal_sms_reminders_table(PDO $pdo): void {
   $pdo->exec("

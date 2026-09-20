@@ -177,6 +177,23 @@ ALTER TABLE transfers_internal
   ADD COLUMN IF NOT EXISTS people_count INT UNSIGNED DEFAULT NULL AFTER location,
   ADD COLUMN IF NOT EXISTS note VARCHAR(255) DEFAULT NULL AFTER people_count;
 
+CREATE TABLE IF NOT EXISTS transfer_locations (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(190) NOT NULL UNIQUE,
+  distance_km DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO transfer_locations (name, distance_km, is_active) VALUES
+  ('Coop', 0.00, 1),
+  ('Stazione Ricadi', 0.00, 1),
+  ('Ristorante La Notte', 0.00, 1),
+  ('Ristorante Europa', 0.00, 1),
+  ('Ristorante Campagnola', 0.00, 1),
+  ('Ristorante da Mimma', 0.00, 1);
+
 CREATE TABLE IF NOT EXISTS transfer_internal_sms_reminders (
   transfer_id INT UNSIGNED NOT NULL PRIMARY KEY,
   sent_at DATETIME DEFAULT NULL,
