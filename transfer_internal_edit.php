@@ -10,11 +10,14 @@ $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_transfer_internal_details_columns($pdo);
+ensure_transfer_locations_table($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 if (!user_is_reception_or_amministrazione($user)) { http_response_code(403); exit('Permesso negato.'); }
 
-$predef = ['Coop','Stazione Ricadi','Ristorante La Notte','Ristorante Europa','Ristorante Campagnola','Ristorante da Mimma'];
+$locationRows = $pdo->query('SELECT name, distance_km FROM transfer_locations WHERE is_active = 1 ORDER BY name ASC')->fetchAll();
+$predef = array_column($locationRows, 'name');
+$hasPredefinedLocations = !empty($predef);
 $message = '';
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 if ($id <= 0) { header('Location: ' . $base . '/transfers_internal.php'); exit; }
@@ -29,7 +32,7 @@ $form = [
   'direction' => $transfer['direction'],
   'date' => (new DateTime($transfer['when_at']))->format('Y-m-d'),
   'time' => (new DateTime($transfer['when_at']))->format('H:i'),
-  'location_predef' => in_array($transfer['location'], $predef, true) ? $transfer['location'] : $predef[0],
+  'location_predef' => in_array($transfer['location'], $predef, true) ? $transfer['location'] : ($predef[0] ?? ''),
   'location_custom' => in_array($transfer['location'], $predef, true) ? '' : $transfer['location'],
   'loc_mode' => in_array($transfer['location'], $predef, true) ? 'predef' : 'custom',
   'people_count' => (string)($transfer['people_count'] ?? 1),
@@ -40,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $form['room_number'] = trim($_POST['room_number'] ?? '');
   $form['direction'] = $_POST['direction'] ?? 'da';
   $form['loc_mode'] = $_POST['loc_mode'] ?? 'predef';
-  $form['location_predef'] = $_POST['location_predef'] ?? $predef[0];
+  $form['location_predef'] = $_POST['location_predef'] ?? ($predef[0] ?? '');
   $form['location_custom'] = trim($_POST['location_custom'] ?? '');
   $form['date'] = $_POST['date'] ?? '';
   $form['time'] = $_POST['time'] ?? '';
@@ -167,13 +170,14 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-8">
               <label class="form-label">Località</label>
               <div class="d-flex gap-2">
-                <select name="location_predef" class="form-select" id="loc_predef">
+                <select name="location_predef" class="form-select" id="loc_predef" <?= !$hasPredefinedLocations ? 'disabled' : '' ?>>
                   <?php foreach($predef as $p): ?>
-                    <option value="<?= e($p) ?>" <?= $form['location_predef']===$p ? 'selected' : '' ?>><?= e($p) ?></option>
+                    <?php $locationRow = $locationRows[array_search($p, $predef, true)] ?? null; ?>
+                    <option value="<?= e($p) ?>" <?= $form['location_predef']===$p ? 'selected' : '' ?>><?= e($p) ?><?= $locationRow ? ' · ' . e(number_format((float)$locationRow['distance_km'], 2, ',', '.')) . ' km' : '' ?></option>
                   <?php endforeach; ?>
                 </select>
                 <div class="form-check d-flex align-items-center">
-                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" <?= $form['loc_mode']==='predef' ? 'checked' : '' ?>>
+                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" <?= $form['loc_mode']==='predef' ? 'checked' : '' ?> <?= !$hasPredefinedLocations ? 'disabled' : '' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_predef">Predef.</label>
                 </div>
               </div>
