@@ -334,19 +334,21 @@ function tramontoday_dashboard_money($amount): string {
             <ul class="list-group list-group-flush">
               <?php foreach($tin as $r): ?>
                 <?php $isEarlyInternalTransfer = (new DateTime($r['when_at']))->format('H:i') < '08:00'; ?>
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                <?php $isTodayInternalTransfer = (new DateTime($r['when_at'], new DateTimeZone('Europe/Rome')))->format('Y-m-d') === (new DateTime('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d'); ?>
+                <li class="list-group-item <?= $isTodayInternalTransfer ? 'px-2 border border-2 border-primary rounded-3 bg-primary-subtle' : 'px-0' ?> d-flex justify-content-between align-items-start">
                   <div class="me-2">
-                    <div class="fw-semibold">
+                    <div class="fw-semibold <?= $isTodayInternalTransfer ? 'text-primary-emphasis' : '' ?>">
                       <?php if ($isEarlyInternalTransfer): ?><i class="bi bi-clock-fill text-danger me-1" title="Transfer previsto prima delle 08:00" aria-label="Transfer previsto prima delle 08:00"></i><?php endif; ?>
                       Cam. <?= e($r['room_number']) ?> · <?= e(strtoupper($r['direction'])) ?> <?= e($r['location']) ?>
                     </div>
-                    <div class="small text-muted">
+                    <div class="small <?= $isTodayInternalTransfer ? 'text-primary-emphasis fw-semibold' : 'text-muted' ?>">
                       <?= it_dt($r['when_at']) ?>
                     </div>
                     <?php if (trim((string)($r['note'] ?? '')) !== ''): ?>
                       <div class="small mt-1"><i class="bi bi-sticky me-1 text-muted" aria-hidden="true"></i><?= nl2br(e($r['note'])) ?></div>
                     <?php endif; ?>
                   </div>
+                  <?php if ($isTodayInternalTransfer): ?><span class="badge bg-primary ms-2">Oggi</span><?php endif; ?>
                 </li>
               <?php endforeach; ?>
             </ul>
