@@ -41,5 +41,8 @@ $footerBase = $base ?? '';
 <script src="<?= e($footerBase) ?>/assets/confirm-delete.js?v=<?= (int)$confirmDeleteVersion ?>"></script>
 <script src="<?= e($footerBase) ?>/assets/wait-feedback.js?v=<?= (int)$waitFeedbackVersion ?>"></script>
 <script src="<?= e($footerBase) ?>/assets/menu-dedupe.js?v=<?= (int)$menuDedupeVersion ?>"></script>
+<?php foreach (($pageScripts ?? []) as $pageScript): ?>
+<script src="<?= e($footerBase) ?>/<?= e(ltrim((string)$pageScript, '/')) ?>?v=<?= (int)(@filemtime(__DIR__ . '/../' . ltrim((string)$pageScript, '/')) ?: time()) ?>"></script>
+<?php endforeach; ?>
 </body>
 </html>

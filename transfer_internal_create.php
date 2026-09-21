@@ -9,10 +9,13 @@ $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo  = db();
 ensure_transfer_internal_details_columns($pdo);
+ensure_transfer_locations_table($pdo);
 $user = current_user();
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
 
-$predef = ['Coop','Stazione Ricadi','Ristorante La Notte','Ristorante Europa','Ristorante Campagnola','Ristorante da Mimma'];
+$locationRows = $pdo->query('SELECT name, distance_km FROM transfer_locations WHERE is_active = 1 ORDER BY name ASC')->fetchAll();
+$predef = array_column($locationRows, 'name');
+$hasPredefinedLocations = !empty($predef);
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD']==='POST') {
@@ -21,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST') {
   } else {
     $room = trim($_POST['room_number'] ?? '');
     $direction = $_POST['direction'] ?? 'da';
-    $use_predef = $_POST['loc_mode'] ?? 'predef';
+    $use_predef = $_POST['loc_mode'] ?? ($hasPredefinedLocations ? 'predef' : 'custom');
     $location = '';
     if ($use_predef === 'predef') {
       $lp = $_POST['location_predef'] ?? '';
@@ -118,7 +121,7 @@ include __DIR__ . '/partials/header.php';
       <div class="card-body">
         <h1 class="h5 mb-3">Nuovo Transfer Interno</h1>
         <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
-        <form method="post" data-wait-feedback="Creazione transfer e invio SMS in corso...">
+        <form method="post" id="internalTransferCreateForm" data-wait-feedback="Creazione transfer e invio SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <div class="row g-3">
             <div class="col-md-4">
@@ -147,20 +150,21 @@ include __DIR__ . '/partials/header.php';
             <div class="col-md-8">
               <label class="form-label">Località</label>
               <div class="d-flex gap-2">
-                <select name="location_predef" class="form-select" id="loc_predef">
+                <select name="location_predef" class="form-select" id="loc_predef" <?= !$hasPredefinedLocations ? 'disabled' : '' ?>>
                   <?php foreach($predef as $p): ?>
-                    <option value="<?= e($p) ?>"><?= e($p) ?></option>
+                    <?php $locationRow = $locationRows[array_search($p, $predef, true)] ?? null; ?>
+                    <option value="<?= e($p) ?>"><?= e($p) ?><?= $locationRow ? ' · ' . e(number_format((float)$locationRow['distance_km'], 2, ',', '.')) . ' km' : '' ?></option>
                   <?php endforeach; ?>
                 </select>
                 <div class="form-check d-flex align-items-center">
-                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" checked>
+                  <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" <?= $hasPredefinedLocations ? 'checked' : 'disabled' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_predef">Predef.</label>
                 </div>
               </div>
               <div class="d-flex gap-2 mt-2">
                 <input type="text" name="location_custom" class="form-control" placeholder="Oppure inserisci manualmente...">
                 <div class="form-check d-flex align-items-center">
-                  <input class="form-check-input" type="radio" name="loc_mode" value="custom" id="loc_mode_custom">
+                  <input class="form-check-input" type="radio" name="loc_mode" value="custom" id="loc_mode_custom" <?= !$hasPredefinedLocations ? 'checked' : '' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_custom">Manuale</label>
                 </div>
               </div>
@@ -179,4 +183,12 @@ include __DIR__ . '/partials/header.php';
     </div>
   </div>
 </div>
+<div class="modal fade" id="coopOpeningModal" tabindex="-1" aria-labelledby="coopOpeningModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+    <div class="modal-header border-0 pb-0"><div class="d-flex align-items-center gap-3"><span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning-emphasis" style="width:44px;height:44px"><i class="bi bi-shop fs-4"></i></span><div><div class="text-muted small">Verifica apertura</div><h2 class="modal-title h5 mb-0" id="coopOpeningModalTitle">Conferma transfer Coop</h2></div></div><button type="button" class="btn-close" id="coopOpeningClose" aria-label="Chiudi"></button></div>
+    <div class="modal-body py-4"><p class="mb-0" id="coopOpeningModalMessage"></p></div>
+    <div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-outline-secondary" id="coopOpeningChange"><i class="bi bi-pencil me-1"></i><span>Modifica</span></button><button type="button" class="btn btn-primary" id="coopOpeningConfirm"><i class="bi bi-check2-circle me-1"></i><span>Conferma</span></button></div>
+  </div></div>
+</div>
+<?php $pageScripts = ['assets/transfer-internal-create.js']; ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>
