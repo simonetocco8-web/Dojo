@@ -183,5 +183,12 @@ include __DIR__ . '/partials/header.php';
     </div>
   </div>
 </div>
+<div class="modal fade" id="coopOpeningModal" tabindex="-1" aria-labelledby="coopOpeningModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+    <div class="modal-header border-0 pb-0"><div class="d-flex align-items-center gap-3"><span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning-emphasis" style="width:44px;height:44px"><i class="bi bi-shop fs-4"></i></span><div><div class="text-muted small">Verifica apertura</div><h2 class="modal-title h5 mb-0" id="coopOpeningModalTitle">Conferma transfer Coop</h2></div></div><button type="button" class="btn-close" id="coopOpeningClose" aria-label="Chiudi"></button></div>
+    <div class="modal-body py-4"><p class="mb-0" id="coopOpeningModalMessage"></p></div>
+    <div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-outline-secondary" id="coopOpeningChange"><i class="bi bi-pencil me-1"></i><span>Modifica</span></button><button type="button" class="btn btn-primary" id="coopOpeningConfirm"><i class="bi bi-check2-circle me-1"></i><span>Conferma</span></button></div>
+  </div></div>
+</div>
 <?php $pageScripts = ['assets/transfer-internal-create.js']; ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>
