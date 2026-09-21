@@ -121,7 +121,7 @@ include __DIR__ . '/partials/header.php';
       <div class="card-body">
         <h1 class="h5 mb-3">Nuovo Transfer Interno</h1>
         <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
-        <form method="post" data-wait-feedback="Creazione transfer e invio SMS in corso...">
+        <form method="post" id="internalTransferCreateForm" data-wait-feedback="Creazione transfer e invio SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <div class="row g-3">
             <div class="col-md-4">
@@ -183,4 +183,5 @@ include __DIR__ . '/partials/header.php';
     </div>
   </div>
 </div>
+<?php $pageScripts = ['assets/transfer-internal-create.js']; ?>
 <?php include __DIR__ . '/partials/footer.php'; ?>
