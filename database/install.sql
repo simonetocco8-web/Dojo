@@ -61,7 +61,10 @@ CREATE TABLE IF NOT EXISTS riassetti (
 -- Aggiornamenti tabella transfers_external
 ALTER TABLE transfers_external
   ADD COLUMN IF NOT EXISTS people_count INT UNSIGNED DEFAULT NULL AFTER guest_name,
-  ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER people_count,
+  ADD COLUMN IF NOT EXISTS adults_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER people_count,
+  ADD COLUMN IF NOT EXISTS children_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER adults_count,
+  ADD COLUMN IF NOT EXISTS child_seat_weights TEXT DEFAULT NULL AFTER children_count,
+  ADD COLUMN IF NOT EXISTS price_eur DECIMAL(10,2) DEFAULT NULL AFTER child_seat_weights,
   ADD COLUMN IF NOT EXISTS supplier_price_eur DECIMAL(10,2) DEFAULT NULL AFTER price_eur;
 
 -- Aggiornamenti tabella suppliers

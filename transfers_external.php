@@ -89,7 +89,8 @@ include __DIR__ . '/partials/header.php';
             <th>Camera</th>
             <th>Nominativo</th>
             <th>Fornitore</th>
-            <th class="text-center">Persone</th>
+            <th class="text-center">Adulti</th>
+            <th>Bambini / Seggiolini</th>
             <th>Prezzo al Cliente</th>
             <th>Prezzo al Fornitore</th>
             <th class="text-center">Pag.</th>
@@ -127,6 +128,11 @@ include __DIR__ . '/partials/header.php';
               $rowClass = $rowDateYmd < $todayYmd ? 'table-secondary' : ($rowDateYmd === $todayYmd ? 'table-success' : '');
             }
             $referenceParts = [];
+            $adultCount = (int)($r['adults_count'] ?? 0);
+            $childrenCount = (int)($r['children_count'] ?? 0);
+            if ($adultCount === 0 && $childrenCount === 0 && $r['people_count'] !== null) $adultCount = (int)$r['people_count'];
+            $childSeatWeights = json_decode((string)($r['child_seat_weights'] ?? ''), true);
+            if (!is_array($childSeatWeights)) $childSeatWeights = [];
             if ($isRoundTrip) {
               if (!empty($r['arrival_flight_number'])) $referenceParts[] = $flightReferenceLink('Volo arrivo', (string)$r['arrival_flight_number']);
               if (!empty($r['arrival_train_number'])) $referenceParts[] = e('Treno arrivo: ' . $r['arrival_train_number']);
@@ -205,7 +211,8 @@ include __DIR__ . '/partials/header.php';
             </td>
             <td><?= e($r['guest_name']) ?></td>
             <td><?= trim((string)($r['supplier_name'] ?? '')) !== '' ? e($r['supplier_name']) : '—' ?></td>
-            <td class="text-center"><?= $r['people_count'] !== null ? e((int)$r['people_count']) : '—' ?></td>
+            <td class="text-center"><?= $adultCount ?></td>
+            <td><div><?= $childrenCount ?> bambini</div><?php if ($childSeatWeights): ?><div class="small text-muted"><i class="bi bi-shield-check me-1"></i><?= count($childSeatWeights) ?> <?= count($childSeatWeights) === 1 ? 'seggiolino' : 'seggiolini' ?>: <?= e(implode(', ', array_map(static fn($weight): string => number_format((float)$weight, 1, ',', '.') . ' kg', $childSeatWeights))) ?></div><?php endif; ?></td>
             <td>
               <?php if ($r['price_eur'] !== null): ?>
                 € <?= e(number_format((float)$r['price_eur'], 2, ',', '.')) ?>

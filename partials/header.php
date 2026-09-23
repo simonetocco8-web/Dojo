@@ -306,6 +306,10 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
           <ul class="dropdown-menu <?= $parkingMenuOpen ? 'show' : '' ?>" aria-labelledby="parkingSidebarDropdown"><li><a class="dropdown-item" href="<?= e($base) ?>/parking.php"><i class="bi bi-map"></i><span>Mappa</span></a></li><li><a class="dropdown-item" href="<?= e($base) ?>/parking_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li></ul>
         </li>
         <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $parkingMenuOpen ? 'active' : '' ?>" href="#" id="parkingSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $parkingMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-p-square"></i><span>Parcheggi</span></a>
+          <ul class="dropdown-menu <?= $parkingMenuOpen ? 'show' : '' ?>" aria-labelledby="parkingSidebarDropdown"><li><a class="dropdown-item" href="<?= e($base) ?>/parking.php"><i class="bi bi-map"></i><span>Mappa</span></a></li><li><a class="dropdown-item" href="<?= e($base) ?>/parking_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li></ul>
+        </li>
+        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= $trasportiMenuOpen ? 'active' : '' ?>" href="#" id="trasportiSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $trasportiMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-car-front"></i><span>Trasporti</span></a>
           <ul class="dropdown-menu <?= $trasportiMenuOpen ? 'show' : '' ?>" aria-labelledby="trasportiSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/transfere.php"><i class="bi bi-car-front"></i><span>Transfer</span></a></li>
@@ -584,6 +588,10 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <?php if($user && user_is_reception_or_amministrazione($user)): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/tasks.php"><i class="bi bi-check2-square"></i><span>Task</span></a></li>
             <li class="nav-item"><a class="nav-link <?= $currentPath === 'parking.php' ? 'active' : '' ?>" href="<?= e($base) ?>/parking.php"><i class="bi bi-p-square"></i><span>Parcheggi</span></a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $parkingMenuOpen ? 'active' : '' ?>" href="#" id="parkingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $parkingMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-p-square"></i><span>Parcheggi</span></a>
+              <ul class="dropdown-menu <?= $parkingMenuOpen ? 'show' : '' ?>" aria-labelledby="parkingDropdown"><li><a class="dropdown-item" href="<?= e($base) ?>/parking.php"><i class="bi bi-map"></i><span>Mappa</span></a></li><li><a class="dropdown-item" href="<?= e($base) ?>/parking_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li></ul>
+            </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle <?= $parkingMenuOpen ? 'active' : '' ?>" href="#" id="parkingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="<?= $parkingMenuOpen ? 'true' : 'false' ?>"><i class="bi bi-p-square"></i><span>Parcheggi</span></a>
               <ul class="dropdown-menu <?= $parkingMenuOpen ? 'show' : '' ?>" aria-labelledby="parkingDropdown"><li><a class="dropdown-item" href="<?= e($base) ?>/parking.php"><i class="bi bi-map"></i><span>Mappa</span></a></li><li><a class="dropdown-item" href="<?= e($base) ?>/parking_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li></ul>

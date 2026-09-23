@@ -59,4 +59,5 @@ body{min-height:100vh}.card{border-radius:1rem}
 .parking-settings-table th,.parking-settings-table td{padding:.75rem 1rem}.parking-settings-table .form-select{min-width:125px}.parking-settings-actions{position:sticky;bottom:1rem;z-index:5;display:flex;justify-content:flex-end;margin-top:1.5rem;pointer-events:none}.parking-settings-actions .btn{pointer-events:auto}
 .transport-chart-wrap{position:relative;height:340px;min-height:260px}
 .tramontoday-report-chart-wrap{position:relative;height:380px;min-height:280px}
+.transfer-fields-contents:not(.d-none){display:contents}
 @media(max-width:767.98px){.parking-page{padding-left:.25rem;padding-right:.25rem}.parking-map-scroll{max-height:68vh}.parking-map{width:780px;max-height:none}.parking-legend{width:100%;justify-content:center}.parking-summary-card .display-6{font-size:2rem}}

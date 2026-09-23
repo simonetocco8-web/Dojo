@@ -366,7 +366,7 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'transfers_external'
       AND COLUMN_NAME IN (
-        'supplier_price_eur', 'supplier_name',
+        'supplier_price_eur', 'supplier_name', 'adults_count', 'children_count', 'child_seat_weights',
         'supplier_confirm_token', 'supplier_reject_token', 'supplier_token_expires_at', 'supplier_responded_at', 'rejection_reason',
         'flight_number', 'train_number',
         'arrival_place', 'arrival_date_time', 'arrival_pickup_time', 'arrival_flight_number', 'arrival_train_number',
@@ -377,6 +377,15 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
 
   if (empty($columns['supplier_price_eur'])) {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN supplier_price_eur DECIMAL(10,2) DEFAULT NULL AFTER price_eur");
+  }
+  if (empty($columns['adults_count'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN adults_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER people_count");
+  }
+  if (empty($columns['children_count'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN children_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER adults_count");
+  }
+  if (empty($columns['child_seat_weights'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN child_seat_weights TEXT DEFAULT NULL AFTER children_count");
   }
   if (empty($columns['supplier_name'])) {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company");
