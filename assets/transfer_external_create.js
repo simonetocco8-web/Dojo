@@ -20,6 +20,8 @@
     const emailSkipButton = document.getElementById('transferEmailSkipButton');
     const singleFields = document.getElementById('singleTransferFields');
     const roundTripFields = document.getElementById('roundTripTransferFields');
+    const childrenCount = document.getElementById('children_count');
+    const childSeatOptions = document.getElementById('childSeatOptions');
     let confirmedSubmit = false;
 
     function syncCompanyField(){
@@ -133,31 +135,69 @@
       if (train) lines.push((prefix || '') + 'Numero treno: ' + train);
     }
 
+    function syncChildSeatOptions() {
+      if (!childrenCount || !childSeatOptions) return;
+      const previous = {};
+      childSeatOptions.querySelectorAll('[data-child-index]').forEach(function(row){
+        const index = row.dataset.childIndex;
+        previous[index] = { checked: row.querySelector('[type="checkbox"]').checked, weight: row.querySelector('[type="number"]').value };
+      });
+      if (!Object.keys(previous).length) {
+        const selected = JSON.parse(childSeatOptions.dataset.selected || '[]').map(String);
+        const weights = JSON.parse(childSeatOptions.dataset.weights || '{}');
+        selected.forEach(function(index){ previous[index] = { checked: true, weight: weights[index] || '' }; });
+      }
+      const count = Math.max(0, Math.min(20, parseInt(childrenCount.value || '0', 10) || 0));
+      childSeatOptions.replaceChildren();
+      for (let index = 0; index < count; index += 1) {
+        const row = document.createElement('div');
+        row.className = 'col-12 col-lg-6';
+        row.dataset.childIndex = String(index);
+        row.innerHTML = '<div class="border rounded-3 p-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="child_seat[' + index + ']" value="1" id="childSeat' + index + '"><label class="form-check-label fw-semibold" for="childSeat' + index + '">Bambino ' + (index + 1) + ': Seggiolino</label></div><div class="mt-2 d-none" data-weight-wrap><label class="form-label small" for="childWeight' + index + '">Peso del bambino (kg)</label><input class="form-control" type="number" name="child_weight[' + index + ']" id="childWeight' + index + '" min="0.1" max="100" step="0.1"></div></div>';
+        const checkbox = row.querySelector('[type="checkbox"]');
+        const weight = row.querySelector('[type="number"]');
+        const weightWrap = row.querySelector('[data-weight-wrap]');
+        const state = previous[String(index)] || { checked: false, weight: '' };
+        checkbox.checked = state.checked;
+        weight.value = state.weight;
+        const syncWeight = function(){ weightWrap.classList.toggle('d-none', !checkbox.checked); weight.disabled = !checkbox.checked; weight.required = checkbox.checked; };
+        checkbox.addEventListener('change', syncWeight);
+        syncWeight();
+        childSeatOptions.appendChild(row);
+      }
+    }
+
     function buildTransferDetails() {
       const currentType = fieldValue('type');
       const lines = [
         'Tipo: ' + typeLabel(currentType),
         'Camera: ' + optionalValue(fieldValue('room_number')),
         'Nominativo: ' + optionalValue(fieldValue('guest_name')),
-        'Numero persone: ' + optionalValue(fieldValue('people_count')),
+        'Numero adulti: ' + optionalValue(fieldValue('adults_count')),
+        'Numero bambini: ' + optionalValue(fieldValue('children_count')),
       ];
+      childSeatOptions?.querySelectorAll('[data-child-index]').forEach(function(row){
+        const checkbox = row.querySelector('[type="checkbox"]');
+        const weight = row.querySelector('[type="number"]');
+        if (checkbox.checked) lines.push('Bambino ' + (Number(row.dataset.childIndex) + 1) + ': seggiolino richiesto, peso ' + optionalValue(weight.value) + ' kg');
+      });
 
       if (currentType === 'arrivo_partenza') {
         lines.push('', 'Arrivo:');
         lines.push('- Luogo: ' + optionalValue(selectedText('arrival_place')));
         lines.push('- Data/Ora: ' + formatDateTime(fieldValue('arrival_date'), fieldValue('arrival_time')));
         lines.push('- Pickup: ' + optionalValue(fieldValue('arrival_pickup_time')));
-        addReferenceLines(lines, 'arrival_flight_number', 'arrival_train_number', '- ');
+        if (fieldValue('arrival_travel_reference')) lines.push('- Numero volo o treno: ' + fieldValue('arrival_travel_reference'));
         lines.push('', 'Partenza:');
         lines.push('- Luogo: ' + optionalValue(selectedText('departure_place')));
         lines.push('- Data/Ora: ' + formatDateTime(fieldValue('departure_date'), fieldValue('departure_time')));
         lines.push('- Pickup: ' + optionalValue(fieldValue('departure_pickup_time')));
-        addReferenceLines(lines, 'departure_flight_number', 'departure_train_number', '- ');
+        if (fieldValue('departure_travel_reference')) lines.push('- Numero volo o treno: ' + fieldValue('departure_travel_reference'));
       } else {
         lines.push('Luogo: ' + optionalValue(selectedText('place')));
         lines.push('Data/Ora: ' + formatDateTime(fieldValue('date'), fieldValue('time')));
         lines.push('Pickup: ' + optionalValue(fieldValue('pickup_time')));
-        addReferenceLines(lines, 'flight_number', 'train_number', '');
+        if (fieldValue('travel_reference')) lines.push('Numero volo o treno: ' + fieldValue('travel_reference'));
       }
 
       return lines.join('\n');
@@ -183,6 +223,7 @@
 
     if (booked) booked.addEventListener('change', syncCompanyField);
     if (type) type.addEventListener('change', syncTransferType);
+    if (childrenCount) childrenCount.addEventListener('input', syncChildSeatOptions);
     document.querySelectorAll('[data-travel-place]').forEach(function(select){
       select.addEventListener('change', function(){ syncTravelReference(select); });
     });
@@ -209,5 +250,6 @@
 
     syncCompanyField();
     syncTransferType();
+    syncChildSeatOptions();
   });
 })();
