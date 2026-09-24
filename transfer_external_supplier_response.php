@@ -30,31 +30,36 @@ function public_transfer_time(?string $value): string {
 }
 
 function public_transfer_details(array $row): array {
+  $adultCount = (int)($row['adults_count'] ?? 0);
+  $childrenCount = (int)($row['children_count'] ?? 0);
+  if ($adultCount === 0 && $childrenCount === 0) $adultCount = (int)($row['people_count'] ?? 0);
   $details = [
     'Tipo' => public_transfer_type_label((string)($row['type'] ?? '')),
     'Camera' => (string)($row['room_number'] ?? '—'),
     'Nominativo' => (string)($row['guest_name'] ?? '—'),
-    'Numero persone' => isset($row['people_count']) ? (string)(int)$row['people_count'] : '—',
+    'Numero adulti' => (string)$adultCount,
+    'Numero bambini' => (string)$childrenCount,
     'Prezzo' => $row['price_eur'] !== null ? '€ ' . number_format((float)$row['price_eur'], 2, ',', '.') : '—',
   ];
+  $seatWeights = json_decode((string)($row['child_seat_weights'] ?? ''), true);
+  if (is_array($seatWeights) && $seatWeights) {
+    $details['Seggiolini'] = implode(', ', array_map(static fn($weight): string => number_format((float)$weight, 1, ',', '.') . ' kg', $seatWeights));
+  }
 
   if (($row['type'] ?? '') === 'arrivo_partenza') {
     $details['Luogo arrivo'] = (string)($row['arrival_place'] ?? '—');
     $details['Data/Ora arrivo'] = public_transfer_datetime($row['arrival_date_time'] ?? null);
     $details['Pickup arrivo'] = public_transfer_time($row['arrival_pickup_time'] ?? null);
-    if (!empty($row['arrival_flight_number'])) $details['Numero volo arrivo'] = (string)$row['arrival_flight_number'];
-    if (!empty($row['arrival_train_number'])) $details['Numero treno arrivo'] = (string)$row['arrival_train_number'];
+    if (!empty($row['arrival_flight_number']) || !empty($row['arrival_train_number'])) $details['Numero volo o treno arrivo'] = (string)($row['arrival_flight_number'] ?: $row['arrival_train_number']);
     $details['Luogo partenza'] = (string)($row['departure_place'] ?? '—');
     $details['Data/Ora partenza'] = public_transfer_datetime($row['departure_date_time'] ?? null);
     $details['Pickup partenza'] = public_transfer_time($row['departure_pickup_time'] ?? null);
-    if (!empty($row['departure_flight_number'])) $details['Numero volo partenza'] = (string)$row['departure_flight_number'];
-    if (!empty($row['departure_train_number'])) $details['Numero treno partenza'] = (string)$row['departure_train_number'];
+    if (!empty($row['departure_flight_number']) || !empty($row['departure_train_number'])) $details['Numero volo o treno partenza'] = (string)($row['departure_flight_number'] ?: $row['departure_train_number']);
   } else {
     $details['Luogo'] = (string)($row['place'] ?? '—');
     $details['Data/Ora'] = public_transfer_datetime($row['date_time'] ?? null);
     $details['Pickup'] = public_transfer_time($row['pickup_time'] ?? null);
-    if (!empty($row['flight_number'])) $details['Numero volo'] = (string)$row['flight_number'];
-    if (!empty($row['train_number'])) $details['Numero treno'] = (string)$row['train_number'];
+    if (!empty($row['flight_number']) || !empty($row['train_number'])) $details['Numero volo o treno'] = (string)($row['flight_number'] ?: $row['train_number']);
   }
 
   return $details;

@@ -32,21 +32,25 @@ $form = [
   'pickup_time' => '',
   'flight_number' => '',
   'train_number' => '',
+  'travel_reference' => '',
   'arrival_place' => $places[0],
   'arrival_date' => '',
   'arrival_time' => '',
   'arrival_pickup_time' => '',
   'arrival_flight_number' => '',
   'arrival_train_number' => '',
+  'arrival_travel_reference' => '',
   'departure_place' => $places[0],
   'departure_date' => '',
   'departure_time' => '',
   'departure_pickup_time' => '',
   'departure_flight_number' => '',
   'departure_train_number' => '',
+  'departure_travel_reference' => '',
   'room_number' => '',
   'guest_name' => '',
-  'people_count' => '',
+  'adults_count' => '1',
+  'children_count' => '0',
   'price_eur' => '',
   'supplier_price_eur' => '',
   'supplier_name' => $suppliers[0],
@@ -126,7 +130,9 @@ function transfer_external_build_email_details(
   string $type,
   string $room,
   string $name,
-  int $people,
+  int $adults,
+  int $children,
+  array $childSeatWeights,
   string $price,
   ?string $place,
   ?DateTime $dateTime,
@@ -148,8 +154,12 @@ function transfer_external_build_email_details(
     'Tipo: ' . transfer_external_type_label($type),
     'Camera: ' . $room,
     'Nominativo: ' . $name,
-    'Numero persone: ' . $people,
+    'Numero adulti: ' . $adults,
+    'Numero bambini: ' . $children,
   ];
+  foreach ($childSeatWeights as $index => $weight) {
+    $lines[] = 'Bambino ' . ($index + 1) . ': seggiolino richiesto, peso ' . number_format((float)$weight, 1, ',', '.') . ' kg';
+  }
 
   if ($type === 'arrivo_partenza') {
     $lines[] = '';
@@ -157,21 +167,18 @@ function transfer_external_build_email_details(
     $lines[] = '- Luogo: ' . ($arrivalPlace ?: '—');
     $lines[] = '- Data/Ora: ' . transfer_external_format_datetime($arrivalDateTime);
     $lines[] = '- Pickup: ' . transfer_external_format_time($arrivalPickupDb);
-    if ($arrivalFlightNumber) $lines[] = '- Numero volo: ' . $arrivalFlightNumber;
-    if ($arrivalTrainNumber) $lines[] = '- Numero treno: ' . $arrivalTrainNumber;
+    if ($arrivalFlightNumber || $arrivalTrainNumber) $lines[] = '- Numero volo o treno: ' . ($arrivalFlightNumber ?: $arrivalTrainNumber);
     $lines[] = '';
     $lines[] = 'Partenza:';
     $lines[] = '- Luogo: ' . ($departurePlace ?: '—');
     $lines[] = '- Data/Ora: ' . transfer_external_format_datetime($departureDateTime);
     $lines[] = '- Pickup: ' . transfer_external_format_time($departurePickupDb);
-    if ($departureFlightNumber) $lines[] = '- Numero volo: ' . $departureFlightNumber;
-    if ($departureTrainNumber) $lines[] = '- Numero treno: ' . $departureTrainNumber;
+    if ($departureFlightNumber || $departureTrainNumber) $lines[] = '- Numero volo o treno: ' . ($departureFlightNumber ?: $departureTrainNumber);
   } else {
     $lines[] = 'Luogo: ' . ($place ?: '—');
     $lines[] = 'Data/Ora: ' . transfer_external_format_datetime($dateTime);
     $lines[] = 'Pickup: ' . transfer_external_format_time($pickupDb);
-    if ($flightNumber) $lines[] = 'Numero volo: ' . $flightNumber;
-    if ($trainNumber) $lines[] = 'Numero treno: ' . $trainNumber;
+    if ($flightNumber || $trainNumber) $lines[] = 'Numero volo o treno: ' . ($flightNumber ?: $trainNumber);
   }
 
   return implode("\n", $lines);
@@ -226,7 +233,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $room = $form['room_number'];
     $name = $form['guest_name'];
-    $peopleRaw = $form['people_count'];
+    $adultsRaw = $form['adults_count'];
+    $childrenRaw = $form['children_count'];
     $priceRaw = $form['price_eur'];
     $supplierPriceRaw = $form['supplier_price_eur'];
     $booked = (int)$form['booked'];
@@ -244,10 +252,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
 
-    $people = null;
-    if ($peopleRaw === '' || ($people = filter_var($peopleRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) === false) {
-      $message = 'Inserisci un Numero Persone valido (maggiore o uguale a 1).';
+    $adults = filter_var($adultsRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 100]]);
+    $children = filter_var($childrenRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => 20]]);
+    if ($adults === false || $children === false || ((int)$adults + (int)$children) < 1) $message = 'Inserisci almeno un adulto o un bambino.';
+    $adults = $adults === false ? 0 : (int)$adults;
+    $children = $children === false ? 0 : (int)$children;
+    $childSeatWeights = [];
+    $requestedSeats = is_array($_POST['child_seat'] ?? null) ? $_POST['child_seat'] : [];
+    $submittedWeights = is_array($_POST['child_weight'] ?? null) ? $_POST['child_weight'] : [];
+    for ($childIndex = 0; $childIndex < $children; $childIndex++) {
+      if (!isset($requestedSeats[$childIndex])) continue;
+      $weightRaw = str_replace(',', '.', trim((string)($submittedWeights[$childIndex] ?? '')));
+      if (!is_numeric($weightRaw) || (float)$weightRaw <= 0 || (float)$weightRaw > 100) { $message = 'Inserisci un peso valido per ogni bambino che necessita del seggiolino.'; break; }
+      $childSeatWeights[$childIndex] = round((float)$weightRaw, 1);
     }
+    $people = $adults + $children;
 
     $price = null;
     if (!$message) {
@@ -286,10 +305,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $departureDateTime = transfer_external_required_datetime($form['departure_date'], $form['departure_time']);
       $arrivalPickupDb = transfer_external_optional_time($form['arrival_pickup_time']);
       $departurePickupDb = transfer_external_optional_time($form['departure_pickup_time']);
-      $arrivalFlightNumber = transfer_external_is_airport($arrivalPlace) ? transfer_external_clean_reference($form['arrival_flight_number']) : null;
-      $arrivalTrainNumber = transfer_external_is_station($arrivalPlace) ? transfer_external_clean_reference($form['arrival_train_number']) : null;
-      $departureFlightNumber = transfer_external_is_airport($departurePlace) ? transfer_external_clean_reference($form['departure_flight_number']) : null;
-      $departureTrainNumber = transfer_external_is_station($departurePlace) ? transfer_external_clean_reference($form['departure_train_number']) : null;
+      $arrivalTravelReference = transfer_external_clean_reference($form['arrival_travel_reference']);
+      $departureTravelReference = transfer_external_clean_reference($form['departure_travel_reference']);
+      $arrivalFlightNumber = transfer_external_is_airport($arrivalPlace) ? $arrivalTravelReference : null;
+      $arrivalTrainNumber = transfer_external_is_station($arrivalPlace) ? $arrivalTravelReference : null;
+      $departureFlightNumber = transfer_external_is_airport($departurePlace) ? $departureTravelReference : null;
+      $departureTrainNumber = transfer_external_is_station($departurePlace) ? $departureTravelReference : null;
 
       if (!$arrivalDateTime || !$departureDateTime) {
         $message = 'Data/ora di arrivo e partenza non valide.';
@@ -302,8 +323,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $place = in_array($form['place'], $places, true) ? $form['place'] : $places[0];
       $dateTime = transfer_external_required_datetime($form['date'], $form['time']);
       $pickupDb = transfer_external_optional_time($form['pickup_time']);
-      $flightNumber = transfer_external_is_airport($place) ? transfer_external_clean_reference($form['flight_number']) : null;
-      $trainNumber = transfer_external_is_station($place) ? transfer_external_clean_reference($form['train_number']) : null;
+      $travelReference = transfer_external_clean_reference($form['travel_reference']);
+      $flightNumber = transfer_external_is_airport($place) ? $travelReference : null;
+      $trainNumber = transfer_external_is_station($place) ? $travelReference : null;
       if (!$dateTime) {
         $message = 'Data/ora non valida.';
       }
@@ -317,8 +339,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $tokenExpiresAt = $sendSupplierEmail ? (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s') : null;
 
         $sql = 'INSERT INTO transfers_external
-                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, price_eur, supplier_price_eur, booked, paid, service_company, supplier_name, supplier_confirm_token, supplier_reject_token, supplier_token_expires_at, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+                  (type, place, date_time, pickup_time, room_number, guest_name, people_count, adults_count, children_count, child_seat_weights, price_eur, supplier_price_eur, booked, paid, service_company, supplier_name, supplier_confirm_token, supplier_reject_token, supplier_token_expires_at, flight_number, train_number, arrival_place, arrival_date_time, arrival_pickup_time, arrival_flight_number, arrival_train_number, departure_place, departure_date_time, departure_pickup_time, departure_flight_number, departure_train_number, created_by)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
           $type,
@@ -328,6 +350,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $room,
           $name,
           $people,
+          $adults,
+          $children,
+          $childSeatWeights ? json_encode($childSeatWeights) : null,
           $price,
           $supplierPrice,
           $booked,
@@ -357,7 +382,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $type,
             $room,
             $name,
-            (int)$people,
+            $adults,
+            $children,
+            $childSeatWeights,
             (string)$price,
             $place,
             $dateTime,
@@ -412,7 +439,7 @@ include __DIR__ . '/partials/header.php';
           <input type="hidden" name="send_supplier_email" id="send_supplier_email" value="0">
           <div class="row g-3">
 
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label class="form-label">Tipo</label>
               <select name="type" id="transfer_type" class="form-select">
                 <option value="arrivo" <?= $form['type'] === 'arrivo' ? 'selected' : '' ?>>Arrivo</option>
@@ -421,15 +448,18 @@ include __DIR__ . '/partials/header.php';
               </select>
             </div>
 
-            <div class="col-12<?= $isRoundTripSelected ? ' d-none' : '' ?>" id="singleTransferFields"<?= $isRoundTripSelected ? ' hidden' : '' ?>>
-              <div class="row g-3">
-                <div class="col-md-9">
+            <div class="transfer-fields-contents<?= $isRoundTripSelected ? ' d-none' : '' ?>" id="singleTransferFields"<?= $isRoundTripSelected ? ' hidden' : '' ?>>
+                <div class="col-md-4">
                   <label class="form-label">Luogo Arrivo/Partenza</label>
                   <select name="place" id="place" class="form-select" data-travel-place>
                     <?php foreach($places as $p): ?>
                       <option value="<?= e($p) ?>" <?= $form['place'] === $p ? 'selected' : '' ?>><?= e($p) ?></option>
                     <?php endforeach; ?>
                   </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Numero Volo o Treno</label>
+                  <input type="text" name="travel_reference" class="form-control" maxlength="80" value="<?= e($form['travel_reference']) ?>">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Data Arrivo/Partenza</label>
@@ -443,15 +473,6 @@ include __DIR__ . '/partials/header.php';
                   <label class="form-label">Orario Pickup (opz.)</label>
                   <input type="time" name="pickup_time" class="form-control" value="<?= e($form['pickup_time']) ?>">
                 </div>
-                <div class="col-md-6 travel-ref flight-ref d-none">
-                  <label class="form-label">Numero Volo</label>
-                  <input type="text" name="flight_number" class="form-control" maxlength="80" value="<?= e($form['flight_number']) ?>">
-                </div>
-                <div class="col-md-6 travel-ref train-ref d-none">
-                  <label class="form-label">Numero Treno</label>
-                  <input type="text" name="train_number" class="form-control" maxlength="80" value="<?= e($form['train_number']) ?>">
-                </div>
-              </div>
             </div>
 
             <div class="col-12<?= $isRoundTripSelected ? '' : ' d-none' ?>" id="roundTripTransferFields"<?= $isRoundTripSelected ? '' : ' hidden' ?>>
@@ -477,13 +498,9 @@ include __DIR__ . '/partials/header.php';
                   <label class="form-label">Orario Pickup Arrivo (opz.)</label>
                   <input type="time" name="arrival_pickup_time" class="form-control" value="<?= e($form['arrival_pickup_time']) ?>">
                 </div>
-                <div class="col-md-4 travel-ref flight-ref d-none">
-                  <label class="form-label">Numero Volo Arrivo</label>
-                  <input type="text" name="arrival_flight_number" class="form-control" maxlength="80" value="<?= e($form['arrival_flight_number']) ?>">
-                </div>
-                <div class="col-md-4 travel-ref train-ref d-none">
-                  <label class="form-label">Numero Treno Arrivo</label>
-                  <input type="text" name="arrival_train_number" class="form-control" maxlength="80" value="<?= e($form['arrival_train_number']) ?>">
+                <div class="col-md-4">
+                  <label class="form-label">Numero Volo o Treno Arrivo</label>
+                  <input type="text" name="arrival_travel_reference" class="form-control" maxlength="80" value="<?= e($form['arrival_travel_reference']) ?>">
                 </div>
 
                 <div class="col-12"><hr><h2 class="h6 mb-0">Partenza</h2></div>
@@ -507,13 +524,9 @@ include __DIR__ . '/partials/header.php';
                   <label class="form-label">Orario Pickup Partenza (opz.)</label>
                   <input type="time" name="departure_pickup_time" class="form-control" value="<?= e($form['departure_pickup_time']) ?>">
                 </div>
-                <div class="col-md-4 travel-ref flight-ref d-none">
-                  <label class="form-label">Numero Volo Partenza</label>
-                  <input type="text" name="departure_flight_number" class="form-control" maxlength="80" value="<?= e($form['departure_flight_number']) ?>">
-                </div>
-                <div class="col-md-4 travel-ref train-ref d-none">
-                  <label class="form-label">Numero Treno Partenza</label>
-                  <input type="text" name="departure_train_number" class="form-control" maxlength="80" value="<?= e($form['departure_train_number']) ?>">
+                <div class="col-md-4">
+                  <label class="form-label">Numero Volo o Treno Partenza</label>
+                  <input type="text" name="departure_travel_reference" class="form-control" maxlength="80" value="<?= e($form['departure_travel_reference']) ?>">
                 </div>
               </div>
             </div>
@@ -528,9 +541,14 @@ include __DIR__ . '/partials/header.php';
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Numero Persone</label>
-              <input type="number" name="people_count" class="form-control" min="1" step="1" value="<?= e($form['people_count']) ?>" required>
+              <label class="form-label">Numero Adulti</label>
+              <input type="number" name="adults_count" class="form-control" min="0" max="100" step="1" value="<?= e($form['adults_count']) ?>" required>
             </div>
+            <div class="col-md-4">
+              <label class="form-label">Numero Bambini</label>
+              <input type="number" name="children_count" id="children_count" class="form-control" min="0" max="20" step="1" value="<?= e($form['children_count']) ?>" required>
+            </div>
+            <div class="col-12"><div id="childSeatOptions" class="row g-2" data-selected="<?= e(json_encode(array_keys(is_array($_POST['child_seat'] ?? null) ? $_POST['child_seat'] : []))) ?>" data-weights="<?= e(json_encode(is_array($_POST['child_weight'] ?? null) ? $_POST['child_weight'] : [])) ?>"></div></div>
 
             <div class="col-md-4">
               <label class="form-label">Prezzo al Cliente</label>
