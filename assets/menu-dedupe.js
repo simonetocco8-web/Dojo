@@ -1,34 +1,35 @@
 (function () {
-  function dedupeTramontoDayMenus() {
-    const allMenus = Array.from(document.querySelectorAll('.dojo-tramontoday-menu, .nav-item.dropdown')).filter(function (menu) {
-      const label = menu.querySelector('.dropdown-toggle span');
-      return menu.classList.contains('dojo-tramontoday-menu') || (label && label.textContent.trim() === 'TramontoDay');
+  function dedupeMenu(labelText) {
+    const allMenus = Array.from(document.querySelectorAll('.nav-item')).filter(function (menu) {
+      const label = menu.querySelector(':scope > .nav-link span');
+      return label && label.textContent.trim() === labelText;
     });
-    if (allMenus.length <= 1) return;
-
     const isDesktop = window.matchMedia('(min-width: 992px)').matches;
-    let kept = false;
-
-    allMenus.forEach(function (menu) {
+    const currentLayoutMenus = allMenus.filter(function (menu) {
       const isSidebarMenu = Boolean(menu.closest('.dojo-sidebar'));
       const isNavbarMenu = Boolean(menu.closest('.navbar'));
-      const belongsToCurrentLayout = isDesktop
+      return isDesktop
         ? (isSidebarMenu || (!isNavbarMenu && !menu.classList.contains('dojo-mobile-only')))
         : (isNavbarMenu || (!isSidebarMenu && !menu.classList.contains('dojo-desktop-only')));
-
-      if (belongsToCurrentLayout && !kept) {
-        menu.style.display = '';
-        kept = true;
-      } else {
-        menu.style.display = 'none';
-      }
     });
+    const preferredMenu = currentLayoutMenus.find(function (menu) {
+      return menu.classList.contains('dropdown') && menu.querySelector(':scope > .dropdown-menu');
+    }) || currentLayoutMenus[0];
+
+    allMenus.forEach(function (menu) {
+      menu.style.display = menu === preferredMenu ? '' : 'none';
+    });
+  }
+
+  function dedupeNavigationMenus() {
+    dedupeMenu('TramontoDay');
+    dedupeMenu('Parcheggi');
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', dedupeTramontoDayMenus);
+    document.addEventListener('DOMContentLoaded', dedupeNavigationMenus);
   } else {
-    dedupeTramontoDayMenus();
+    dedupeNavigationMenus();
   }
-  window.addEventListener('resize', dedupeTramontoDayMenus);
+  window.addEventListener('resize', dedupeNavigationMenus);
 })();

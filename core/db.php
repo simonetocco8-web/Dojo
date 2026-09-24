@@ -13,6 +13,31 @@ function db(): PDO {
   return $pdo;
 }
 
+function ensure_parking_spaces_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS parking_spaces (
+      space_id VARCHAR(4) NOT NULL PRIMARY KEY,
+      parking ENUM('primario','secondario') NOT NULL,
+      size ENUM('piccolo','medio','grande') NOT NULL DEFAULT 'medio',
+      is_covered TINYINT(1) NOT NULL DEFAULT 0,
+      status ENUM('libero','occupato','riservato') NOT NULL DEFAULT 'libero',
+      assignment_type ENUM('nessuna','appartamento','personale','tramontoday','sunset_beach_bar','altro') NOT NULL DEFAULT 'nessuna',
+      assignment_detail VARCHAR(190) DEFAULT NULL,
+      updated_by INT UNSIGNED DEFAULT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_parking_spaces_parking_status (parking, status),
+      CONSTRAINT fk_parking_spaces_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $insert = $pdo->prepare('INSERT IGNORE INTO parking_spaces (space_id, parking) VALUES (?, ?)');
+  foreach (['P' => ['primario', 27], 'S' => ['secondario', 11]] as $prefix => $definition) {
+    for ($number = 1; $number <= $definition[1]; $number++) {
+      $insert->execute([$prefix . $number, $definition[0]]);
+    }
+  }
+}
+
 
 function ensure_system_settings_table(PDO $pdo): void {
   $pdo->exec("
@@ -150,6 +175,24 @@ function ensure_transfer_internal_details_columns(PDO $pdo): void {
   }
   if (empty($columns['note'])) {
     $pdo->exec("ALTER TABLE transfers_internal ADD COLUMN note VARCHAR(255) DEFAULT NULL AFTER people_count");
+  }
+}
+
+function ensure_transfer_locations_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS transfer_locations (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(190) NOT NULL UNIQUE,
+      distance_km DECIMAL(8,2) NOT NULL DEFAULT 0.00,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  ");
+
+  $insert = $pdo->prepare('INSERT IGNORE INTO transfer_locations (name, distance_km, is_active) VALUES (?, 0.00, 1)');
+  foreach (['Coop', 'Stazione Ricadi', 'Ristorante La Notte', 'Ristorante Europa', 'Ristorante Campagnola', 'Ristorante da Mimma'] as $name) {
+    $insert->execute([$name]);
   }
 }
 
@@ -323,7 +366,7 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
     WHERE TABLE_SCHEMA = DATABASE()
       AND TABLE_NAME = 'transfers_external'
       AND COLUMN_NAME IN (
-        'supplier_price_eur', 'supplier_name',
+        'supplier_price_eur', 'supplier_name', 'adults_count', 'children_count', 'child_seat_weights',
         'supplier_confirm_token', 'supplier_reject_token', 'supplier_token_expires_at', 'supplier_responded_at', 'rejection_reason',
         'flight_number', 'train_number',
         'arrival_place', 'arrival_date_time', 'arrival_pickup_time', 'arrival_flight_number', 'arrival_train_number',
@@ -334,6 +377,15 @@ function ensure_transfer_external_travel_columns(PDO $pdo): void {
 
   if (empty($columns['supplier_price_eur'])) {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN supplier_price_eur DECIMAL(10,2) DEFAULT NULL AFTER price_eur");
+  }
+  if (empty($columns['adults_count'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN adults_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER people_count");
+  }
+  if (empty($columns['children_count'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN children_count INT UNSIGNED NOT NULL DEFAULT 0 AFTER adults_count");
+  }
+  if (empty($columns['child_seat_weights'])) {
+    $pdo->exec("ALTER TABLE transfers_external ADD COLUMN child_seat_weights TEXT DEFAULT NULL AFTER children_count");
   }
   if (empty($columns['supplier_name'])) {
     $pdo->exec("ALTER TABLE transfers_external ADD COLUMN supplier_name VARCHAR(80) NOT NULL DEFAULT 'Dany Express' AFTER service_company");
