@@ -65,21 +65,25 @@ $statusStmt = $pdo->query("SELECT
   FROM tramontoday_bookings");
 $statusTotals = $statusStmt->fetch(PDO::FETCH_ASSOC) ?: ['cancelled' => 0, 'no_show' => 0];
 
-$byDayStmt = $pdo->query("SELECT booking_date, COUNT(*) AS accesses
-  FROM tramontoday_bookings
-  WHERE $activeStatusSql
-  GROUP BY booking_date
-  ORDER BY booking_date DESC
-  LIMIT 31");
-$accessesByDay = $byDayStmt->fetchAll(PDO::FETCH_ASSOC);
+$seasonRange = get_summer_season_range($pdo);
+$reportTimezone = new DateTimeZone('Europe/Rome');
+$reportToday = new DateTimeImmutable('today', $reportTimezone);
+$reportStart = DateTimeImmutable::createFromFormat('!Y-m-d', (string)($seasonRange['start'] ?? ''), $reportTimezone) ?: $reportToday->setDate((int)$reportToday->format('Y'), 1, 1);
+$reportEnd = DateTimeImmutable::createFromFormat('!Y-m-d', (string)($seasonRange['end'] ?? ''), $reportTimezone) ?: $reportToday->setDate((int)$reportToday->format('Y'), 12, 31);
+if ($reportStart > $reportEnd) [$reportStart, $reportEnd] = [$reportEnd, $reportStart];
 
-$byMonthStmt = $pdo->query("SELECT DATE_FORMAT(booking_date, '%Y-%m') AS month_key, COUNT(*) AS accesses
+$accessesTimeline = [];
+for ($date = $reportStart; $date <= $reportEnd; $date = $date->modify('+1 day')) $accessesTimeline[$date->format('Y-m-d')] = 0;
+$byDayStmt = $pdo->prepare("SELECT booking_date, COUNT(*) AS accesses
   FROM tramontoday_bookings
-  WHERE $activeStatusSql
-  GROUP BY month_key
-  ORDER BY month_key DESC
-  LIMIT 12");
-$accessesByMonth = $byMonthStmt->fetchAll(PDO::FETCH_ASSOC);
+  WHERE $activeStatusSql AND booking_date BETWEEN ? AND ?
+  GROUP BY booking_date
+  ORDER BY booking_date ASC");
+$byDayStmt->execute([$reportStart->format('Y-m-d'), $reportEnd->format('Y-m-d')]);
+foreach ($byDayStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+  if (isset($accessesTimeline[$row['booking_date']])) $accessesTimeline[$row['booking_date']] = (int)$row['accesses'];
+}
+$accessTimelineLabels = array_map(static fn(string $date): string => (new DateTimeImmutable($date))->format('d/m'), array_keys($accessesTimeline));
 
 $revenueByFormulaStmt = $pdo->query("SELECT formula, COALESCE(SUM(final_amount), 0) AS revenue
   FROM tramontoday_bookings
@@ -118,18 +122,6 @@ foreach ($dailyOccupancy as $totals) {
 $averageMorning = $daysWithOccupancy > 0 ? $morningTotal / $daysWithOccupancy : 0;
 $averageAfternoon = $daysWithOccupancy > 0 ? $afternoonTotal / $daysWithOccupancy : 0;
 $extraSunbedRevenue = (int)($summary['extra_sunbeds'] ?? 0) * $extraSunbedPrice;
-
-function tramontoday_report_date_it(?string $date): string {
-  if (!$date) return '';
-  $dt = DateTime::createFromFormat('Y-m-d', $date);
-  return $dt ? $dt->format('d/m/Y') : $date;
-}
-
-function tramontoday_report_month_it(?string $month): string {
-  if (!$month) return '';
-  $dt = DateTime::createFromFormat('Y-m', $month);
-  return $dt ? $dt->format('m/Y') : $month;
-}
 
 $title = 'Report TramontoDay';
 include __DIR__ . '/partials/header.php';
@@ -214,46 +206,12 @@ include __DIR__ . '/partials/header.php';
 </div>
 
 <div class="row g-3">
-  <div class="col-12 col-xl-4">
+  <div class="col-12 col-xl-8">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h5 mb-3">Accessi per giorno</h2>
-        <?php if (!$accessesByDay): ?>
-          <p class="text-muted mb-0">Nessun dato disponibile.</p>
-        <?php else: ?>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead><tr><th>Giorno</th><th class="text-end">Accessi</th></tr></thead>
-              <tbody>
-                <?php foreach ($accessesByDay as $row): ?>
-                  <tr><td><?= e(tramontoday_report_date_it($row['booking_date'])) ?></td><td class="text-end fw-semibold"><?= e(tramontoday_report_int($row['accesses'])) ?></td></tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-12 col-xl-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Accessi per mese</h2>
-        <?php if (!$accessesByMonth): ?>
-          <p class="text-muted mb-0">Nessun dato disponibile.</p>
-        <?php else: ?>
-          <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-              <thead><tr><th>Mese</th><th class="text-end">Accessi</th></tr></thead>
-              <tbody>
-                <?php foreach ($accessesByMonth as $row): ?>
-                  <tr><td><?= e(tramontoday_report_month_it($row['month_key'])) ?></td><td class="text-end fw-semibold"><?= e(tramontoday_report_int($row['accesses'])) ?></td></tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
+        <h2 class="h5 mb-1">Accessi nella stagione</h2>
+        <p class="text-muted small mb-3">Andamento giornaliero dal <?= e($reportStart->format('d/m/Y')) ?> al <?= e($reportEnd->format('d/m/Y')) ?>.</p>
+        <div class="tramontoday-report-chart-wrap"><canvas id="tramontoDayAccessTimeline" data-labels="<?= e(json_encode($accessTimelineLabels)) ?>" data-values="<?= e(json_encode(array_values($accessesTimeline))) ?>"></canvas></div>
       </div>
     </div>
   </div>
@@ -271,4 +229,5 @@ include __DIR__ . '/partials/header.php';
     </div>
   </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<?php $pageScripts = ['assets/tramontoday-reports.js']; include __DIR__ . '/partials/footer.php'; ?>
