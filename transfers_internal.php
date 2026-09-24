@@ -79,10 +79,12 @@ $todayYmd = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->f
                   <?php
                     $transferDateYmd = substr((string)$r['when_at'], 0, 10);
                     $transferRowClass = $transferDateYmd < $todayYmd ? 'table-secondary' : ($transferDateYmd === $todayYmd ? 'table-success' : '');
+                    $transferDateTime = new DateTime((string)$r['when_at']);
+                    $isEarlyTransfer = $transferDateTime->format('H:i') < '08:00';
                   ?>
                   <tr<?= $transferRowClass !== '' ? ' class="' . e($transferRowClass) . '"' : '' ?>>
-                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('d/m/Y'); ?></td>
-                    <td><?php $dt=new DateTime($r['when_at']); echo $dt->format('H:i'); ?></td>
+                    <td><?= e($transferDateTime->format('d/m/Y')) ?></td>
+                    <td><?php if ($isEarlyTransfer): ?><i class="bi bi-clock-fill text-danger me-1" title="Transfer previsto prima delle 08:00" aria-label="Transfer previsto prima delle 08:00"></i><?php endif; ?><?= e($transferDateTime->format('H:i')) ?></td>
                     <td><?= e($r['room_number']) ?></td>
                     <td><?= e($r['people_count'] ?: '—') ?></td>
                     <td><?= e(strtoupper($r['direction'])) ?></td>
