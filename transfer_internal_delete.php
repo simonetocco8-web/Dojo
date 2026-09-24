@@ -4,6 +4,7 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
+require_once __DIR__ . '/core/sms.php';
 
 // (opzionale ma consigliato) helper Google già visto in precedenza
 require_once __DIR__ . '/google/google_client.php';         // google_calendar_client()
@@ -11,6 +12,7 @@ $env = require __DIR__ . '/config/env.php';
 
 
 $pdo  = db();
+ensure_transfer_internal_details_columns($pdo);
 $user = current_user();
 
 // Permessi: limita a admin (adatta se vuoi estendere ad altri ruoli)
@@ -37,8 +39,8 @@ if ($id <= 0) {
 
 $pdo = db();
 
-// 1) Recupera il transfer per leggere l'event_id
-$st = $pdo->prepare("SELECT id, google_event_id FROM transfers_internal WHERE id = ? LIMIT 1");
+// 1) Recupera tutti i dati prima dell'eliminazione: servono anche per l'SMS.
+$st = $pdo->prepare("SELECT id, google_event_id, room_number, direction, location, people_count, note, when_at FROM transfers_internal WHERE id = ? LIMIT 1");
 $st->execute([$id]);
 $transfer = $st->fetch(PDO::FETCH_ASSOC);
 if (!$transfer) {
@@ -62,6 +64,38 @@ if (!empty($transfer['google_event_id'])) {
 $del = $pdo->prepare("DELETE FROM transfers_internal WHERE id = ?");
 $del->execute([$id]);
 
+// 4) Avvisa tutti i navettisti della cancellazione (best-effort).
+$messages = [];
+try {
+  $navStmt = $pdo->prepare("
+    SELECT telefono
+    FROM users
+    WHERE deleted_at IS NULL
+      AND is_active = 1
+      AND telefono <> ''
+      AND FIND_IN_SET('Navettista', REPLACE(dipartimento, ' ', '')) > 0
+  ");
+  $navStmt->execute();
+  $navettistaPhones = $navStmt->fetchAll(PDO::FETCH_COLUMN);
+  $whenAt = new DateTime((string)$transfer['when_at']);
+
+  sms_send_internal_transfer($env, [
+    'label' => 'CANCELLAZIONE',
+    'room_number' => $transfer['room_number'] ?? '',
+    'direction' => $transfer['direction'] ?? '',
+    'location' => $transfer['location'] ?? '',
+    'date' => $whenAt->format('d/m/Y'),
+    'time' => $whenAt->format('H:i'),
+    'people_count' => $transfer['people_count'] ?? '',
+    'note' => $transfer['note'] ?? '',
+    'recipients' => $navettistaPhones,
+  ]);
+} catch (Throwable $e) {
+  error_log('SMS transfer deletion failed: ' . $e->getMessage());
+  $messages[] = 'sms_error: ' . $e->getMessage();
+}
+
 // Redirect alla lista con messaggio
-header('Location: transfers_internal.php?msg=deleted');
+$msg = $messages ? ('deleted | ' . implode(' | ', $messages)) : 'deleted';
+header('Location: transfers_internal.php?msg=' . rawurlencode($msg));
 exit;
