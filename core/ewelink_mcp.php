@@ -142,7 +142,9 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName, 
         }
         return null;
     };
-    foreach (ewelink_mcp_flatten($result) as $candidate) {
+    // Dal nodo più specifico a quello più ampio: una risposta con più device
+    // non deve associare al secondo device la prima temperatura dell'elenco.
+    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
         if (!is_array($candidate)) continue;
         $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
         if ($encoded === false || ($requireDeviceName && stripos($encoded, $deviceName) === false)) continue;
@@ -168,7 +170,7 @@ function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?
     return null;
 }
 
-function ewelink_mcp_arguments(array $schema, string $deviceName, ?string $deviceId = null): ?array
+function ewelink_mcp_arguments(array $schema, ?string $deviceName, ?string $deviceId = null): ?array
 {
     $properties = $schema['properties'] ?? [];
     $required = $schema['required'] ?? [];
@@ -176,11 +178,19 @@ function ewelink_mcp_arguments(array $schema, string $deviceName, ?string $devic
     foreach ($properties as $name => $definition) {
         $normalized = strtolower((string)$name);
         $compact = str_replace(['-', '_'], '', $normalized);
-        if ($deviceId !== null && in_array($compact, ['id', 'deviceid', 'thingid'], true)) {
+        if (array_key_exists('default', $definition)) {
+            $arguments[$name] = $definition['default'];
+        } elseif (in_array($name, $required, true) && ($definition['type'] ?? '') === 'object'
+            && empty($definition['properties'])) {
+            // eWeLink richiede extraParams: {} anche se l'oggetto non contiene campi.
+            $arguments[$name] = (object)[];
+        } elseif (in_array($name, $required, true) && ($definition['type'] ?? '') === 'array') {
+            $arguments[$name] = [];
+        } elseif ($deviceId !== null && in_array($compact, ['id', 'deviceid', 'thingid'], true)) {
             $arguments[$name] = $deviceId;
-        } elseif (str_contains($normalized, 'name') || str_contains($normalized, 'query')) {
+        } elseif ($deviceName !== null && (str_contains($normalized, 'name') || str_contains($normalized, 'query'))) {
             $arguments[$name] = $deviceName;
-        } elseif (str_contains($normalized, 'device') && !str_contains($normalized, 'id')) {
+        } elseif ($deviceName !== null && str_contains($normalized, 'device') && !str_contains($normalized, 'id')) {
             $arguments[$name] = $deviceName;
         }
     }
@@ -232,8 +242,11 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
         ] : ['names' => array_column($tools, 'name')]);
         $tools = array_values(array_filter($tools, static function (array $tool): bool {
             $text = ($tool['name'] ?? '') . ' ' . ($tool['description'] ?? '');
+            $name = (string)($tool['name'] ?? '');
             return preg_match('/device|thing|status|state|temperature|sensor|list|get|query|read/i', $text)
-                && !preg_match('/control|command|switch|turn.on|turn.off|write|update|delete|remove|set./i', $text);
+                // Le descrizioni eWeLink dei tool di lettura citano anche il controllo:
+                // escludiamo in base al nome del tool, non all'intera descrizione.
+                && !preg_match('/control|command|switch|turn.on|turn.off|write|update|delete|remove|set./i', $name);
         }));
         usort($tools, static function (array $a, array $b): int {
             $score = static fn(array $tool): int => preg_match('/status|state|device|thing|list/i', ($tool['name'] ?? '') . ' ' . ($tool['description'] ?? '')) ? 0 : 1;
@@ -245,9 +258,11 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
         // Prima interroga gli strumenti senza argomenti (tipicamente "list devices"):
         // servono sia a leggere direttamente i sensori sia a risolvere nome -> device ID.
         foreach ($tools as $tool) {
-            if (!empty($tool['inputSchema']['required'])) continue;
+            $genericArguments = ewelink_mcp_arguments($tool['inputSchema'] ?? [], null);
+            if ($genericArguments === null) continue;
             try {
-                $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)[]], $session, $trace);
+                ewelink_mcp_trace($trace, 'tool', 'Chiamata generica ' . $tool['name'], ['arguments' => $genericArguments]);
+                $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)$genericArguments], $session, $trace);
                 if ($debug) ewelink_mcp_trace($trace, 'tool_result', 'Risultato di ' . $tool['name'], [
                     'preview' => ewelink_mcp_debug_preview($result),
                 ]);
