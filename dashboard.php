@@ -16,6 +16,7 @@ $user  = current_user();
 $seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+$boilerTemperatures = ewelink_mcp_fetch_boilers();
 ensure_task_user_assignments_table($pdo);
 ensure_products_active_column($pdo);
 ensure_products_default_warehouse_column($pdo);
