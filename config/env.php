@@ -47,7 +47,15 @@ return [
     'auth_base' => $envValue('EWELINK_AUTH_BASE', 'https://eu-apia.coolkit.cc'),
     'api_base' => $envValue('EWELINK_API_BASE', 'https://eu-apia.coolkit.cc'),
     // Scopes consigliati: device lettura/scrittura
-    'scope' => $envValue('EWELINK_SCOPE', 'userinfo:read device:read device:write')
+    'scope' => $envValue('EWELINK_SCOPE', 'userinfo:read device:read device:write'),
+    // URL completo generato da eWeLink (include il token: non commetterlo nel repository).
+    'mcp_access_url' => $envValue('EWELINK_MCP_ACCESS_URL', ''),
+    'mcp_boiler_names' => array_values(array_filter(array_map('trim', explode(',', $envValue(
+      'EWELINK_MCP_BOILER_NAMES',
+      'Boiler Appartamenti,Boiler Cottage'
+    ))))),
+    'mcp_cache_seconds' => $envInt('EWELINK_MCP_CACHE_SECONDS', 60),
+    'mcp_timeout_seconds' => $envInt('EWELINK_MCP_TIMEOUT_SECONDS', 12)
   ],
   'sms' => [
     'enabled' => true,
