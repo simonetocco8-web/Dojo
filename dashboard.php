@@ -5,6 +5,8 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
+require_once __DIR__ . '/core/ewelink_mcp.php';
+require_once __DIR__ . '/core/ecowitt.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -24,6 +26,9 @@ $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1')
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
+$ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
+$boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
+$ecowittWeather = ecowitt_fetch_temperature();
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
@@ -223,6 +228,71 @@ function tramontoday_dashboard_money($amount): string {
 
 
 ?>
+<?php if ($ecowittWeather['configured']): ?>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100 border-start border-4 <?= $ecowittWeather['temperature'] === null ? 'border-secondary' : 'border-info' ?>">
+      <div class="card-body d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="small text-muted text-uppercase fw-semibold">Stazione meteo Ecowitt</div>
+          <h2 class="h5 mb-0"><i class="bi bi-thermometer-sun me-1"></i>Temperatura esterna</h2>
+          <?php if ($ecowittWeather['measured_at']): ?><div class="small text-muted mt-1">Aggiornata alle <?= e(date('H:i', $ecowittWeather['measured_at'])) ?></div><?php endif; ?>
+        </div>
+        <div class="display-6 fw-semibold text-nowrap">
+          <?= $ecowittWeather['temperature'] === null ? '<span class="text-muted">—</span>' : e(number_format((float)$ecowittWeather['temperature'], 1, ',', '')) . '<span class="fs-4"> °C</span>' ?>
+        </div>
+      </div>
+      <?php if ($ecowittWeather['error']): ?><div class="card-footer small text-warning-emphasis">Dato Ecowitt temporaneamente non disponibile.</div><?php endif; ?>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+<?php if ($boilerTemperatures['configured']): ?>
+<div class="row g-4 mb-4">
+  <?php foreach ($boilerTemperatures['boilers'] as $boilerName => $temperature): ?>
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm h-100 border-start border-4 <?= $temperature === null ? 'border-secondary' : 'border-danger' ?>">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted text-uppercase fw-semibold">Temperatura acqua</div>
+            <h2 class="h5 mb-0"><i class="bi bi-thermometer-half me-1"></i><?= e($boilerName) ?></h2>
+          </div>
+          <div class="display-6 fw-semibold text-nowrap">
+            <?= $temperature === null ? '<span class="text-muted">—</span>' : e(number_format((float)$temperature, 1, ',', '')) . '<span class="fs-4"> °C</span>' ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  <?php endforeach; ?>
+  <?php if ($boilerTemperatures['error']): ?>
+    <div class="col-12">
+      <div class="alert alert-warning py-2 mb-0">
+        <i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili.
+        <?php if ($is_admin && !$ewelinkDebug): ?><a class="alert-link ms-1" href="?ewelink_debug=1">Avvia debug MCP</a><?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+  <?php if ($is_admin && $ewelinkDebug): ?>
+    <div class="col-12">
+      <div class="card border-warning shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Debug comunicazione eWeLink MCP</strong><a href="<?= e($base) ?>/dashboard.php" class="btn btn-sm btn-outline-secondary">Chiudi debug</a>
+        </div>
+        <div class="card-body">
+          <div class="alert <?= $boilerTemperatures['error'] ? 'alert-danger' : 'alert-success' ?> py-2"><?= e($boilerTemperatures['error'] ?: 'Comunicazione completata senza errori.') ?></div>
+          <ol class="small font-monospace mb-0">
+            <?php foreach (($boilerTemperatures['trace'] ?? []) as $trace): ?>
+              <li class="mb-2"><strong><?= e($trace['time'] ?? '') ?> [<?= e($trace['step'] ?? '') ?>]</strong> <?= e($trace['message'] ?? '') ?>
+                <?php if (!empty($trace['context'])): ?><pre class="bg-light border rounded p-2 mt-1 mb-0 text-wrap"><?= e(json_encode($trace['context'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></pre><?php endif; ?>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </div>
+      </div>
+    </div>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 <div class="row g-4 mb-4">
 
   <!-- BOX TASK -->
