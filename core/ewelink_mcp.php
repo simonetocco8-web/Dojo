@@ -221,6 +221,17 @@ function ewelink_mcp_device_params_from_result(array $result, string $deviceName
     return [];
 }
 
+function ewelink_mcp_device_record_from_result(array $result, string $deviceName): array
+{
+    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
+        if (!is_array($candidate)) continue;
+        $name = (string)($candidate['name'] ?? '');
+        if ($name === '' || strcasecmp(trim($name), trim($deviceName)) !== 0) continue;
+        return $candidate;
+    }
+    return [];
+}
+
 function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?string
 {
     foreach (ewelink_mcp_flatten($result) as $candidate) {
@@ -279,7 +290,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
-    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v5-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v6-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
     if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
         if (is_array($cached)) {
@@ -294,6 +305,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
         'boilers' => array_fill_keys($names, null),
         'temperature_values' => array_fill_keys($names, []),
         'device_params' => array_fill_keys($names, []),
+        'device_records' => array_fill_keys($names, []),
         'error' => null,
         'trace' => &$trace,
     ];
@@ -351,6 +363,8 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
                 if ($values) $output['temperature_values'][$deviceName] = $values;
                 $params = ewelink_mcp_device_params_from_result($result, $deviceName);
                 if ($params) $output['device_params'][$deviceName] = $params;
+                $record = ewelink_mcp_device_record_from_result($result, $deviceName);
+                if ($record) $output['device_records'][$deviceName] = $record;
                 $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
                 ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
                     'device_id_found' => $deviceIds[$deviceName] !== null,

@@ -244,10 +244,16 @@ function tramontoday_dashboard_money($amount): string {
         <?php if ($boilerName === 'Boiler Cottage'): ?>
           <?php $cottageValues = $boilerTemperatures['temperature_values'][$boilerName] ?? []; ?>
           <?php $cottageParams = $boilerTemperatures['device_params'][$boilerName] ?? []; ?>
+          <?php $cottageRecord = $boilerTemperatures['device_records'][$boilerName] ?? []; ?>
           <div class="border-top mt-3 pt-2 d-flex flex-wrap gap-3 small">
             <span><code>temperature</code>: <strong><?= array_key_exists('temperature', $cottageValues) ? e(number_format((float)$cottageValues['temperature'], 1, ',', '')) . ' °C' : '—' ?></strong></span>
             <span><code>currentTemperature</code>: <strong><?= array_key_exists('currentTemperature', $cottageValues) ? e(number_format((float)$cottageValues['currentTemperature'], 1, ',', '')) . ' °C' : '—' ?></strong></span>
           </div>
+          <?php if (!array_key_exists('temperature', $cottageValues) && array_key_exists('currentTemperature', $cottageValues)): ?>
+            <div class="alert alert-info py-2 mt-2 mb-0 small">
+              Il TH10R2 sta inviando tramite MCP soltanto <code>currentTemperature</code>. Un valore diverso non può essere ricavato finché non compare nel record eWeLink sottostante.
+            </div>
+          <?php endif; ?>
           <details class="border-top mt-2 pt-2 small">
             <summary class="text-primary" role="button">Mostra tutti i parametri eWeLink</summary>
             <?php if ($cottageParams): ?>
@@ -267,6 +273,11 @@ function tramontoday_dashboard_money($amount): string {
             <?php else: ?>
               <div class="text-muted mt-2">Nessun parametro ricevuto per il dispositivo.</div>
             <?php endif; ?>
+          </details>
+          <details class="border-top mt-2 pt-2 small">
+            <summary class="text-primary" role="button">Mostra record completo TH10R2</summary>
+            <p class="text-muted mt-2 mb-1">Dati integrali inviati da eWeLink per verificare ID, UIID, stato online e valori del sensore.</p>
+            <pre class="bg-light border rounded p-2 mb-0 text-wrap text-break"><?= e($cottageRecord ? json_encode($cottageRecord, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'Nessun record ricevuto.') ?></pre>
           </details>
         <?php endif; ?>
       </div>
