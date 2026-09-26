@@ -772,7 +772,7 @@ $lowPressureAlert = $ecowittWeather['pressure'] !== null && $ecowittWeather['pre
 $windGustAlert = $ecowittWeather['wind_gust'] !== null && $ecowittWeather['wind_gust'] >= 40;
 ?>
 <?php if ($ecowittWeather['configured'] || $boilerTemperatures['configured']): ?>
-<div class="row g-3 mb-4 align-items-stretch">
+<div class="row g-3 mt-4 mb-4 align-items-stretch">
   <?php if ($ecowittWeather['configured']): ?>
     <?php foreach ($ecowittMetrics as $metric): ?>
       <?php $metricValue = $ecowittWeather[$metric['key']] ?? null; ?>
