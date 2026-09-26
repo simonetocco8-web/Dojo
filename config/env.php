@@ -57,6 +57,14 @@ return [
     'mcp_cache_seconds' => $envInt('EWELINK_MCP_CACHE_SECONDS', 60),
     'mcp_timeout_seconds' => $envInt('EWELINK_MCP_TIMEOUT_SECONDS', 12)
   ],
+  'ecowitt' => [
+    'application_key' => $envValue('ECOWITT_APPLICATION_KEY', ''),
+    'api_key' => $envValue('ECOWITT_API_KEY', ''),
+    'device_mac' => $envValue('ECOWITT_DEVICE_MAC', ''),
+    'api_base' => $envValue('ECOWITT_API_BASE', 'https://api.ecowitt.net/api/v3'),
+    'cache_seconds' => $envInt('ECOWITT_CACHE_SECONDS', 60),
+    'timeout_seconds' => $envInt('ECOWITT_TIMEOUT_SECONDS', 10)
+  ],
   'sms' => [
     'enabled' => true,
     'provider' => 'openapi',

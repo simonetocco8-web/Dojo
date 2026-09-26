@@ -6,6 +6,7 @@ require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
 require_once __DIR__ . '/core/ewelink_mcp.php';
+require_once __DIR__ . '/core/ecowitt.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -28,6 +29,7 @@ $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
 $ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
 $boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
+$ecowittWeather = ecowitt_fetch_temperature();
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
@@ -227,6 +229,25 @@ function tramontoday_dashboard_money($amount): string {
 
 
 ?>
+<?php if ($ecowittWeather['configured']): ?>
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100 border-start border-4 <?= $ecowittWeather['temperature'] === null ? 'border-secondary' : 'border-info' ?>">
+      <div class="card-body d-flex align-items-center justify-content-between gap-3">
+        <div>
+          <div class="small text-muted text-uppercase fw-semibold">Stazione meteo Ecowitt</div>
+          <h2 class="h5 mb-0"><i class="bi bi-thermometer-sun me-1"></i>Temperatura esterna</h2>
+          <?php if ($ecowittWeather['measured_at']): ?><div class="small text-muted mt-1">Aggiornata alle <?= e(date('H:i', $ecowittWeather['measured_at'])) ?></div><?php endif; ?>
+        </div>
+        <div class="display-6 fw-semibold text-nowrap">
+          <?= $ecowittWeather['temperature'] === null ? '<span class="text-muted">—</span>' : e(number_format((float)$ecowittWeather['temperature'], 1, ',', '')) . '<span class="fs-4"> °C</span>' ?>
+        </div>
+      </div>
+      <?php if ($ecowittWeather['error']): ?><div class="card-footer small text-warning-emphasis">Dato Ecowitt temporaneamente non disponibile.</div><?php endif; ?>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 <?php if ($boilerTemperatures['configured']): ?>
 <div class="row g-4 mb-4">
   <?php foreach ($boilerTemperatures['boilers'] as $boilerName => $temperature): ?>
