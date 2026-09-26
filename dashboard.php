@@ -5,6 +5,8 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
+require_once __DIR__ . '/core/ewelink_mcp.php';
+require_once __DIR__ . '/core/ecowitt.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -24,6 +26,9 @@ $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1')
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
+$ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
+$boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
+$ecowittWeather = ecowitt_fetch_temperature();
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
@@ -688,6 +693,8 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
 
 </div>
 <?php endif; ?>
+
+<?php include __DIR__ . '/partials/dashboard_telemetry.php'; ?>
 
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-6">
