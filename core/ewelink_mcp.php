@@ -125,9 +125,16 @@ function ewelink_mcp_flatten($value): array
 
 function ewelink_mcp_temperature_from_result(array $result, string $deviceName, bool $requireDeviceName = true): ?float
 {
-    $temperatureKeys = ['temperature', 'currenttemperature', 'current_temperature', 'temp'];
+    // Nei dispositivi eWeLink possono coesistere la temperatura interna/ambiente
+    // (`temperature`) e quella della sonda (`currentTemperature`). Per i boiler
+    // la sonda è il dato utile e deve avere sempre la precedenza.
+    $temperatureKeys = ['currenttemperature', 'current_temperature', 'currenttemp', 'current_temp', 'temperature', 'temp'];
     $findTemperature = static function ($value) use (&$findTemperature, $temperatureKeys): ?float {
         if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return $findTemperature($decoded);
+            }
             if (preg_match('/(?:temperature|temperatura|temp)[^0-9-]{0,20}(-?\d+(?:[.,]\d+)?)/i', $value, $match)
                 || preg_match('/(-?\d+(?:[.,]\d+)?)\s*°\s*C\b/i', $value, $match)) {
                 return (float)str_replace(',', '.', $match[1]);
@@ -135,8 +142,12 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName, 
             return null;
         }
         if (!is_array($value)) return null;
-        foreach ($value as $key => $child) {
-            if (in_array(strtolower((string)$key), $temperatureKeys, true) && is_numeric($child)) return (float)$child;
+        foreach ($temperatureKeys as $wantedKey) {
+            foreach ($value as $key => $child) {
+                if (strtolower((string)$key) === $wantedKey && is_numeric($child)) return (float)$child;
+            }
+        }
+        foreach ($value as $child) {
             $found = $findTemperature($child);
             if ($found !== null) return $found;
         }
@@ -212,7 +223,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
-    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v2-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
     if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
         if (is_array($cached)) {
