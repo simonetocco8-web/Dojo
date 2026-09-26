@@ -241,6 +241,13 @@ function tramontoday_dashboard_money($amount): string {
             <?= $temperature === null ? '<span class="text-muted">—</span>' : e(number_format((float)$temperature, 1, ',', '')) . '<span class="fs-4"> °C</span>' ?>
           </div>
         </div>
+        <?php if ($boilerName === 'Boiler Cottage'): ?>
+          <?php $cottageValues = $boilerTemperatures['temperature_values'][$boilerName] ?? []; ?>
+          <div class="border-top mt-3 pt-2 d-flex flex-wrap gap-3 small">
+            <span><code>temperature</code>: <strong><?= array_key_exists('temperature', $cottageValues) ? e(number_format((float)$cottageValues['temperature'], 1, ',', '')) . ' °C' : '—' ?></strong></span>
+            <span><code>currentTemperature</code>: <strong><?= array_key_exists('currentTemperature', $cottageValues) ? e(number_format((float)$cottageValues['currentTemperature'], 1, ',', '')) . ' °C' : '—' ?></strong></span>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
   <?php endforeach; ?>

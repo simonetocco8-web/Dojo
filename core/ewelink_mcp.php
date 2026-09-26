@@ -170,6 +170,39 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName, 
     return null;
 }
 
+function ewelink_mcp_temperature_values_from_result(array $result, string $deviceName, bool $requireDeviceName = true): array
+{
+    $wantedKeys = ['temperature', 'currenttemperature'];
+    $collect = static function ($value) use (&$collect, $wantedKeys): array {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? $collect($decoded) : [];
+        }
+        if (!is_array($value)) return [];
+
+        $values = [];
+        foreach ($value as $key => $child) {
+            $normalized = strtolower(str_replace(['_', '-'], '', (string)$key));
+            if (in_array($normalized, $wantedKeys, true) && is_numeric($child)) {
+                $values[$normalized === 'currenttemperature' ? 'currentTemperature' : 'temperature'] = (float)$child;
+            }
+        }
+        foreach ($value as $child) {
+            foreach ($collect($child) as $key => $temperature) $values[$key] ??= $temperature;
+        }
+        return $values;
+    };
+
+    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
+        if (!is_array($candidate)) continue;
+        $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false || ($requireDeviceName && stripos($encoded, $deviceName) === false)) continue;
+        $values = $collect($candidate);
+        if ($values) return $values;
+    }
+    return [];
+}
+
 function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?string
 {
     foreach (ewelink_mcp_flatten($result) as $candidate) {
@@ -228,7 +261,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
-    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v3-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v4-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
     if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
         if (is_array($cached)) {
@@ -238,7 +271,13 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     }
 
     if ($debug) ewelink_mcp_trace($trace, 'cache', 'Cache ignorata per il debug');
-    $output = ['configured' => true, 'boilers' => array_fill_keys($names, null), 'error' => null, 'trace' => &$trace];
+    $output = [
+        'configured' => true,
+        'boilers' => array_fill_keys($names, null),
+        'temperature_values' => array_fill_keys($names, []),
+        'error' => null,
+        'trace' => &$trace,
+    ];
     try {
         $session = null;
         ewelink_mcp_request('initialize', [
@@ -289,6 +328,8 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
             foreach ($names as $deviceName) {
                 $temperature = ewelink_mcp_temperature_from_result($result, $deviceName);
                 if ($temperature !== null) $output['boilers'][$deviceName] = $temperature;
+                $values = ewelink_mcp_temperature_values_from_result($result, $deviceName);
+                if ($values) $output['temperature_values'][$deviceName] = $values;
                 $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
                 ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
                     'device_id_found' => $deviceIds[$deviceName] !== null,
@@ -317,6 +358,8 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
                 $temperature = ewelink_mcp_temperature_from_result($result, $deviceName, false);
                 if ($temperature !== null) {
                     $output['boilers'][$deviceName] = $temperature;
+                    $values = ewelink_mcp_temperature_values_from_result($result, $deviceName, false);
+                    if ($values) $output['temperature_values'][$deviceName] = $values;
                     break;
                 }
             }
