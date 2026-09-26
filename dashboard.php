@@ -5,6 +5,7 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
+require_once __DIR__ . '/core/ewelink_mcp.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -14,6 +15,7 @@ $user  = current_user();
 $seasonActive = is_today_within_summer_season($pdo);
 
 if (!$user) { header('Location: ' . $base . '/index.php?msg=auth'); exit; }
+$boilerTemperatures = ewelink_mcp_fetch_boilers();
 ensure_task_user_assignments_table($pdo);
 ensure_products_active_column($pdo);
 ensure_products_default_warehouse_column($pdo);
@@ -223,6 +225,28 @@ function tramontoday_dashboard_money($amount): string {
 
 
 ?>
+<?php if ($boilerTemperatures['configured']): ?>
+<div class="row g-4 mb-4">
+  <?php foreach ($boilerTemperatures['boilers'] as $boilerName => $temperature): ?>
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm h-100 border-start border-4 <?= $temperature === null ? 'border-secondary' : 'border-danger' ?>">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted text-uppercase fw-semibold">Temperatura acqua</div>
+            <h2 class="h5 mb-0"><i class="bi bi-thermometer-half me-1"></i><?= e($boilerName) ?></h2>
+          </div>
+          <div class="display-6 fw-semibold text-nowrap">
+            <?= $temperature === null ? '<span class="text-muted">—</span>' : e(number_format((float)$temperature, 1, ',', '')) . '<span class="fs-4"> °C</span>' ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  <?php endforeach; ?>
+  <?php if ($boilerTemperatures['error']): ?>
+    <div class="col-12"><div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili. Il dettaglio è stato registrato nel log PHP.</div></div>
+  <?php endif; ?>
+</div>
+<?php endif; ?>
 <div class="row g-4 mb-4">
 
   <!-- BOX TASK -->
