@@ -126,8 +126,8 @@ function ewelink_mcp_flatten($value): array
 function ewelink_mcp_temperature_from_result(array $result, string $deviceName, bool $requireDeviceName = true): ?float
 {
     // Nei dispositivi eWeLink possono coesistere la temperatura interna/ambiente
-    // (`temperature`) e quella della sonda (`currentTemperature`). Per i boiler
-    // la sonda è il dato utile e deve avere sempre la precedenza.
+    // e quella della sonda. Il nome del parametro cambia in base al modello e non
+    // identifica in modo affidabile quale delle due sia la sonda del boiler.
     $temperatureKeys = ['currenttemperature', 'current_temperature', 'currenttemp', 'current_temp', 'temperature', 'temp'];
     $findTemperature = static function ($value) use (&$findTemperature, $temperatureKeys): ?float {
         if (is_string($value)) {
@@ -142,11 +142,16 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName, 
             return null;
         }
         if (!is_array($value)) return null;
-        foreach ($temperatureKeys as $wantedKey) {
-            foreach ($value as $key => $child) {
-                if (strtolower((string)$key) === $wantedKey && is_numeric($child)) return (float)$child;
+        $directTemperatures = [];
+        foreach ($value as $key => $child) {
+            if (in_array(strtolower((string)$key), $temperatureKeys, true) && is_numeric($child)) {
+                $directTemperatures[] = (float)$child;
             }
         }
+        // Queste schede rappresentano acqua calda: quando il medesimo device
+        // espone sia ambiente sia sonda, il valore più alto è quello del boiler.
+        // Chiavi di setpoint/target non sono incluse in $temperatureKeys.
+        if ($directTemperatures) return max($directTemperatures);
         foreach ($value as $child) {
             $found = $findTemperature($child);
             if ($found !== null) return $found;
@@ -223,7 +228,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
-    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v2-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v3-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
     if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
         if (is_array($cached)) {
@@ -288,6 +293,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
                 ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
                     'device_id_found' => $deviceIds[$deviceName] !== null,
                     'temperature_found' => $output['boilers'][$deviceName] !== null,
+                    'selected_temperature' => $output['boilers'][$deviceName],
                 ]);
             }
         }
