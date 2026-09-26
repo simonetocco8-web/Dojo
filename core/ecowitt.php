@@ -13,12 +13,21 @@ function ecowitt_is_configured(): bool
 }
 
 /**
- * Recupera la temperatura esterna corrente in gradi Celsius.
+ * Recupera le letture meteo correnti nelle unità usate dalla dashboard.
  */
 function ecowitt_fetch_temperature(): array
 {
     $cfg = ecowitt_config();
-    $output = ['configured' => ecowitt_is_configured(), 'temperature' => null, 'measured_at' => null, 'error' => null];
+    $output = [
+        'configured' => ecowitt_is_configured(),
+        'temperature' => null,
+        'humidity' => null,
+        'wind_gust' => null,
+        'daily_rain' => null,
+        'pressure' => null,
+        'measured_at' => null,
+        'error' => null,
+    ];
     if (!$output['configured']) return $output;
 
     $cacheSeconds = max(0, (int)($cfg['cache_seconds'] ?? 60));
@@ -32,8 +41,11 @@ function ecowitt_fetch_temperature(): array
         'application_key' => $cfg['application_key'],
         'api_key' => $cfg['api_key'],
         'mac' => $cfg['device_mac'],
-        'call_back' => 'outdoor.temperature',
+        'call_back' => 'outdoor,wind,rainfall,pressure',
         'temp_unitid' => 1,
+        'wind_speed_unitid' => 7,
+        'rainfall_unitid' => 12,
+        'pressure_unitid' => 3,
     ]);
     $url = rtrim((string)$cfg['api_base'], '/') . '/device/real_time?' . $query;
 
@@ -61,12 +73,24 @@ function ecowitt_fetch_temperature(): array
         if ((int)($response['code'] ?? -1) !== 0) {
             throw new RuntimeException((string)($response['msg'] ?? 'Errore API Ecowitt.'));
         }
-        $reading = $response['data']['outdoor']['temperature'] ?? null;
-        if (!is_array($reading) || !isset($reading['value']) || !is_numeric($reading['value'])) {
+        $data = $response['data'] ?? [];
+        $readings = [
+            'temperature' => $data['outdoor']['temperature'] ?? null,
+            'humidity' => $data['outdoor']['humidity'] ?? null,
+            'wind_gust' => $data['wind']['wind_gust'] ?? null,
+            'daily_rain' => $data['rainfall']['daily'] ?? ($data['rainfall_piezo']['daily'] ?? null),
+            'pressure' => $data['pressure']['relative'] ?? null,
+        ];
+        if (!is_array($readings['temperature']) || !isset($readings['temperature']['value']) || !is_numeric($readings['temperature']['value'])) {
             throw new RuntimeException('La temperatura esterna non è presente nella risposta Ecowitt.');
         }
-        $output['temperature'] = (float)$reading['value'];
-        $output['measured_at'] = isset($reading['time']) && is_numeric($reading['time']) ? (int)$reading['time'] : null;
+        $timestamps = [];
+        foreach ($readings as $key => $reading) {
+            if (!is_array($reading) || !isset($reading['value']) || !is_numeric($reading['value'])) continue;
+            $output[$key] = (float)$reading['value'];
+            if (isset($reading['time']) && is_numeric($reading['time'])) $timestamps[] = (int)$reading['time'];
+        }
+        $output['measured_at'] = $timestamps ? max($timestamps) : null;
         @file_put_contents($cacheFile, json_encode($output), LOCK_EX);
     } catch (Throwable $e) {
         $output['error'] = $e->getMessage();

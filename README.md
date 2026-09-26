@@ -56,5 +56,6 @@ logout.php
 
 ## Integrazione stazione meteo Ecowitt
 - Crea le chiavi nel portale API Ecowitt e configura `ECOWITT_APPLICATION_KEY`, `ECOWITT_API_KEY` e `ECOWITT_DEVICE_MAC` sul server.
-- La dashboard mostra la temperatura esterna corrente in °C letta da `outdoor.temperature`.
+- La dashboard mostra temperatura, umidità, raffica, pioggia giornaliera e pressione nelle unità metriche.
+- Pressione fino a 1013 hPa e raffiche da 40 km/h attivano avvisi operativi in dashboard.
 - La cache predefinita è di 60 secondi; può essere modificata con `ECOWITT_CACHE_SECONDS`.
