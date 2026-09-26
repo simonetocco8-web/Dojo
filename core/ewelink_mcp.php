@@ -170,68 +170,6 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName, 
     return null;
 }
 
-function ewelink_mcp_temperature_values_from_result(array $result, string $deviceName, bool $requireDeviceName = true): array
-{
-    $wantedKeys = ['temperature', 'currenttemperature'];
-    $collect = static function ($value) use (&$collect, $wantedKeys): array {
-        if (is_string($value)) {
-            $decoded = json_decode($value, true);
-            return is_array($decoded) ? $collect($decoded) : [];
-        }
-        if (!is_array($value)) return [];
-
-        $values = [];
-        foreach ($value as $key => $child) {
-            $normalized = strtolower(str_replace(['_', '-'], '', (string)$key));
-            if (in_array($normalized, $wantedKeys, true) && is_numeric($child)) {
-                $values[$normalized === 'currenttemperature' ? 'currentTemperature' : 'temperature'] = (float)$child;
-            }
-        }
-        foreach ($value as $child) {
-            foreach ($collect($child) as $key => $temperature) $values[$key] ??= $temperature;
-        }
-        return $values;
-    };
-
-    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
-        if (!is_array($candidate)) continue;
-        $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
-        if ($encoded === false || ($requireDeviceName && stripos($encoded, $deviceName) === false)) continue;
-        $values = $collect($candidate);
-        if ($values) return $values;
-    }
-    return [];
-}
-
-function ewelink_mcp_device_params_from_result(array $result, string $deviceName): array
-{
-    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
-        if (!is_array($candidate)) continue;
-        $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
-        if ($encoded === false || stripos($encoded, $deviceName) === false || !array_key_exists('params', $candidate)) continue;
-
-        $params = $candidate['params'];
-        if (is_string($params)) {
-            $decoded = json_decode($params, true);
-            if (is_array($decoded)) return $decoded;
-            return ['_raw' => $params];
-        }
-        return is_array($params) ? $params : ['_raw' => $params];
-    }
-    return [];
-}
-
-function ewelink_mcp_device_record_from_result(array $result, string $deviceName): array
-{
-    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
-        if (!is_array($candidate)) continue;
-        $name = (string)($candidate['name'] ?? '');
-        if ($name === '' || strcasecmp(trim($name), trim($deviceName)) !== 0) continue;
-        return $candidate;
-    }
-    return [];
-}
-
 function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?string
 {
     foreach (ewelink_mcp_flatten($result) as $candidate) {
@@ -303,9 +241,6 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     $output = [
         'configured' => true,
         'boilers' => array_fill_keys($names, null),
-        'temperature_values' => array_fill_keys($names, []),
-        'device_params' => array_fill_keys($names, []),
-        'device_records' => array_fill_keys($names, []),
         'error' => null,
         'trace' => &$trace,
     ];
@@ -359,12 +294,6 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
             foreach ($names as $deviceName) {
                 $temperature = ewelink_mcp_temperature_from_result($result, $deviceName);
                 if ($temperature !== null) $output['boilers'][$deviceName] = $temperature;
-                $values = ewelink_mcp_temperature_values_from_result($result, $deviceName);
-                if ($values) $output['temperature_values'][$deviceName] = $values;
-                $params = ewelink_mcp_device_params_from_result($result, $deviceName);
-                if ($params) $output['device_params'][$deviceName] = $params;
-                $record = ewelink_mcp_device_record_from_result($result, $deviceName);
-                if ($record) $output['device_records'][$deviceName] = $record;
                 $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
                 ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
                     'device_id_found' => $deviceIds[$deviceName] !== null,
@@ -393,8 +322,6 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
                 $temperature = ewelink_mcp_temperature_from_result($result, $deviceName, false);
                 if ($temperature !== null) {
                     $output['boilers'][$deviceName] = $temperature;
-                    $values = ewelink_mcp_temperature_values_from_result($result, $deviceName, false);
-                    if ($values) $output['temperature_values'][$deviceName] = $values;
                     break;
                 }
             }
