@@ -47,3 +47,8 @@ logout.php
 - Importa/aggiorna lo schema database con `database/install.sql` per creare la tabella `ewelink_tokens`.
 - Da menu “eWeLink” (visibile agli admin) collega l'account tramite OAuth 2.0.
 - Dopo l'autorizzazione potrai vedere l'elenco dei dispositivi Sonoff/eWeLink e inviare comandi on/off.
+
+### Temperature boiler tramite MCP
+- Genera in eWeLink Premium un **MCP server access URL** e salvalo sul server nella variabile `EWELINK_MCP_ACCESS_URL`. L'URL contiene il token: non inserirlo in `config/env.php` e non commetterlo.
+- La dashboard cerca per impostazione predefinita `Boiler Appartamenti` e `Boiler Cottage` e mostra la temperatura restituita dal server MCP.
+- I nomi si possono cambiare con `EWELINK_MCP_BOILER_NAMES` (lista separata da virgole); cache e timeout sono configurabili con `EWELINK_MCP_CACHE_SECONDS` e `EWELINK_MCP_TIMEOUT_SECONDS`.
