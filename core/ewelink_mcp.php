@@ -119,14 +119,35 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName):
     return null;
 }
 
-function ewelink_mcp_arguments(array $schema, string $deviceName): ?array
+function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?string
+{
+    foreach (ewelink_mcp_flatten($result) as $candidate) {
+        if (!is_array($candidate)) continue;
+        $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false || stripos($encoded, $deviceName) === false) continue;
+        foreach ($candidate as $key => $value) {
+            $normalized = strtolower(str_replace(['-', '_'], '', (string)$key));
+            if (in_array($normalized, ['id', 'deviceid', 'thingid'], true) && is_scalar($value) && (string)$value !== '') {
+                return (string)$value;
+            }
+        }
+    }
+    return null;
+}
+
+function ewelink_mcp_arguments(array $schema, string $deviceName, ?string $deviceId = null): ?array
 {
     $properties = $schema['properties'] ?? [];
     $required = $schema['required'] ?? [];
     $arguments = [];
     foreach ($properties as $name => $definition) {
         $normalized = strtolower((string)$name);
-        if (str_contains($normalized, 'device') || str_contains($normalized, 'name') || str_contains($normalized, 'query')) {
+        $compact = str_replace(['-', '_'], '', $normalized);
+        if ($deviceId !== null && in_array($compact, ['id', 'deviceid', 'thingid'], true)) {
+            $arguments[$name] = $deviceId;
+        } elseif (str_contains($normalized, 'name') || str_contains($normalized, 'query')) {
+            $arguments[$name] = $deviceName;
+        } elseif (str_contains($normalized, 'device') && !str_contains($normalized, 'id')) {
             $arguments[$name] = $deviceName;
         }
     }
@@ -169,10 +190,28 @@ function ewelink_mcp_fetch_boilers(): array
             $score = static fn(array $tool): int => preg_match('/status|state|device|thing|list/i', ($tool['name'] ?? '') . ' ' . ($tool['description'] ?? '')) ? 0 : 1;
             return $score($a) <=> $score($b);
         });
-        $tools = array_slice($tools, 0, 6);
+        $tools = array_slice($tools, 0, 8);
+        $deviceIds = array_fill_keys($names, null);
+
+        // Prima interroga gli strumenti senza argomenti (tipicamente "list devices"):
+        // servono sia a leggere direttamente i sensori sia a risolvere nome -> device ID.
+        foreach ($tools as $tool) {
+            if (!empty($tool['inputSchema']['required'])) continue;
+            try {
+                $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)[]], $session);
+            } catch (Throwable $toolError) {
+                continue;
+            }
+            foreach ($names as $deviceName) {
+                $temperature = ewelink_mcp_temperature_from_result($result, $deviceName);
+                if ($temperature !== null) $output['boilers'][$deviceName] = $temperature;
+                $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
+            }
+        }
         foreach ($names as $deviceName) {
+            if ($output['boilers'][$deviceName] !== null) continue;
             foreach ($tools as $tool) {
-                $arguments = ewelink_mcp_arguments($tool['inputSchema'] ?? [], $deviceName);
+                $arguments = ewelink_mcp_arguments($tool['inputSchema'] ?? [], $deviceName, $deviceIds[$deviceName]);
                 if ($arguments === null) continue;
                 try {
                     $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)$arguments], $session);
@@ -186,9 +225,14 @@ function ewelink_mcp_fetch_boilers(): array
                 }
             }
         }
+        $missing = array_keys(array_filter($output['boilers'], static fn($temperature): bool => $temperature === null));
+        if ($missing) {
+            $output['error'] = 'Nessuna temperatura ricevuta per: ' . implode(', ', $missing) . '.';
+        }
     } catch (Throwable $e) {
         $output['error'] = $e->getMessage();
     }
+    if ($output['error'] !== null) error_log('[eWeLink MCP] ' . $output['error']);
     if ($output['error'] === null || !is_file($cacheFile)) @file_put_contents($cacheFile, json_encode($output), LOCK_EX);
     return $output;
 }

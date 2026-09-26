@@ -52,3 +52,4 @@ logout.php
 - Genera in eWeLink Premium un **MCP server access URL** e salvalo sul server nella variabile `EWELINK_MCP_ACCESS_URL`. L'URL contiene il token: non inserirlo in `config/env.php` e non commetterlo.
 - La dashboard cerca per impostazione predefinita `Boiler Appartamenti` e `Boiler Cottage` e mostra la temperatura restituita dal server MCP.
 - I nomi si possono cambiare con `EWELINK_MCP_BOILER_NAMES` (lista separata da virgole); cache e timeout sono configurabili con `EWELINK_MCP_CACHE_SECONDS` e `EWELINK_MCP_TIMEOUT_SECONDS`.
+- Se le schede mostrano `—`, consulta il log errori PHP: le anomalie MCP vengono registrate con il prefisso `[eWeLink MCP]`, senza includere l'URL o il token di accesso.

@@ -243,7 +243,7 @@ function tramontoday_dashboard_money($amount): string {
     </div>
   <?php endforeach; ?>
   <?php if ($boilerTemperatures['error']): ?>
-    <div class="col-12"><div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili.</div></div>
+    <div class="col-12"><div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili. Il dettaglio è stato registrato nel log PHP.</div></div>
   <?php endif; ?>
 </div>
 <?php endif; ?>
