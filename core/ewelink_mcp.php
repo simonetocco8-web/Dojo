@@ -48,6 +48,10 @@ function ewelink_mcp_request(string $method, array $params = [], ?string &$sessi
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_POSTREDIR => CURL_REDIR_POST_ALL,
+        CURLOPT_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
+        CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS | CURLPROTO_HTTP,
         CURLOPT_POSTFIELDS => $payload,
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_CONNECTTIMEOUT => 5,
@@ -90,7 +94,7 @@ function ewelink_mcp_flatten($value): array
     return $values;
 }
 
-function ewelink_mcp_temperature_from_result(array $result, string $deviceName): ?float
+function ewelink_mcp_temperature_from_result(array $result, string $deviceName, bool $requireDeviceName = true): ?float
 {
     $temperatureKeys = ['temperature', 'currenttemperature', 'current_temperature', 'temp'];
     $findTemperature = static function ($value) use (&$findTemperature, $temperatureKeys): ?float {
@@ -112,7 +116,7 @@ function ewelink_mcp_temperature_from_result(array $result, string $deviceName):
     foreach (ewelink_mcp_flatten($result) as $candidate) {
         if (!is_array($candidate)) continue;
         $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
-        if ($encoded === false || stripos($encoded, $deviceName) === false) continue;
+        if ($encoded === false || ($requireDeviceName && stripos($encoded, $deviceName) === false)) continue;
         $temperature = $findTemperature($candidate);
         if ($temperature !== null) return $temperature;
     }
@@ -218,7 +222,9 @@ function ewelink_mcp_fetch_boilers(): array
                 } catch (Throwable $toolError) {
                     continue;
                 }
-                $temperature = ewelink_mcp_temperature_from_result($result, $deviceName);
+                // Una risposta richiesta per ID spesso contiene solo i parametri
+                // (es. {"temperature": 48.2}) e non ripete il nome dispositivo.
+                $temperature = ewelink_mcp_temperature_from_result($result, $deviceName, false);
                 if ($temperature !== null) {
                     $output['boilers'][$deviceName] = $temperature;
                     break;
