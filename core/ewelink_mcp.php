@@ -11,6 +11,23 @@ function ewelink_mcp_config(): array
     return $env['ewelink'] ?? [];
 }
 
+function ewelink_mcp_trace(array &$trace, string $step, string $message, array $context = []): void
+{
+    $trace[] = [
+        'time' => date('H:i:s'),
+        'step' => $step,
+        'message' => $message,
+        'context' => $context,
+    ];
+}
+
+function ewelink_mcp_debug_preview(array $result): string
+{
+    $preview = substr((string)json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), 0, 4000);
+    $preview = preg_replace('/(https?:\/\/[^?"\s]+)\?[^"\s]+/i', '$1?[REDACTED]', $preview);
+    return preg_replace('/(bearer|token|access_token)["\s:=]+[^,"\s}]+/i', '$1=[REDACTED]', (string)$preview);
+}
+
 function ewelink_mcp_decode_response(string $body): array
 {
     $decoded = json_decode($body, true);
@@ -26,11 +43,12 @@ function ewelink_mcp_decode_response(string $body): array
     throw new RuntimeException('Il server MCP ha restituito una risposta non valida.');
 }
 
-function ewelink_mcp_request(string $method, array $params = [], ?string &$sessionId = null): array
+function ewelink_mcp_request(string $method, array $params = [], ?string &$sessionId = null, ?array &$trace = null): array
 {
     $cfg = ewelink_mcp_config();
     $url = trim((string)($cfg['mcp_access_url'] ?? ''));
     if ($url === '') throw new RuntimeException('MCP eWeLink non configurato.');
+    if ($trace !== null) ewelink_mcp_trace($trace, 'request', 'Invio ' . $method, ['session' => $sessionId ? 'presente' : 'assente']);
 
     $message = [
         'jsonrpc' => '2.0',
@@ -70,13 +88,24 @@ function ewelink_mcp_request(string $method, array $params = [], ?string &$sessi
         throw new RuntimeException('Connessione al server MCP non riuscita: ' . $message);
     }
     $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $contentType = (string)curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     curl_close($ch);
+    if ($trace !== null) ewelink_mcp_trace($trace, 'response', 'Risposta a ' . $method, [
+        'http_status' => $status,
+        'content_type' => $contentType,
+        'bytes' => strlen($body),
+        'session' => !empty($responseHeaders['mcp-session-id']) ? 'ricevuta' : 'non ricevuta',
+    ]);
     if ($status >= 400) throw new RuntimeException('Server MCP non disponibile (HTTP ' . $status . ').');
     if (!empty($responseHeaders['mcp-session-id'])) $sessionId = $responseHeaders['mcp-session-id'];
     if ($isNotification && trim($body) === '') return [];
 
     $decoded = ewelink_mcp_decode_response($body);
     if (!empty($decoded['error'])) {
+        if ($trace !== null) ewelink_mcp_trace($trace, 'error', 'Errore JSON-RPC per ' . $method, [
+            'code' => $decoded['error']['code'] ?? null,
+            'message' => $decoded['error']['message'] ?? 'Errore MCP eWeLink.',
+        ]);
         throw new RuntimeException((string)($decoded['error']['message'] ?? 'Errore MCP eWeLink.'));
     }
     return $decoded['result'] ?? [];
@@ -161,30 +190,46 @@ function ewelink_mcp_arguments(array $schema, string $deviceName, ?string $devic
     return $arguments;
 }
 
-function ewelink_mcp_fetch_boilers(): array
+function ewelink_mcp_fetch_boilers(bool $debug = false): array
 {
     $cfg = ewelink_mcp_config();
     $names = $cfg['mcp_boiler_names'] ?? ['Boiler Appartamenti', 'Boiler Cottage'];
-    if (empty($cfg['mcp_access_url'])) return ['configured' => false, 'boilers' => [], 'error' => null];
+    $trace = [];
+    if (empty($cfg['mcp_access_url'])) return ['configured' => false, 'boilers' => [], 'error' => null, 'trace' => $trace];
+    ewelink_mcp_trace($trace, 'config', 'Configurazione MCP caricata', [
+        'device_names' => $names,
+        'timeout_seconds' => (int)($cfg['mcp_timeout_seconds'] ?? 12),
+    ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
     $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
-    if ($cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
+    if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
-        if (is_array($cached)) return $cached;
+        if (is_array($cached)) {
+            $cached['trace'] = [['time' => date('H:i:s'), 'step' => 'cache', 'message' => 'Risultato caricato dalla cache', 'context' => ['age_seconds' => time() - filemtime($cacheFile)]]];
+            return $cached;
+        }
     }
 
-    $output = ['configured' => true, 'boilers' => array_fill_keys($names, null), 'error' => null];
+    if ($debug) ewelink_mcp_trace($trace, 'cache', 'Cache ignorata per il debug');
+    $output = ['configured' => true, 'boilers' => array_fill_keys($names, null), 'error' => null, 'trace' => &$trace];
     try {
         $session = null;
         ewelink_mcp_request('initialize', [
             'protocolVersion' => '2025-03-26',
             'capabilities' => (object)[],
             'clientInfo' => ['name' => 'Dojo Dashboard', 'version' => '1.0'],
-        ], $session);
-        ewelink_mcp_request('notifications/initialized', [], $session);
-        $toolsResult = ewelink_mcp_request('tools/list', [], $session);
+        ], $session, $trace);
+        ewelink_mcp_request('notifications/initialized', [], $session, $trace);
+        $toolsResult = ewelink_mcp_request('tools/list', [], $session, $trace);
         $tools = $toolsResult['tools'] ?? [];
+        ewelink_mcp_trace($trace, 'tools', 'Strumenti MCP ricevuti', $debug ? [
+            'tools' => array_map(static fn(array $tool): array => [
+                'name' => $tool['name'] ?? '',
+                'description' => $tool['description'] ?? '',
+                'inputSchema' => $tool['inputSchema'] ?? null,
+            ], $tools),
+        ] : ['names' => array_column($tools, 'name')]);
         $tools = array_values(array_filter($tools, static function (array $tool): bool {
             $text = ($tool['name'] ?? '') . ' ' . ($tool['description'] ?? '');
             return preg_match('/device|thing|status|state|temperature|sensor|list|get|query|read/i', $text)
@@ -202,14 +247,22 @@ function ewelink_mcp_fetch_boilers(): array
         foreach ($tools as $tool) {
             if (!empty($tool['inputSchema']['required'])) continue;
             try {
-                $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)[]], $session);
+                $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)[]], $session, $trace);
+                if ($debug) ewelink_mcp_trace($trace, 'tool_result', 'Risultato di ' . $tool['name'], [
+                    'preview' => ewelink_mcp_debug_preview($result),
+                ]);
             } catch (Throwable $toolError) {
+                ewelink_mcp_trace($trace, 'tool_error', 'Errore in ' . ($tool['name'] ?? 'tool'), ['message' => $toolError->getMessage()]);
                 continue;
             }
             foreach ($names as $deviceName) {
                 $temperature = ewelink_mcp_temperature_from_result($result, $deviceName);
                 if ($temperature !== null) $output['boilers'][$deviceName] = $temperature;
                 $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
+                ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
+                    'device_id_found' => $deviceIds[$deviceName] !== null,
+                    'temperature_found' => $output['boilers'][$deviceName] !== null,
+                ]);
             }
         }
         foreach ($names as $deviceName) {
@@ -218,8 +271,13 @@ function ewelink_mcp_fetch_boilers(): array
                 $arguments = ewelink_mcp_arguments($tool['inputSchema'] ?? [], $deviceName, $deviceIds[$deviceName]);
                 if ($arguments === null) continue;
                 try {
-                    $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)$arguments], $session);
+                    ewelink_mcp_trace($trace, 'tool', 'Chiamata ' . $tool['name'], ['arguments' => $arguments]);
+                    $result = ewelink_mcp_request('tools/call', ['name' => $tool['name'], 'arguments' => (object)$arguments], $session, $trace);
+                    if ($debug) ewelink_mcp_trace($trace, 'tool_result', 'Risultato di ' . $tool['name'], [
+                        'preview' => ewelink_mcp_debug_preview($result),
+                    ]);
                 } catch (Throwable $toolError) {
+                    ewelink_mcp_trace($trace, 'tool_error', 'Errore in ' . ($tool['name'] ?? 'tool'), ['message' => $toolError->getMessage()]);
                     continue;
                 }
                 // Una risposta richiesta per ID spesso contiene solo i parametri
@@ -237,6 +295,7 @@ function ewelink_mcp_fetch_boilers(): array
         }
     } catch (Throwable $e) {
         $output['error'] = $e->getMessage();
+        ewelink_mcp_trace($trace, 'fatal', 'Comunicazione MCP interrotta', ['message' => $e->getMessage()]);
     }
     if ($output['error'] !== null) error_log('[eWeLink MCP] ' . $output['error']);
     if ($output['error'] === null || !is_file($cacheFile)) @file_put_contents($cacheFile, json_encode($output), LOCK_EX);

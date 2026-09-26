@@ -26,6 +26,8 @@ $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1')
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
+$ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
+$boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
@@ -243,7 +245,31 @@ function tramontoday_dashboard_money($amount): string {
     </div>
   <?php endforeach; ?>
   <?php if ($boilerTemperatures['error']): ?>
-    <div class="col-12"><div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili. Il dettaglio è stato registrato nel log PHP.</div></div>
+    <div class="col-12">
+      <div class="alert alert-warning py-2 mb-0">
+        <i class="bi bi-exclamation-triangle me-1"></i>Temperature eWeLink temporaneamente non disponibili.
+        <?php if ($is_admin && !$ewelinkDebug): ?><a class="alert-link ms-1" href="?ewelink_debug=1">Avvia debug MCP</a><?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
+  <?php if ($is_admin && $ewelinkDebug): ?>
+    <div class="col-12">
+      <div class="card border-warning shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Debug comunicazione eWeLink MCP</strong><a href="<?= e($base) ?>/dashboard.php" class="btn btn-sm btn-outline-secondary">Chiudi debug</a>
+        </div>
+        <div class="card-body">
+          <div class="alert <?= $boilerTemperatures['error'] ? 'alert-danger' : 'alert-success' ?> py-2"><?= e($boilerTemperatures['error'] ?: 'Comunicazione completata senza errori.') ?></div>
+          <ol class="small font-monospace mb-0">
+            <?php foreach (($boilerTemperatures['trace'] ?? []) as $trace): ?>
+              <li class="mb-2"><strong><?= e($trace['time'] ?? '') ?> [<?= e($trace['step'] ?? '') ?>]</strong> <?= e($trace['message'] ?? '') ?>
+                <?php if (!empty($trace['context'])): ?><pre class="bg-light border rounded p-2 mt-1 mb-0 text-wrap"><?= e(json_encode($trace['context'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?></pre><?php endif; ?>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </div>
+      </div>
+    </div>
   <?php endif; ?>
 </div>
 <?php endif; ?>
