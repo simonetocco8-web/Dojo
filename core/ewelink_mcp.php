@@ -203,6 +203,24 @@ function ewelink_mcp_temperature_values_from_result(array $result, string $devic
     return [];
 }
 
+function ewelink_mcp_device_params_from_result(array $result, string $deviceName): array
+{
+    foreach (array_reverse(ewelink_mcp_flatten($result)) as $candidate) {
+        if (!is_array($candidate)) continue;
+        $encoded = json_encode($candidate, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false || stripos($encoded, $deviceName) === false || !array_key_exists('params', $candidate)) continue;
+
+        $params = $candidate['params'];
+        if (is_string($params)) {
+            $decoded = json_decode($params, true);
+            if (is_array($decoded)) return $decoded;
+            return ['_raw' => $params];
+        }
+        return is_array($params) ? $params : ['_raw' => $params];
+    }
+    return [];
+}
+
 function ewelink_mcp_device_id_from_result(array $result, string $deviceName): ?string
 {
     foreach (ewelink_mcp_flatten($result) as $candidate) {
@@ -261,7 +279,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
     ]);
 
     $cacheSeconds = max(0, (int)($cfg['mcp_cache_seconds'] ?? 60));
-    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v4-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
+    $cacheFile = rtrim(sys_get_temp_dir(), '/') . '/dojo-ewelink-mcp-v5-' . hash('sha256', (string)$cfg['mcp_access_url']) . '.json';
     if (!$debug && $cacheSeconds > 0 && is_file($cacheFile) && filemtime($cacheFile) >= time() - $cacheSeconds) {
         $cached = json_decode((string)file_get_contents($cacheFile), true);
         if (is_array($cached)) {
@@ -275,6 +293,7 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
         'configured' => true,
         'boilers' => array_fill_keys($names, null),
         'temperature_values' => array_fill_keys($names, []),
+        'device_params' => array_fill_keys($names, []),
         'error' => null,
         'trace' => &$trace,
     ];
@@ -330,6 +349,8 @@ function ewelink_mcp_fetch_boilers(bool $debug = false): array
                 if ($temperature !== null) $output['boilers'][$deviceName] = $temperature;
                 $values = ewelink_mcp_temperature_values_from_result($result, $deviceName);
                 if ($values) $output['temperature_values'][$deviceName] = $values;
+                $params = ewelink_mcp_device_params_from_result($result, $deviceName);
+                if ($params) $output['device_params'][$deviceName] = $params;
                 $deviceIds[$deviceName] = ewelink_mcp_device_id_from_result($result, $deviceName) ?? $deviceIds[$deviceName];
                 ewelink_mcp_trace($trace, 'device', 'Analisi di ' . $deviceName, [
                     'device_id_found' => $deviceIds[$deviceName] !== null,
