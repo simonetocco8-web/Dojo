@@ -30,6 +30,7 @@ $is_admin = ($me['role'] ?? '') === 'admin';
 $ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
 $boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
 $ecowittWeather = ecowitt_fetch_temperature();
+$hotWaterSetpoint = get_hot_water_setpoint($pdo);
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";

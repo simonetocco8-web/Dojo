@@ -61,3 +61,4 @@ logout.php
 - La cache predefinita è di 60 secondi; può essere modificata con `ECOWITT_CACHE_SECONDS`.
 - Durante la stagione estiva, `notification/ecowitt-weather-alerts-cron.php` invia al reparto Manutenzione un SMS quando la raffica supera 30 km/h o la pressione è pari o inferiore a 1013 hPa. Ogni allerta viene inviata una sola volta finché il valore non torna nella norma.
 - Esempio cron ogni 5 minuti: `*/5 * * * * /usr/bin/php /percorso/dojo/notification/ecowitt-weather-alerts-cron.php`
+- Lo stesso cron verifica i boiler eWeLink durante la stagione: il setpoint dell'acqua calda si configura in **Avanzate → Impostazioni** e genera un SMS a Manutenzione quando una temperatura è pari o inferiore alla soglia.

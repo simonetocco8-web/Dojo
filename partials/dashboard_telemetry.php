@@ -26,15 +26,21 @@ $windGustAlert = $ecowittWeather['wind_gust'] !== null && $ecowittWeather['wind_
   <?php endif; ?>
   <?php if ($boilerTemperatures['configured']): ?>
     <?php foreach ($boilerTemperatures['boilers'] as $boilerName => $temperature): ?>
+      <?php $boilerBelowSetpoint = $hotWaterSetpoint !== null && $temperature !== null && (float)$temperature <= $hotWaterSetpoint; ?>
       <div class="col-6 col-md-4 col-xl">
         <div class="card shadow-sm h-100 border-top border-3 <?= $temperature === null ? 'border-secondary' : 'border-danger' ?>">
           <div class="card-body p-3">
-            <div class="small text-muted text-uppercase fw-semibold"><i class="bi bi-thermometer-half me-1"></i><?= e($boilerName) ?></div>
+            <div class="small text-muted text-uppercase fw-semibold"><i class="bi bi-thermometer-half me-1"></i><?= e($boilerName) ?><?php if ($boilerBelowSetpoint): ?> <i class="bi bi-exclamation-triangle-fill text-warning" title="Temperatura pari o inferiore al setpoint"></i><?php endif; ?></div>
             <div class="h3 mb-0 mt-2 text-nowrap"><?= $temperature === null ? '<span class="text-muted">—</span>' : e(number_format((float)$temperature, 1, ',', '')) . ' <small class="fs-6">°C</small>' ?></div>
           </div>
         </div>
       </div>
     <?php endforeach; ?>
+  <?php endif; ?>
+
+  <?php $boilersBelowSetpoint = array_filter($boilerTemperatures['boilers'] ?? [], static fn($temperature): bool => $hotWaterSetpoint !== null && $temperature !== null && (float)$temperature <= $hotWaterSetpoint); ?>
+  <?php if ($boilersBelowSetpoint): ?>
+    <div class="col-12"><div class="alert alert-danger mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Temperatura acqua sotto setpoint:</strong> <?= e(implode(', ', array_keys($boilersBelowSetpoint))) ?>. Verificare l'accensione delle caldaie.</div></div>
   <?php endif; ?>
 
   <?php if ($lowPressureAlert): ?>
