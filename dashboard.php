@@ -75,7 +75,7 @@ if ($seasonActive) {
   // --- Prossimi 5 TRANSFER ESTERNI ---
   $qExt = $pdo->prepare('SELECT id, type, place, date_time, pickup_time, room_number, guest_name, booked, paid, status
                          FROM transfers_external
-                         WHERE deleted_at IS NULL AND date_time >= NOW()
+                         WHERE deleted_at IS NULL AND date_time >= CURDATE()
                          ORDER BY date_time ASC, id DESC
                          LIMIT 5');
   $qExt->execute();
