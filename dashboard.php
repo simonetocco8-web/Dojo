@@ -376,16 +376,18 @@ function tramontoday_dashboard_money($amount): string {
           <?php else: ?>
             <ul class="list-group list-group-flush">
               <?php foreach($tex as $r): ?>
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                <?php $isTodayExternalTransfer = (new DateTime($r['date_time'], new DateTimeZone('Europe/Rome')))->format('Y-m-d') === (new DateTime('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d'); ?>
+                <li class="list-group-item <?= $isTodayExternalTransfer ? 'px-2 border border-2 border-primary rounded-3 bg-primary-subtle' : 'px-0' ?> d-flex justify-content-between align-items-start">
                   <div class="me-2">
-                    <div class="fw-semibold">
+                    <div class="fw-semibold <?= $isTodayExternalTransfer ? 'text-primary-emphasis' : '' ?>">
                       <?= e(ucfirst($r['type'])) ?> · <?= e($r['place'] ?? '') ?> · Cam. <?= e($r['room_number']) ?>
                     </div>
-                    <div class="small text-muted">
+                    <div class="small <?= $isTodayExternalTransfer ? 'text-primary-emphasis fw-semibold' : 'text-muted' ?>">
                       <?= it_dt($r['date_time']) ?> · Pickup <?= e(substr($r['pickup_time'],0,5)) ?> · <?= e($r['guest_name']) ?>
                     </div>
                   </div>
                   <div class="text-nowrap small">
+                    <?= ($isTodayExternalTransfer ? '<span class="badge bg-primary me-1">Oggi</span>' : '') ?>
                     <?= ($r['booked'] ? '<span class="badge bg-primary">Pren.</span>' : '') ?>
                     <?= ($r['paid']   ? '<span class="badge bg-success ms-1">Pag.</span>' : '') ?>
                     <?= (($r['status'] ?? 'attivo') === 'annullato' ? '<span class="badge bg-warning text-dark ms-1">Ann.</span>' : '') ?>
