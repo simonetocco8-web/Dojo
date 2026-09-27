@@ -391,6 +391,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <?php if (user_is_amministrazione($user)): ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
             <?php endif; ?>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/season_end_report.php"><i class="bi bi-file-earmark-pdf"></i><span>Report Fine Stagione</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
