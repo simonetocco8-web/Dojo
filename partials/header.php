@@ -38,7 +38,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
 $parkingMenuOpen = nav_path_is_current(['parking.php', 'parking_settings.php'], $currentPath);
-$avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php'], $currentPath);
+$avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php', 'season_end_report.php', 'season_end_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
 $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione($user));
 ?>
@@ -391,6 +391,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <?php if (user_is_amministrazione($user)): ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
             <?php endif; ?>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/season_end_report.php"><i class="bi bi-file-earmark-pdf"></i><span>Report Fine Stagione</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -742,6 +743,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <?php if (user_is_amministrazione($user)): ?>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
                 <?php endif; ?>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/season_end_report.php"><i class="bi bi-file-earmark-pdf"></i><span>Report Fine Stagione</span></a></li>
               </ul>
             </li>
             <?php endif; ?>
