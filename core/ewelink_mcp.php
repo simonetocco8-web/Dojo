@@ -216,6 +216,53 @@ function ewelink_mcp_arguments(array $schema, ?string $deviceName, ?string $devi
     return $arguments;
 }
 
+/**
+ * Esegue una diagnostica MCP in sola lettura e restituisce richieste e risposte
+ * decodificate senza includere l'URL di accesso o il relativo token.
+ */
+function ewelink_mcp_test_device_raw(string $deviceName): array
+{
+    $steps = [];
+    $session = null;
+
+    $initializeRequest = [
+        'protocolVersion' => '2025-03-26',
+        'capabilities' => (object)[],
+        'clientInfo' => ['name' => 'Dojo eWeLink Test', 'version' => '1.0'],
+    ];
+    $initializeResponse = ewelink_mcp_request('initialize', $initializeRequest, $session);
+    $steps[] = ['method' => 'initialize', 'request' => $initializeRequest, 'response' => $initializeResponse];
+
+    ewelink_mcp_request('notifications/initialized', [], $session);
+    $steps[] = ['method' => 'notifications/initialized', 'request' => (object)[], 'response' => null];
+
+    $toolsResponse = ewelink_mcp_request('tools/list', [], $session);
+    $steps[] = ['method' => 'tools/list', 'request' => (object)[], 'response' => $toolsResponse];
+
+    $tool = null;
+    foreach (($toolsResponse['tools'] ?? []) as $candidate) {
+        if (($candidate['name'] ?? '') === 'getBasicInformation') {
+            $tool = $candidate;
+            break;
+        }
+    }
+    if (!$tool) throw new RuntimeException('Il tool MCP getBasicInformation non è disponibile.');
+
+    $arguments = ewelink_mcp_arguments($tool['inputSchema'] ?? [], null);
+    if ($arguments === null) throw new RuntimeException('Impossibile costruire gli argomenti per getBasicInformation.');
+    $callRequest = ['name' => 'getBasicInformation', 'arguments' => (object)$arguments];
+    $callResponse = ewelink_mcp_request('tools/call', $callRequest, $session);
+    $steps[] = ['method' => 'tools/call', 'request' => $callRequest, 'response' => $callResponse];
+
+    $matches = [];
+    foreach (ewelink_mcp_flatten($callResponse) as $candidate) {
+        if (!is_array($candidate)) continue;
+        if (strcasecmp(trim((string)($candidate['name'] ?? '')), trim($deviceName)) === 0) $matches[] = $candidate;
+    }
+
+    return ['device_name' => $deviceName, 'matched_devices' => $matches, 'steps' => $steps];
+}
+
 function ewelink_mcp_fetch_boilers(bool $debug = false): array
 {
     $cfg = ewelink_mcp_config();
