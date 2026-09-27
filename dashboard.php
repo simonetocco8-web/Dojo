@@ -5,6 +5,8 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
+require_once __DIR__ . '/core/ewelink_mcp.php';
+require_once __DIR__ . '/core/ecowitt.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -24,6 +26,9 @@ $st = $pdo->prepare('SELECT role, dipartimento FROM users WHERE id = ? LIMIT 1')
 $st->execute([$user['id']]);
 $me = $st->fetch();
 $is_admin = ($me['role'] ?? '') === 'admin';
+$ewelinkDebug = $is_admin && isset($_GET['ewelink_debug']) && $_GET['ewelink_debug'] === '1';
+$boilerTemperatures = ewelink_mcp_fetch_boilers($ewelinkDebug);
+$ecowittWeather = ecowitt_fetch_temperature();
 $my_deps  = user_departments($me);
 $my_dep   = $my_deps[0] ?? null;
 $myDepPlaceholders = $my_deps ? implode(',', array_fill(0, count($my_deps), '?')) : "''";
@@ -69,7 +74,7 @@ if ($seasonActive) {
   // --- Prossimi 5 TRANSFER ESTERNI ---
   $qExt = $pdo->prepare('SELECT id, type, place, date_time, pickup_time, room_number, guest_name, booked, paid, status
                          FROM transfers_external
-                         WHERE deleted_at IS NULL AND date_time >= NOW()
+                         WHERE deleted_at IS NULL AND date_time >= CURDATE()
                          ORDER BY date_time ASC, id DESC
                          LIMIT 5');
   $qExt->execute();
@@ -370,16 +375,18 @@ function tramontoday_dashboard_money($amount): string {
           <?php else: ?>
             <ul class="list-group list-group-flush">
               <?php foreach($tex as $r): ?>
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
+                <?php $isTodayExternalTransfer = (new DateTime($r['date_time'], new DateTimeZone('Europe/Rome')))->format('Y-m-d') === (new DateTime('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d'); ?>
+                <li class="list-group-item <?= $isTodayExternalTransfer ? 'px-2 border border-2 border-primary rounded-3 bg-primary-subtle' : 'px-0' ?> d-flex justify-content-between align-items-start">
                   <div class="me-2">
-                    <div class="fw-semibold">
+                    <div class="fw-semibold <?= $isTodayExternalTransfer ? 'text-primary-emphasis' : '' ?>">
                       <?= e(ucfirst($r['type'])) ?> · <?= e($r['place'] ?? '') ?> · Cam. <?= e($r['room_number']) ?>
                     </div>
-                    <div class="small text-muted">
+                    <div class="small <?= $isTodayExternalTransfer ? 'text-primary-emphasis fw-semibold' : 'text-muted' ?>">
                       <?= it_dt($r['date_time']) ?> · Pickup <?= e(substr($r['pickup_time'],0,5)) ?> · <?= e($r['guest_name']) ?>
                     </div>
                   </div>
                   <div class="text-nowrap small">
+                    <?= ($isTodayExternalTransfer ? '<span class="badge bg-primary me-1">Oggi</span>' : '') ?>
                     <?= ($r['booked'] ? '<span class="badge bg-primary">Pren.</span>' : '') ?>
                     <?= ($r['paid']   ? '<span class="badge bg-success ms-1">Pag.</span>' : '') ?>
                     <?= (($r['status'] ?? 'attivo') === 'annullato' ? '<span class="badge bg-warning text-dark ms-1">Ann.</span>' : '') ?>
@@ -688,6 +695,8 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
 
 </div>
 <?php endif; ?>
+
+<?php include __DIR__ . '/partials/dashboard_telemetry.php'; ?>
 
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-6">
