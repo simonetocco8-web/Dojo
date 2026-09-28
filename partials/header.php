@@ -37,8 +37,9 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
+$autocontrolloMenuOpen = nav_path_is_current(['autocontrollo_settings.php'], $currentPath);
 $parkingMenuOpen = nav_path_is_current(['parking.php', 'parking_settings.php'], $currentPath);
-$avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php'], $currentPath);
+$avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php', 'season_end_report.php', 'season_end_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
 $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione($user));
 ?>
@@ -375,6 +376,23 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
           </ul>
         </li>
         <?php endif; ?>
+        <?php if ($user && user_has_department($user, 'Amministrazione')): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
+          <ul class="dropdown-menu" aria-labelledby="autocontrolloSidebarDropdown">
+            <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-water"></i><span>Piscina</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li>
+            <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
+          </ul>
+        </li>
+        <?php endif; ?>
         <?php if($user): ?>
         <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
         <?php endif; ?>
@@ -391,6 +409,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <?php if (user_is_amministrazione($user)): ?>
             <li><a class="dropdown-item" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
             <?php endif; ?>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/season_end_report.php"><i class="bi bi-file-earmark-pdf"></i><span>Report Fine Stagione</span></a></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -726,6 +745,23 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
               </ul>
             </li>
             <?php endif; ?>
+            <?php if ($user && user_has_department($user, 'Amministrazione')): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
+              <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
+                <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-water"></i><span>Piscina</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li>
+                <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
+              </ul>
+            </li>
+            <?php endif; ?>
             <?php if($user): ?>
             <li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/ai_chat.php"><i class="bi bi-robot"></i><span>AI Chat</span></a></li>
             <?php endif; ?>
@@ -742,6 +778,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <?php if (user_is_amministrazione($user)): ?>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/reports/daily_summary_pdf.php"><i class="bi bi-file-earmark-text"></i><span>Report Giornaliero</span></a></li>
                 <?php endif; ?>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/season_end_report.php"><i class="bi bi-file-earmark-pdf"></i><span>Report Fine Stagione</span></a></li>
               </ul>
             </li>
             <?php endif; ?>
