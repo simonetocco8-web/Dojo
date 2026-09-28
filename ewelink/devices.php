@@ -36,6 +36,7 @@ include __DIR__ . '/../partials/header.php';
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h5 mb-0">Dispositivi eWeLink</h1>
   <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="<?= e($base) ?>/ewelink/test_cottage.php">Test Boiler Cottage</a>
     <?php if (ewelink_is_configured() && $tokens): ?>
       <form action="<?= e($base) ?>/ewelink/disconnect.php" method="post" onsubmit="return confirm('Scollegare l\'account eWeLink?');">
         <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
