@@ -49,6 +49,17 @@ function ensure_system_settings_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_electrical_panels_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_electrical_panels (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      installation_location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 
 function ensure_users_department_column_supports_multiple(PDO $pdo): void {
   $stmt = $pdo->query("
