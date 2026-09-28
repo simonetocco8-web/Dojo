@@ -133,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   } else {
     $summerStart = trim($_POST['summer_season_start'] ?? '');
     $summerEnd   = trim($_POST['summer_season_end'] ?? '');
+    $setpointRaw = str_replace(',', '.', trim((string)($_POST['hot_water_temperature_setpoint'] ?? '')));
 
     $startValue = $summerStart !== '' ? $summerStart : null;
     $endValue   = $summerEnd !== '' ? $summerEnd : null;
@@ -153,9 +154,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $errors[] = 'La data di apertura non può essere successiva alla data di chiusura.';
     }
 
+    if ($setpointRaw !== '' && (!is_numeric($setpointRaw) || !is_finite((float)$setpointRaw) || (float)$setpointRaw < 0 || (float)$setpointRaw > 100)) {
+      $errors[] = 'Il setpoint acqua calda deve essere compreso tra 0 e 100 °C.';
+    }
+
     if (!$errors) {
       set_setting('summer_season_start', $startValue, $pdo);
       set_setting('summer_season_end', $endValue, $pdo);
+      set_setting('hot_water_temperature_setpoint', $setpointRaw === '' ? null : number_format((float)$setpointRaw, 1, '.', ''), $pdo);
       $messages[] = 'Impostazioni salvate correttamente.';
     }
   }
@@ -164,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $currentSettings = get_summer_season_range($pdo);
 $currentStart = $currentSettings['start'];
 $currentEnd   = $currentSettings['end'];
+$hotWaterSetpoint = get_hot_water_setpoint($pdo);
 $departments = available_departments();
 $linenCosts = get_riassetti_linen_costs($pdo);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errors && (($_POST['action'] ?? '') === 'linen_costs')) {
@@ -177,6 +184,7 @@ foreach ($departments as $department) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errors && (($_POST['action'] ?? 'season') === 'season')) {
   $currentStart = $startValue ?? $currentStart;
   $currentEnd   = $endValue ?? $currentEnd;
+  if (isset($setpointRaw) && $setpointRaw !== '' && is_numeric($setpointRaw)) $hotWaterSetpoint = (float)$setpointRaw;
 }
 
 $seasonActive = is_today_within_summer_season($pdo);
@@ -252,6 +260,11 @@ include __DIR__ . '/partials/header.php';
           <div class="mb-3">
             <label for="summer_season_end" class="form-label">Data chiusura stagione estiva</label>
             <input type="date" class="form-control" id="summer_season_end" name="summer_season_end" value="<?= e($currentEnd ?? '') ?>">
+          </div>
+          <div class="mb-3">
+            <label for="hot_water_temperature_setpoint" class="form-label">Setpoint temperatura acqua calda</label>
+            <div class="input-group"><input type="number" min="0" max="100" step="0.1" class="form-control" id="hot_water_temperature_setpoint" name="hot_water_temperature_setpoint" value="<?= e($hotWaterSetpoint !== null ? number_format($hotWaterSetpoint, 1, '.', '') : '') ?>"><span class="input-group-text">°C</span></div>
+            <div class="form-text">Lascia vuoto per disattivare gli alert caldaie.</div>
           </div>
           <button type="submit" class="btn btn-primary">Salva impostazioni</button>
         </form>
