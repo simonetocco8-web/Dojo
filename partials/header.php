@@ -37,6 +37,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
+$autocontrolloMenuOpen = false;
 $parkingMenuOpen = nav_path_is_current(['parking.php', 'parking_settings.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php', 'season_end_report.php', 'season_end_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
@@ -372,6 +373,23 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
           <ul class="dropdown-menu <?= $riassettiMenuOpen ? 'show' : '' ?>" aria-labelledby="riassettiSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-list-check"></i><span>Elenco</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti_statistiche.php"><i class="bi bi-bar-chart-line"></i><span>Statistiche</span></a></li>
+          </ul>
+        </li>
+        <?php endif; ?>
+        <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
+          <ul class="dropdown-menu" aria-labelledby="autocontrolloSidebarDropdown">
+            <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-water"></i><span>Piscina</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><span class="dropdown-item"><i class="bi bi-sliders"></i><span>Setting</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
           </ul>
         </li>
         <?php endif; ?>
@@ -724,6 +742,23 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
               <ul class="dropdown-menu <?= $riassettiMenuOpen ? 'show' : '' ?>" aria-labelledby="riassettiDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti.php"><i class="bi bi-list-check"></i><span>Elenco</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/riassetti_statistiche.php"><i class="bi bi-bar-chart-line"></i><span>Statistiche</span></a></li>
+              </ul>
+            </li>
+            <?php endif; ?>
+            <?php if ($user && (user_is_reception_or_amministrazione($user) || user_is_housekeeping($user))): ?>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
+              <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
+                <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-water"></i><span>Piscina</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></span></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><span class="dropdown-item"><i class="bi bi-sliders"></i><span>Setting</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-bar-chart-line"></i><span>Report</span></span></li>
               </ul>
             </li>
             <?php endif; ?>
