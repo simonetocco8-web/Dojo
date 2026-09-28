@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS system_settings (
 INSERT IGNORE INTO system_settings (setting_key, setting_value)
 VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","Resp. Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
 
+CREATE TABLE IF NOT EXISTS autocontrollo_electrical_panels (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  installation_location VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS parking_spaces (
   space_id VARCHAR(4) NOT NULL PRIMARY KEY,
   parking ENUM('primario','secondario') NOT NULL,

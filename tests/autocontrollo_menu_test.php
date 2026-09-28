@@ -17,5 +17,8 @@ foreach (['autocontrolloSidebarDropdown', 'autocontrolloDropdown'] as $menuId) {
 if (substr_count($header, '<span>Autocontrollo</span>') !== 2) {
     throw new RuntimeException('Il modulo Autocontrollo deve comparire nei menu desktop e mobile.');
 }
+if (substr_count($header, "user_has_department(\$user, 'Amministrazione')") < 2) {
+    throw new RuntimeException('Il modulo Autocontrollo non è limitato al dipartimento Amministrazione.');
+}
 
 echo "Menu Autocontrollo desktop e mobile verificati.\n";
