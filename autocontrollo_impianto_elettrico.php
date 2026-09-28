@@ -11,6 +11,8 @@ ensure_autocontrollo_electrical_inspections_tables($pdo);
 $env = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $error = '';
+$submittedDifferentials = null;
+$submittedAnomaly = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!csrf_check((string)($_POST['csrf'] ?? ''))) { http_response_code(400); exit('Token CSRF non valido.'); }
@@ -25,8 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $resultId = (int)($_POST['result_id'] ?? 0);
       $external = isset($_POST['external_check']);
       $differentialsOk = ($_POST['differentials_ok'] ?? '') === '1';
+      $submittedDifferentials = (string)($_POST['differentials_ok'] ?? '');
       $answerProvided = in_array($_POST['differentials_ok'] ?? '', ['0', '1'], true);
       $anomaly = trim((string)($_POST['anomaly'] ?? ''));
+      $submittedAnomaly = $anomaly;
       if (!$external) throw new InvalidArgumentException('Confermare di avere verificato lo stato esterno dei componenti.');
       if (!$answerProvided) throw new InvalidArgumentException('Indicare l’esito del test dei differenziali.');
       if (!$differentialsOk && $anomaly === '') throw new InvalidArgumentException('Descrivere brevemente il componente che non funziona regolarmente.');
@@ -82,13 +86,13 @@ include __DIR__ . '/partials/header.php';
   <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="check"><input type="hidden" name="inspection_id" value="<?= (int)$activeInspection['id'] ?>"><input type="hidden" name="result_id" value="<?= (int)$currentResult['id'] ?>">
     <label class="card bg-light p-3 mb-3"><span class="form-check"><input class="form-check-input" type="checkbox" name="external_check" value="1" required><span class="form-check-label fw-semibold">Ho verificato lo stato esterno di tutti i componenti</span></span></label>
     <fieldset><legend class="h6">Premere il pulsante “TEST” su tutti i differenziali. Sono scattati tutti?</legend>
-      <div class="row g-2 mb-3"><div class="col-6"><input class="btn-check" type="radio" name="differentials_ok" id="testYes" value="1" required><label class="btn btn-outline-success w-100 py-3" for="testYes"><i class="bi bi-check-circle d-block fs-3"></i>Sì, tutti</label></div><div class="col-6"><input class="btn-check" type="radio" name="differentials_ok" id="testNo" value="0" required><label class="btn btn-outline-danger w-100 py-3" for="testNo"><i class="bi bi-exclamation-triangle d-block fs-3"></i>No</label></div></div>
+      <div class="row g-2 mb-3"><div class="col-6"><input class="btn-check" type="radio" name="differentials_ok" id="testYes" value="1" required <?= $submittedDifferentials === '1' ? 'checked' : '' ?>><label class="btn btn-outline-success w-100 py-3" for="testYes"><i class="bi bi-check-circle d-block fs-3"></i>Sì, tutti</label></div><div class="col-6"><input class="btn-check" type="radio" name="differentials_ok" id="testNo" value="0" required <?= $submittedDifferentials === '0' ? 'checked' : '' ?>><label class="btn btn-outline-danger w-100 py-3" for="testNo"><i class="bi bi-exclamation-triangle d-block fs-3"></i>No</label></div></div>
     </fieldset>
-    <div id="anomalyBox" class="mb-3 d-none"><label for="anomaly" class="form-label fw-semibold">Descrivi il componente non funzionante</label><textarea class="form-control" id="anomaly" name="anomaly" maxlength="500" rows="3" placeholder="Es. Il differenziale generale non scatta"></textarea></div>
+    <div id="anomalyBox" class="mb-3<?= $submittedDifferentials === '0' ? '' : ' d-none' ?>"><label for="anomaly" class="form-label fw-semibold">Descrivi il componente non funzionante <span class="text-danger">*</span></label><textarea class="form-control" id="anomaly" name="anomaly" maxlength="500" rows="3" placeholder="Es. Il differenziale generale non scatta" <?= $submittedDifferentials === '0' ? 'required' : '' ?>><?= e($submittedAnomaly) ?></textarea><div class="form-text">Obbligatorio quando uno o più differenziali non scattano.</div></div>
     <button class="btn btn-primary btn-lg w-100">Salva e passa al quadro successivo <i class="bi bi-arrow-right ms-1"></i></button>
   </form>
 </div></div>
-<script>document.querySelectorAll('[name="differentials_ok"]').forEach(function(el){el.addEventListener('change',function(){var box=document.getElementById('anomalyBox'),field=document.getElementById('anomaly'),bad=this.value==='0';box.classList.toggle('d-none',!bad);field.required=bad;});});</script>
+<script src="<?= e($base) ?>/assets/autocontrollo-electrical.js" defer></script>
 <?php else: ?>
 <div class="row g-3 mb-4">
 <?php if (!$schedule): ?><div class="col-12"><div class="alert alert-warning">Configurare le date di apertura e chiusura della stagione nelle impostazioni di sistema.</div></div><?php endif; ?>

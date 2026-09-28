@@ -29,5 +29,9 @@ if (strpos($electrical, "user_has_department(\$user, 'Amministrazione')") === fa
     fwrite(STDERR, "La pagina Impianto Elettrico deve essere riservata ad Amministrazione.\n");
     exit(1);
 }
+if (strpos($electrical, '/assets/autocontrollo-electrical.js') === false || strpos($electrical, '<script>document.querySelectorAll') !== false) {
+    fwrite(STDERR, "La gestione dell'anomalia deve usare uno script esterno compatibile con la CSP.\n");
+    exit(1);
+}
 
 echo "Menu Autocontrollo desktop e mobile verificati.\n";
