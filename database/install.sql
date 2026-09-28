@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS system_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO system_settings (setting_key, setting_value)
-VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
+VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","Resp. Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
 
 CREATE TABLE IF NOT EXISTS parking_spaces (
   space_id VARCHAR(4) NOT NULL PRIMARY KEY,
