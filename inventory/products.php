@@ -152,7 +152,9 @@ include __DIR__ . '/../partials/header.php';
 
 
 <?php if ($msg === 'deactivated'): ?>
-  <div class="alert alert-success">Prodotto disattivato.</div>
+  <div class="alert alert-success">Prodotto disattivato e notifica inviata al reparto Resp. Bar.</div>
+<?php elseif ($msg === 'deactivated_sms_error'): ?>
+  <div class="alert alert-warning">Prodotto disattivato, ma non è stato possibile inviare l'SMS al reparto Resp. Bar. Controlla il log errori.</div>
 <?php elseif ($msg === 'deleted'): ?>
   <div class="alert alert-success">Prodotto eliminato definitivamente.</div>
 <?php elseif ($msg === 'error'): ?>
