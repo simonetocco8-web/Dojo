@@ -26,6 +26,21 @@ if (!empty($range['start']) && !empty($range['end'])) {
 $nextDate = autocontrollo_pool_next_required_date($range, $completedDates);
 $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
 $error = '';
+$previousInspection = null;
+$previousProductQuantities = [];
+if ($nextDate) {
+    $previousDate = (new DateTimeImmutable($nextDate))->modify('-1 day')->format('Y-m-d');
+    $stmt = $pdo->prepare('SELECT * FROM autocontrollo_pool_inspections WHERE season_start=? AND season_end=? AND inspection_date=? LIMIT 1');
+    $stmt->execute([$range['start'], $range['end'], $previousDate]);
+    $previousInspection = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    if ($previousInspection) {
+        $stmt = $pdo->prepare('SELECT product_id, quantity_kg FROM autocontrollo_pool_inspection_products WHERE inspection_id=? AND product_id IS NOT NULL');
+        $stmt->execute([$previousInspection['id']]);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $previousProduct) {
+            $previousProductQuantities[(int)$previousProduct['product_id']] = (string)$previousProduct['quantity_kg'];
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -73,7 +88,8 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm border-primary mb-4"><div class="card-body p-3 p-md-4">
   <div class="d-flex justify-content-between align-items-center mb-3"><div><div class="small text-uppercase text-muted fw-semibold">Prossimo controllo obbligatorio</div><h2 class="h5 mb-0"><?= e((new DateTimeImmutable($nextDate))->format('d/m/Y')) ?></h2></div><span class="badge text-bg-primary">In attesa</span></div>
   <?php if ($nextDate < $today->format('Y-m-d')): ?><div class="alert alert-warning py-2"><i class="bi bi-exclamation-triangle me-1"></i>Controllo arretrato: deve essere completato prima di poter registrare le date successive.</div><?php endif; ?>
-  <form method="post" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="create">
+  <?php if ($previousInspection): ?><div class="d-grid d-md-flex justify-content-md-end mb-3"><button type="button" id="poolAutoComplete" class="btn btn-outline-primary" data-inspection-time="<?= e(substr($previousInspection['inspection_time'], 0, 5)) ?>" data-chlorine="<?= e($previousInspection['chlorine']) ?>" data-temperature="<?= e($previousInspection['water_temperature']) ?>" data-ph="<?= e($previousInspection['ph_value']) ?>" data-people="<?= (int)$previousInspection['people_in_pool'] ?>" data-backwash="<?= e($previousInspection['backwash_minutes'] ?? '') ?>" data-sample-location="<?= e($previousInspection['sample_location']) ?>" data-products="<?= e(json_encode($previousProductQuantities, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"><i class="bi bi-magic me-1"></i>Auto Completamento</button></div><?php endif; ?>
+  <form method="post" id="poolInspectionForm" class="row g-3"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="create">
     <div class="col-12 col-md-4"><label class="form-label" for="inspectionTime">Orario</label><input class="form-control" type="time" id="inspectionTime" name="inspection_time" required value="<?= e($_POST['inspection_time'] ?? (new DateTimeImmutable('now', new DateTimeZone('Europe/Rome')))->format('H:i')) ?>"></div>
     <div class="col-12 col-md-4"><label class="form-label" for="chlorine">Cloro rilevato</label><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0" max="100" id="chlorine" name="chlorine" required value="<?= e($_POST['chlorine'] ?? '') ?>"></div>
     <div class="col-12 col-md-4"><label class="form-label" for="waterTemperature">Temperatura °C</label><input class="form-control" type="number" inputmode="decimal" step="0.01" min="-10" max="60" id="waterTemperature" name="water_temperature" required value="<?= e($_POST['water_temperature'] ?? '') ?>"></div>
@@ -91,4 +107,5 @@ include __DIR__ . '/partials/header.php';
 <?php if (!$inspections): ?><tr><td colspan="10" class="text-center text-muted py-4">Nessun controllo piscina registrato.</td></tr><?php endif; ?>
 <?php foreach ($inspections as $inspection): ?><tr><td><code>#<?= (int)$inspection['id'] ?></code></td><td class="text-nowrap"><?= e((new DateTimeImmutable($inspection['inspection_date']))->format('d/m/Y')) ?> <?= e(substr($inspection['inspection_time'], 0, 5)) ?></td><td><?= e($inspection['operator_email'] ?? '—') ?></td><td><?= e(number_format((float)$inspection['chlorine'], 2, ',', '')) ?></td><td><?= e(number_format((float)$inspection['water_temperature'], 1, ',', '')) ?> °C</td><td><?= e(number_format((float)$inspection['ph_value'], 2, ',', '')) ?></td><td><?= (int)$inspection['people_in_pool'] ?></td><td><?= $inspection['backwash_minutes'] === null ? '—' : (int)$inspection['backwash_minutes'] . ' min' ?></td><td><?= $inspection['sample_location'] === 'interno' ? 'Interno' : 'Esterno' ?></td><td><?= e($inspection['products'] ?: '—') ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
+<script src="<?= e($base) ?>/assets/autocontrollo-pool.js" defer></script>
 <?php include __DIR__ . '/partials/footer.php'; ?>
