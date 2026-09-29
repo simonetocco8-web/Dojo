@@ -71,6 +71,17 @@ function ensure_autocontrollo_pool_products_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_rodent_traps (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 function ensure_autocontrollo_pool_inspections_tables(PDO $pdo): void {
   ensure_autocontrollo_pool_products_table($pdo);
   $pdo->exec("
