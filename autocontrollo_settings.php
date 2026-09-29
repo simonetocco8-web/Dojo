@@ -18,6 +18,7 @@ $pdo = db();
 ensure_autocontrollo_electrical_panels_table($pdo);
 ensure_autocontrollo_pool_products_table($pdo);
 ensure_autocontrollo_rodent_traps_table($pdo);
+ensure_autocontrollo_grounding_rods_table($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -29,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $location = trim((string)($_POST['installation_location'] ?? ''));
     $description = trim((string)($_POST['description'] ?? ''));
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
+    $groundingRodLocation = trim((string)($_POST['grounding_rod_location'] ?? ''));
     try {
         if ($action === 'panel_create' || $action === 'panel_update') {
             if ($location === '') throw new InvalidArgumentException('Il luogo di installazione è obbligatorio.');
@@ -99,6 +101,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('DELETE FROM autocontrollo_rodent_traps WHERE id = ?');
             $stmt->execute([$id]);
             $message = 'deleted';
+        } elseif ($action === 'grounding_rod_create' || $action === 'grounding_rod_update') {
+            if ($groundingRodLocation === '') throw new InvalidArgumentException('La location della palina è obbligatoria.');
+            if ((function_exists('mb_strlen') ? mb_strlen($groundingRodLocation, 'UTF-8') : strlen($groundingRodLocation)) > 190) {
+                throw new InvalidArgumentException('La location può contenere al massimo 190 caratteri.');
+            }
+            if ($action === 'grounding_rod_create') {
+                $stmt = $pdo->prepare('INSERT INTO autocontrollo_grounding_rods (location) VALUES (?)');
+                $stmt->execute([$groundingRodLocation]);
+                $message = 'created';
+            } else {
+                if ($id <= 0) throw new InvalidArgumentException('ID palina non valido.');
+                $stmt = $pdo->prepare('UPDATE autocontrollo_grounding_rods SET location = ? WHERE id = ?');
+                $stmt->execute([$groundingRodLocation, $id]);
+                $message = 'updated';
+            }
+        } elseif ($action === 'grounding_rod_delete') {
+            if ($id <= 0) throw new InvalidArgumentException('ID palina non valido.');
+            $stmt = $pdo->prepare('DELETE FROM autocontrollo_grounding_rods WHERE id = ?');
+            $stmt->execute([$id]);
+            $message = 'deleted';
         } else {
             throw new InvalidArgumentException('Azione non valida.');
         }
@@ -113,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $panels = $pdo->query('SELECT id, installation_location FROM autocontrollo_electrical_panels ORDER BY installation_location, id')->fetchAll(PDO::FETCH_ASSOC);
 $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_products ORDER BY description, id')->fetchAll(PDO::FETCH_ASSOC);
 $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
+$groundingRods = $pdo->query('SELECT id, location FROM autocontrollo_grounding_rods ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -206,6 +229,35 @@ include __DIR__ . '/partials/header.php';
             <input class="form-control" name="trap_location" maxlength="190" required value="<?= e($trap['location']) ?>">
             <button class="btn btn-outline-primary text-nowrap" name="action" value="rodent_trap_update"><i class="bi bi-save me-1"></i>Salva</button>
             <button class="btn btn-outline-danger" name="action" value="rodent_trap_delete" formnovalidate onclick="return confirm('Eliminare questa trappola per roditori?')"><i class="bi bi-trash"></i></button>
+          </form>
+        </td></tr>
+      <?php endforeach; ?>
+      </tbody></table></div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <h2 class="h5 mb-3"><i class="bi bi-plug me-1"></i>Mappatura Paline Messa a Terra</h2>
+    <form method="post" class="row g-2 align-items-end mb-4">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+      <input type="hidden" name="action" value="grounding_rod_create">
+      <div class="col-12 col-md"><label for="newGroundingRodLocation" class="form-label">Location</label><input class="form-control" id="newGroundingRodLocation" name="grounding_rod_location" maxlength="190" required></div>
+      <div class="col-12 col-md-auto"><button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Aggiungi palina</button></div>
+    </form>
+
+    <?php if (!$groundingRods): ?>
+      <div class="text-muted">Nessuna palina di messa a terra configurata.</div>
+    <?php else: ?>
+      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th style="width:90px">ID</th><th>Location</th><th class="text-end" style="width:210px">Azioni</th></tr></thead><tbody>
+      <?php foreach ($groundingRods as $rod): ?>
+        <tr><td><code>#<?= (int)$rod['id'] ?></code></td><td colspan="2">
+          <form method="post" class="d-flex flex-column flex-md-row gap-2">
+            <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="id" value="<?= (int)$rod['id'] ?>">
+            <input class="form-control" name="grounding_rod_location" maxlength="190" required value="<?= e($rod['location']) ?>">
+            <button class="btn btn-outline-primary text-nowrap" name="action" value="grounding_rod_update"><i class="bi bi-save me-1"></i>Salva</button>
+            <button class="btn btn-outline-danger" name="action" value="grounding_rod_delete" formnovalidate onclick="return confirm('Eliminare questa palina di messa a terra?')"><i class="bi bi-trash"></i></button>
           </form>
         </td></tr>
       <?php endforeach; ?>

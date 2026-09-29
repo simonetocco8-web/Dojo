@@ -116,6 +116,17 @@ function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
   }
 }
 
+function ensure_autocontrollo_grounding_rods_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_grounding_rods (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 /**
  * Compatibilità con database che conservano ancora la colonna `identifier`.
  * Restituisce la lunghezza massima disponibile, oppure 0 se la colonna non c'è.
