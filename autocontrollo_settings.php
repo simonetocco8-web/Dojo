@@ -19,6 +19,7 @@ ensure_autocontrollo_electrical_panels_table($pdo);
 ensure_autocontrollo_pool_products_table($pdo);
 ensure_autocontrollo_rodent_traps_table($pdo);
 ensure_autocontrollo_grounding_rods_table($pdo);
+ensure_autocontrollo_refrigerators_table($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -31,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim((string)($_POST['description'] ?? ''));
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
     $groundingRodLocation = trim((string)($_POST['grounding_rod_location'] ?? ''));
+    $refrigeratorId = trim((string)($_POST['refrigerator_id'] ?? ''));
+    $originalRefrigeratorId = trim((string)($_POST['original_refrigerator_id'] ?? ''));
+    $refrigeratorType = trim((string)($_POST['refrigerator_type'] ?? ''));
+    $operatingTemperatureRaw = str_replace(',', '.', trim((string)($_POST['operating_temperature'] ?? '')));
     try {
         if ($action === 'panel_create' || $action === 'panel_update') {
             if ($location === '') throw new InvalidArgumentException('Il luogo di installazione è obbligatorio.');
@@ -121,6 +126,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('DELETE FROM autocontrollo_grounding_rods WHERE id = ?');
             $stmt->execute([$id]);
             $message = 'deleted';
+        } elseif ($action === 'refrigerator_create' || $action === 'refrigerator_update') {
+            if ($refrigeratorId === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $refrigeratorId)) {
+                throw new InvalidArgumentException('L’ID frigorifero è obbligatorio e può contenere solo lettere, numeri, punto, trattino e underscore.');
+            }
+            if (strlen($refrigeratorId) > 50) throw new InvalidArgumentException('L’ID frigorifero può contenere al massimo 50 caratteri.');
+            if (!in_array($refrigeratorType, ['frigorifero', 'congelatore', 'cella'], true)) throw new InvalidArgumentException('Tipologia frigorifero non valida.');
+            if ($operatingTemperatureRaw === '' || !is_numeric($operatingTemperatureRaw)) throw new InvalidArgumentException('Temperatura di esercizio non valida.');
+            $operatingTemperature = (float)$operatingTemperatureRaw;
+            if ($operatingTemperature < -99.99 || $operatingTemperature > 99.99) throw new InvalidArgumentException('La temperatura di esercizio deve essere compresa tra -99,99 e 99,99 °C.');
+            $duplicateStmt = $pdo->prepare('SELECT COUNT(*) FROM autocontrollo_refrigerators WHERE id=? AND id<>?');
+            $duplicateStmt->execute([$refrigeratorId, $action === 'refrigerator_update' ? $originalRefrigeratorId : '']);
+            if ((int)$duplicateStmt->fetchColumn() > 0) throw new InvalidArgumentException('L’ID frigorifero indicato è già utilizzato.');
+            if ($action === 'refrigerator_create') {
+                $stmt = $pdo->prepare('INSERT INTO autocontrollo_refrigerators (id, appliance_type, operating_temperature) VALUES (?, ?, ?)');
+                $stmt->execute([$refrigeratorId, $refrigeratorType, $operatingTemperature]);
+                $message = 'created';
+            } else {
+                if ($originalRefrigeratorId === '') throw new InvalidArgumentException('ID frigorifero originale non valido.');
+                $stmt = $pdo->prepare('UPDATE autocontrollo_refrigerators SET id=?, appliance_type=?, operating_temperature=? WHERE id=?');
+                $stmt->execute([$refrigeratorId, $refrigeratorType, $operatingTemperature, $originalRefrigeratorId]);
+                $message = 'updated';
+            }
+        } elseif ($action === 'refrigerator_delete') {
+            if ($originalRefrigeratorId === '') throw new InvalidArgumentException('ID frigorifero non valido.');
+            $stmt = $pdo->prepare('DELETE FROM autocontrollo_refrigerators WHERE id=?');
+            $stmt->execute([$originalRefrigeratorId]);
+            $message = 'deleted';
         } else {
             throw new InvalidArgumentException('Azione non valida.');
         }
@@ -136,6 +168,7 @@ $panels = $pdo->query('SELECT id, installation_location FROM autocontrollo_elect
 $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_products ORDER BY description, id')->fetchAll(PDO::FETCH_ASSOC);
 $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $groundingRods = $pdo->query('SELECT id, location FROM autocontrollo_grounding_rods ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
+$refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -260,6 +293,29 @@ include __DIR__ . '/partials/header.php';
             <button class="btn btn-outline-danger" name="action" value="grounding_rod_delete" formnovalidate onclick="return confirm('Eliminare questa palina di messa a terra?')"><i class="bi bi-trash"></i></button>
           </form>
         </td></tr>
+      <?php endforeach; ?>
+      </tbody></table></div>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <h2 class="h5 mb-3"><i class="bi bi-snow me-1"></i>Mappatura Frigoriferi</h2>
+    <form method="post" class="row g-2 align-items-end mb-4">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="refrigerator_create">
+      <div class="col-12 col-md-4"><label for="newRefrigeratorId" class="form-label">ID univoco</label><input class="form-control" id="newRefrigeratorId" name="refrigerator_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
+      <div class="col-12 col-md-3"><label for="newRefrigeratorType" class="form-label">Tipologia</label><select class="form-select" id="newRefrigeratorType" name="refrigerator_type" required><option value="frigorifero">Frigorifero</option><option value="congelatore">Congelatore</option><option value="cella">Cella</option></select></div>
+      <div class="col-12 col-md-3"><label for="newOperatingTemperature" class="form-label">Temperatura esercizio °C</label><input class="form-control" type="number" inputmode="decimal" step="0.01" min="-99.99" max="99.99" id="newOperatingTemperature" name="operating_temperature" required></div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-plus-circle me-1"></i>Aggiungi</button></div>
+    </form>
+
+    <?php if (!$refrigerators): ?>
+      <div class="text-muted">Nessun frigorifero configurato.</div>
+    <?php else: ?>
+      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Tipologia</th><th>Temperatura esercizio</th><th class="text-end">Azioni</th></tr></thead><tbody>
+      <?php foreach ($refrigerators as $refrigerator): ?>
+        <tr><td colspan="4"><form method="post" class="row g-2 align-items-center"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="original_refrigerator_id" value="<?= e($refrigerator['id']) ?>"><div class="col-12 col-md-3"><input class="form-control" name="refrigerator_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required value="<?= e($refrigerator['id']) ?>" aria-label="ID frigorifero"></div><div class="col-12 col-md-3"><select class="form-select" name="refrigerator_type" required aria-label="Tipologia frigorifero"><?php foreach (['frigorifero'=>'Frigorifero','congelatore'=>'Congelatore','cella'=>'Cella'] as $value=>$label): ?><option value="<?= e($value) ?>" <?= $refrigerator['appliance_type'] === $value ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 col-md-3"><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="-99.99" max="99.99" name="operating_temperature" required value="<?= e($refrigerator['operating_temperature']) ?>" aria-label="Temperatura esercizio"><span class="input-group-text">°C</span></div></div><div class="col-12 col-md-3 d-flex justify-content-md-end gap-2"><button class="btn btn-outline-primary" name="action" value="refrigerator_update"><i class="bi bi-save me-1"></i>Salva</button><button class="btn btn-outline-danger" name="action" value="refrigerator_delete" formnovalidate onclick="return confirm('Eliminare questo frigorifero?')"><i class="bi bi-trash"></i></button></div></form></td></tr>
       <?php endforeach; ?>
       </tbody></table></div>
     <?php endif; ?>
