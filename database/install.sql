@@ -135,6 +135,35 @@ CREATE TABLE IF NOT EXISTS autocontrollo_grounding_rods (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS autocontrollo_grounding_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  inspection_type ENUM('pre_apertura','post_chiusura') NOT NULL,
+  scheduled_date DATE NOT NULL,
+  status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+  operator_id INT UNSIGNED DEFAULT NULL,
+  started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  email_sent_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_grounding_inspection_season_type (season_start, season_end, inspection_type),
+  CONSTRAINT fk_grounding_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_grounding_inspection_results (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  grounding_rod_id INT UNSIGNED DEFAULT NULL,
+  rod_location VARCHAR(190) NOT NULL,
+  sort_order INT UNSIGNED NOT NULL,
+  clamp_checked TINYINT(1) DEFAULT NULL,
+  antioxidant_applied TINYINT(1) DEFAULT NULL,
+  checked_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_grounding_result_rod (inspection_id, sort_order),
+  CONSTRAINT fk_grounding_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_grounding_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_grounding_result_rod FOREIGN KEY (grounding_rod_id) REFERENCES autocontrollo_grounding_rods(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspections (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   season_start DATE NOT NULL,
