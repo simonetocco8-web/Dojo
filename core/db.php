@@ -80,6 +80,34 @@ function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   ");
+
+  // Le prime versioni della tabella includevano una colonna `identifier`
+  // obbligatoria con valore predefinito vuoto e indice univoco. Poiché l'ID
+  // della trappola è già la chiave primaria auto-incrementale, quella colonna
+  // impediva l'inserimento della seconda trappola (duplicate entry '').
+  $legacyColumn = $pdo->query("
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'autocontrollo_rodent_traps'
+      AND COLUMN_NAME = 'identifier'
+    LIMIT 1
+  ")->fetchColumn();
+  if ($legacyColumn !== false) {
+    $legacyIndexes = $pdo->query("
+      SELECT DISTINCT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'autocontrollo_rodent_traps'
+        AND COLUMN_NAME = 'identifier'
+        AND NON_UNIQUE = 0
+        AND INDEX_NAME = 'uq_rodent_trap_identifier'
+    ")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($legacyIndexes as $indexName) {
+      if (preg_match('/^[A-Za-z0-9_]+$/', (string)$indexName)) {
+        $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP INDEX `' . $indexName . '`');
+      }
+    }
+    $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP COLUMN identifier');
+  }
 }
 
 function ensure_autocontrollo_pool_inspections_tables(PDO $pdo): void {

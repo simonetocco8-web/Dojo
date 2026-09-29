@@ -12,6 +12,9 @@ $requirements = [
     [$settings, 'name="trap_location"', 'campo location'],
     [$database, 'ensure_autocontrollo_rodent_traps_table', 'inizializzazione tabella'],
     [$database, 'autocontrollo_rodent_traps', 'persistenza trappole'],
+    [$database, "COLUMN_NAME = 'identifier'", 'rilevamento colonna legacy'],
+    [$database, 'DROP COLUMN identifier', 'rimozione identificativo duplicato legacy'],
+    [$database, "INDEX_NAME = 'uq_rodent_trap_identifier'", 'rimozione indice univoco legacy'],
 ];
 foreach ($requirements as [$source, $needle, $label]) {
     if (strpos($source, $needle) === false) throw new RuntimeException('Funzionalità mancante: ' . $label);
