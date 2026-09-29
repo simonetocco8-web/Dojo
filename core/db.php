@@ -60,6 +60,17 @@ function ensure_autocontrollo_electrical_panels_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_pool_products_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_pool_products (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      description VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 function ensure_autocontrollo_electrical_inspections_tables(PDO $pdo): void {
   ensure_autocontrollo_electrical_panels_table($pdo);
   $pdo->exec("
