@@ -74,6 +74,8 @@ if ($inspectionId > 0) {
   }
 }
 $inspections = $pdo->query('SELECT i.*, u.email operator_email, COUNT(r.id) panel_count, COALESCE(SUM(r.differentials_ok=0),0) anomaly_count, COALESCE(SUM(r.differentials_ok=0 AND r.anomaly_resolved_date IS NULL),0) unresolved_anomaly_count FROM autocontrollo_electrical_inspections i LEFT JOIN users u ON u.id=i.started_by LEFT JOIN autocontrollo_electrical_inspection_results r ON r.inspection_id=i.id GROUP BY i.id ORDER BY i.started_at DESC')->fetchAll();
+$seasonRange = get_summer_season_range($pdo);
+$scheduledInspections = autocontrollo_electrical_schedule_inspections($schedule, $inspections, $seasonRange);
 $viewResults = [];
 $viewId = (int)($_GET['view'] ?? 0);
 if ($viewId > 0) {
@@ -107,9 +109,14 @@ include __DIR__ . '/partials/header.php';
 <?php else: ?>
 <div class="row g-3 mb-4">
 <?php if (!$schedule): ?><div class="col-12"><div class="alert alert-warning">Configurare le date di apertura e chiusura della stagione nelle impostazioni di sistema.</div></div><?php endif; ?>
-<?php foreach ($schedule as $type => $slot): $available = $today >= new DateTimeImmutable($slot['date'], new DateTimeZone('Europe/Rome')); ?>
+<?php foreach ($schedule as $type => $slot): $available = $today >= new DateTimeImmutable($slot['date'], new DateTimeZone('Europe/Rome')); $scheduledInspection = $scheduledInspections[$type] ?? null; ?>
   <div class="col-12 col-md-6"><div class="card shadow-sm h-100"><div class="card-body"><div class="small text-uppercase text-muted fw-semibold"><?= e($slot['label']) ?></div><div class="fs-4 fw-semibold mb-3"><?= e((new DateTimeImmutable($slot['date']))->format('d/m/Y')) ?></div>
-  <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="start"><input type="hidden" name="inspection_type" value="<?= e($type) ?>"><button class="btn btn-primary w-100" <?= $available ? '' : 'disabled' ?>><i class="bi bi-play-circle me-1"></i><?= $available ? 'Avvia procedura' : 'Non ancora disponibile' ?></button></form></div></div></div>
+  <?php if ($scheduledInspection): $actualDate = new DateTimeImmutable($scheduledInspection['started_at']); $late = $actualDate->format('Y-m-d') > $slot['date']; ?>
+    <div class="alert <?= $scheduledInspection['status'] === 'completata' ? 'alert-success' : 'alert-warning' ?> py-2 mb-2"><i class="bi <?= $scheduledInspection['status'] === 'completata' ? 'bi-check-circle' : 'bi-hourglass-split' ?> me-1"></i><strong><?= $scheduledInspection['status'] === 'completata' ? 'Eseguita' : 'Avviata' ?></strong> il <?= e($actualDate->format('d/m/Y H:i')) ?><?= $late ? ' (in data postuma)' : '' ?></div>
+    <?php if ($scheduledInspection['status'] === 'in_corso'): ?><a class="btn btn-primary w-100" href="?inspection=<?= (int)$scheduledInspection['id'] ?>"><i class="bi bi-arrow-right-circle me-1"></i>Continua procedura <?= e($slot['label']) ?></a><?php else: ?><a class="btn btn-outline-secondary w-100" href="?view=<?= (int)$scheduledInspection['id'] ?>#dettaglio"><i class="bi bi-eye me-1"></i>Visualizza controllo <?= e($slot['label']) ?></a><?php endif; ?>
+  <?php else: ?>
+    <form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="start"><input type="hidden" name="inspection_type" value="<?= e($type) ?>"><button class="btn btn-primary w-100" <?= $available ? '' : 'disabled' ?>><i class="bi bi-play-circle me-1"></i><?= $available ? 'Avvia procedura' : 'Non ancora disponibile' ?></button></form>
+  <?php endif; ?></div></div></div>
 <?php endforeach; ?>
 </div>
 <?php endif; ?>

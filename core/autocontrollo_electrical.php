@@ -18,6 +18,22 @@ function autocontrollo_electrical_schedule(PDO $pdo): array {
   ];
 }
 
+/**
+ * Abbina ogni procedura alla scadenza stagionale a cui appartiene. La data
+ * effettiva di avvio non modifica mai il tipo di controllo originario.
+ */
+function autocontrollo_electrical_schedule_inspections(array $schedule, array $inspections, array $range): array {
+  $matched = [];
+  foreach ($inspections as $inspection) {
+    $type = (string)($inspection['inspection_type'] ?? '');
+    if (!isset($schedule[$type])) continue;
+    if (($inspection['season_start'] ?? null) !== ($range['start'] ?? null)
+        || ($inspection['season_end'] ?? null) !== ($range['end'] ?? null)) continue;
+    $matched[$type] = $inspection;
+  }
+  return $matched;
+}
+
 function autocontrollo_electrical_start(PDO $pdo, string $type, int $userId): int {
   $schedule = autocontrollo_electrical_schedule($pdo);
   if (!isset($schedule[$type])) throw new InvalidArgumentException('Momento di controllo non valido o stagione non configurata.');
@@ -75,4 +91,3 @@ function autocontrollo_electrical_send_report(PDO $pdo, int $inspectionId): int 
   if ($sent > 0) $pdo->prepare('UPDATE autocontrollo_electrical_inspections SET email_sent_at=NOW() WHERE id=?')->execute([$inspectionId]);
   return $sent;
 }
-
