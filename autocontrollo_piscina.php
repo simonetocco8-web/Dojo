@@ -60,9 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $inspections = [];
 if (!empty($range['start']) && !empty($range['end'])) {
-    $stmt = $pdo->prepare("SELECT i.*, u.email AS operator_email,
+    $stmt = $pdo->prepare("SELECT i.*, u.email AS operator_email, TRIM(CONCAT_WS(' ', NULLIF(u.nome,''), NULLIF(u.cognome,''))) AS operator_name,
         (SELECT GROUP_CONCAT(CONCAT(p.product_description, ' — ', FORMAT(p.quantity_kg, 3), ' kg') ORDER BY p.id SEPARATOR ' | ')
-         FROM autocontrollo_pool_inspection_products p WHERE p.inspection_id=i.id) AS products
+         FROM autocontrollo_pool_inspection_products p WHERE p.inspection_id=i.id AND p.quantity_kg > 0) AS products
         FROM autocontrollo_pool_inspections i
         LEFT JOIN users u ON u.id=i.operator_id
         WHERE i.season_start=? AND i.season_end=? ORDER BY i.inspection_date DESC, i.inspection_time DESC");
@@ -77,6 +77,8 @@ include __DIR__ . '/partials/header.php';
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4"><div><div class="text-muted small text-uppercase fw-semibold">Autocontrollo</div><h1 class="h4 mb-0"><i class="bi bi-water me-1"></i>Piscina</h1></div></div>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 <?php if (isset($_GET['created'])): ?><div class="alert alert-success"><i class="bi bi-check-circle me-1"></i>Procedura piscina registrata correttamente.</div><?php endif; ?>
+
+<div class="card shadow-sm mb-4"><div class="card-body"><form class="row g-2 align-items-end" method="get" action="<?= e($base) ?>/reports/autocontrollo_pool_pdf.php"><div class="col-12 col-md"><label class="form-label" for="exportDateFrom">Data inizio</label><input class="form-control" type="date" id="exportDateFrom" name="date_from" required value="<?= e($range['start'] ?? $today->format('Y-m-d')) ?>"></div><div class="col-12 col-md"><label class="form-label" for="exportDateTo">Data fine</label><input class="form-control" type="date" id="exportDateTo" name="date_to" required value="<?= e($range['end'] ?? $today->format('Y-m-d')) ?>"></div><div class="col-12 col-md-auto"><button class="btn btn-outline-danger w-100"><i class="bi bi-file-earmark-pdf me-1"></i>Esporta PDF</button></div></form></div></div>
 
 <?php if (empty($range['start']) || empty($range['end'])): ?>
   <div class="alert alert-warning">Configurare le date di apertura e chiusura della stagione nelle impostazioni di sistema.</div>
@@ -105,7 +107,7 @@ include __DIR__ . '/partials/header.php';
 
 <div class="card shadow-sm"><div class="card-header bg-white"><h2 class="h5 mb-0">Controlli effettuati</h2></div><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>ID</th><th>Data e ora</th><th>Operatore</th><th>Cloro</th><th>Temp.</th><th>pH</th><th>Persone</th><th>Controlavaggio</th><th>Prelievo</th><th>Prodotti</th></tr></thead><tbody>
 <?php if (!$inspections): ?><tr><td colspan="10" class="text-center text-muted py-4">Nessun controllo piscina registrato.</td></tr><?php endif; ?>
-<?php foreach ($inspections as $inspection): ?><tr><td><code>#<?= (int)$inspection['id'] ?></code></td><td class="text-nowrap"><?= e((new DateTimeImmutable($inspection['inspection_date']))->format('d/m/Y')) ?> <?= e(substr($inspection['inspection_time'], 0, 5)) ?></td><td><?= e($inspection['operator_email'] ?? '—') ?></td><td><?= e(number_format((float)$inspection['chlorine'], 2, ',', '')) ?></td><td><?= e(number_format((float)$inspection['water_temperature'], 1, ',', '')) ?> °C</td><td><?= e(number_format((float)$inspection['ph_value'], 2, ',', '')) ?></td><td><?= (int)$inspection['people_in_pool'] ?></td><td><?= $inspection['backwash_minutes'] === null ? '—' : (int)$inspection['backwash_minutes'] . ' min' ?></td><td><?= $inspection['sample_location'] === 'interno' ? 'Interno' : 'Esterno' ?></td><td><?= e($inspection['products'] ?: '—') ?></td></tr><?php endforeach; ?>
+<?php foreach ($inspections as $inspection): ?><tr><td><code>#<?= (int)$inspection['id'] ?></code></td><td class="text-nowrap"><?= e((new DateTimeImmutable($inspection['inspection_date']))->format('d/m/Y')) ?> <?= e(substr($inspection['inspection_time'], 0, 5)) ?></td><td><?= e($inspection['operator_name'] ?: ($inspection['operator_email'] ?? '—')) ?></td><td><?= e(number_format((float)$inspection['chlorine'], 2, ',', '')) ?></td><td><?= e(number_format((float)$inspection['water_temperature'], 1, ',', '')) ?> °C</td><td><?= e(number_format((float)$inspection['ph_value'], 2, ',', '')) ?></td><td><?= (int)$inspection['people_in_pool'] ?></td><td><?= (int)($inspection['backwash_minutes'] ?? 0) > 0 ? (int)$inspection['backwash_minutes'] . ' min' : '' ?></td><td><?= $inspection['sample_location'] === 'interno' ? 'Interno' : 'Esterno' ?></td><td><?= e($inspection['products'] ?: '') ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
 <script src="<?= e($base) ?>/assets/autocontrollo-pool.js" defer></script>
 <?php include __DIR__ . '/partials/footer.php'; ?>
