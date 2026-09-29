@@ -37,7 +37,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
-$autocontrolloMenuOpen = nav_path_is_current(['autocontrollo_settings.php', 'autocontrollo_impianto_elettrico.php', 'autocontrollo_piscina.php'], $currentPath);
+$autocontrolloMenuOpen = nav_path_is_current(['autocontrollo_settings.php', 'autocontrollo_impianto_elettrico.php', 'autocontrollo_piscina.php', 'autocontrollo_derattizzazione.php'], $currentPath);
 $parkingMenuOpen = nav_path_is_current(['parking.php', 'parking_settings.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php', 'season_end_report.php', 'season_end_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
@@ -380,7 +380,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
           <ul class="dropdown-menu" aria-labelledby="autocontrolloSidebarDropdown">
-            <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
             <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
             <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
@@ -749,7 +749,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
               <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
-                <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
                 <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
                 <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>

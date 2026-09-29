@@ -128,6 +128,35 @@ CREATE TABLE IF NOT EXISTS autocontrollo_rodent_traps (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  scheduled_date DATE NOT NULL,
+  status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+  operator_id INT UNSIGNED DEFAULT NULL,
+  started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  email_sent_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_rodent_inspection_schedule (season_start, season_end, scheduled_date),
+  CONSTRAINT fk_rodent_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspection_results (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  trap_id INT UNSIGNED DEFAULT NULL,
+  trap_location VARCHAR(190) NOT NULL,
+  sort_order INT UNSIGNED NOT NULL,
+  bait_present TINYINT(1) DEFAULT NULL,
+  bait_eaten TINYINT(1) DEFAULT NULL,
+  bait_replaced TINYINT(1) DEFAULT NULL,
+  checked_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_rodent_result_trap (inspection_id, sort_order),
+  CONSTRAINT fk_rodent_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_rodent_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rodent_result_trap FOREIGN KEY (trap_id) REFERENCES autocontrollo_rodent_traps(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS autocontrollo_pool_inspections (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   season_start DATE NOT NULL,
