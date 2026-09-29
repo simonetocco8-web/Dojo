@@ -35,7 +35,7 @@ function current_user() {
 
 
 function default_departments() {
-  return array('Amministrazione','Reception','Booking','Manutenzione','Bar','HouseKeeping','Navettista','Magazziniere Tizzo','Magazziniere Tramonto');
+  return array('Amministrazione','Reception','Booking','Manutenzione','Bar','Resp. Bar','HouseKeeping','Navettista','Magazziniere Tizzo','Magazziniere Tramonto');
 }
 
 function normalize_departments_list($departments) {
