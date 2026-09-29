@@ -47,3 +47,18 @@ logout.php
 - Importa/aggiorna lo schema database con `database/install.sql` per creare la tabella `ewelink_tokens`.
 - Da menu “eWeLink” (visibile agli admin) collega l'account tramite OAuth 2.0.
 - Dopo l'autorizzazione potrai vedere l'elenco dei dispositivi Sonoff/eWeLink e inviare comandi on/off.
+
+### Temperature boiler tramite MCP
+- Genera in eWeLink Premium un **MCP server access URL** e salvalo sul server nella variabile `EWELINK_MCP_ACCESS_URL`. L'URL contiene il token: non inserirlo in `config/env.php` e non commetterlo.
+- La dashboard cerca per impostazione predefinita `Boiler Appartamenti` e `Boiler Cottage` e mostra la temperatura restituita dal server MCP.
+- I nomi si possono cambiare con `EWELINK_MCP_BOILER_NAMES` (lista separata da virgole); cache e timeout sono configurabili con `EWELINK_MCP_CACHE_SECONDS` e `EWELINK_MCP_TIMEOUT_SECONDS`.
+- Se le schede mostrano `—`, consulta il log errori PHP: le anomalie MCP vengono registrate con il prefisso `[eWeLink MCP]`, senza includere l'URL o il token di accesso.
+
+## Integrazione stazione meteo Ecowitt
+- Crea le chiavi nel portale API Ecowitt e configura `ECOWITT_APPLICATION_KEY`, `ECOWITT_API_KEY` e `ECOWITT_DEVICE_MAC` sul server.
+- La dashboard mostra temperatura, umidità, raffica, pioggia giornaliera e pressione nelle unità metriche.
+- Pressione fino a 1013 hPa e raffiche da 40 km/h attivano avvisi operativi in dashboard.
+- La cache predefinita è di 60 secondi; può essere modificata con `ECOWITT_CACHE_SECONDS`.
+- Durante la stagione estiva, `notification/ecowitt-weather-alerts-cron.php` invia al reparto Manutenzione un SMS quando la raffica supera 30 km/h o la pressione è pari o inferiore a 1013 hPa. Ogni allerta viene inviata una sola volta finché il valore non torna nella norma.
+- Esempio cron ogni 5 minuti: `*/5 * * * * /usr/bin/php /percorso/dojo/notification/ecowitt-weather-alerts-cron.php`
+- Lo stesso cron verifica i boiler eWeLink durante la stagione: il setpoint dell'acqua calda si configura in **Avanzate → Impostazioni** e genera un SMS a Manutenzione quando una temperatura è pari o inferiore alla soglia.
