@@ -105,7 +105,126 @@ CREATE TABLE IF NOT EXISTS system_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO system_settings (setting_key, setting_value)
-VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
+VALUES ('departments', '["Amministrazione","Reception","Booking","Manutenzione","Bar","Resp. Bar","HouseKeeping","Navettista","Magazziniere Tizzo","Magazziniere Tramonto"]');
+
+CREATE TABLE IF NOT EXISTS autocontrollo_electrical_panels (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  installation_location VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_pool_products (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  description VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_rodent_traps (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  location VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_grounding_rods (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  location VARCHAR(190) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  scheduled_date DATE NOT NULL,
+  status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+  operator_id INT UNSIGNED DEFAULT NULL,
+  started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  email_sent_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_rodent_inspection_schedule (season_start, season_end, scheduled_date),
+  CONSTRAINT fk_rodent_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspection_results (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  trap_id INT UNSIGNED DEFAULT NULL,
+  trap_location VARCHAR(190) NOT NULL,
+  sort_order INT UNSIGNED NOT NULL,
+  bait_present TINYINT(1) DEFAULT NULL,
+  bait_eaten TINYINT(1) DEFAULT NULL,
+  bait_replaced TINYINT(1) DEFAULT NULL,
+  checked_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_rodent_result_trap (inspection_id, sort_order),
+  CONSTRAINT fk_rodent_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_rodent_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rodent_result_trap FOREIGN KEY (trap_id) REFERENCES autocontrollo_rodent_traps(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_pool_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  inspection_date DATE NOT NULL,
+  inspection_time TIME NOT NULL,
+  operator_id INT UNSIGNED DEFAULT NULL,
+  chlorine DECIMAL(6,2) NOT NULL,
+  water_temperature DECIMAL(5,2) NOT NULL,
+  ph_value DECIMAL(4,2) NOT NULL,
+  people_in_pool INT UNSIGNED NOT NULL DEFAULT 0,
+  backwash_minutes INT UNSIGNED DEFAULT NULL,
+  sample_location ENUM('interno','esterno') NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_pool_inspection_season_date (season_start, season_end, inspection_date),
+  INDEX idx_pool_inspection_date (inspection_date),
+  CONSTRAINT fk_pool_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_pool_inspection_products (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED DEFAULT NULL,
+  product_description VARCHAR(255) NOT NULL,
+  quantity_kg DECIMAL(8,3) NOT NULL,
+  CONSTRAINT fk_pool_product_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_pool_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pool_product_catalog FOREIGN KEY (product_id) REFERENCES autocontrollo_pool_products(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_electrical_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  inspection_type ENUM('pre_apertura','post_chiusura') NOT NULL,
+  scheduled_date DATE NOT NULL,
+  status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+  started_by INT UNSIGNED DEFAULT NULL,
+  started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  email_sent_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_electrical_inspection_season_type (season_start, season_end, inspection_type),
+  CONSTRAINT fk_electrical_inspection_user FOREIGN KEY (started_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_electrical_inspection_results (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  panel_id INT UNSIGNED DEFAULT NULL,
+  panel_location VARCHAR(190) NOT NULL,
+  sort_order INT UNSIGNED NOT NULL,
+  external_check TINYINT(1) DEFAULT NULL,
+  differentials_ok TINYINT(1) DEFAULT NULL,
+  anomaly VARCHAR(500) DEFAULT NULL,
+  anomaly_resolved_date DATE DEFAULT NULL,
+  anomaly_resolved_by INT UNSIGNED DEFAULT NULL,
+  anomaly_resolved_at DATETIME DEFAULT NULL,
+  checked_at DATETIME DEFAULT NULL,
+  UNIQUE KEY uq_electrical_result_panel (inspection_id, sort_order),
+  CONSTRAINT fk_electrical_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_electrical_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_electrical_result_panel FOREIGN KEY (panel_id) REFERENCES autocontrollo_electrical_panels(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS parking_spaces (
   space_id VARCHAR(4) NOT NULL PRIMARY KEY,

@@ -82,6 +82,11 @@ function get_summer_season_range(?PDO $pdo = null): array {
   ];
 }
 
+function get_hot_water_setpoint(?PDO $pdo = null): ?float {
+  $value = get_setting('hot_water_temperature_setpoint', null, $pdo);
+  return $value !== null && $value !== '' && is_numeric($value) ? (float)$value : null;
+}
+
 /**
  * Return the unit costs used to calculate linen expenses for room resets.
  *
