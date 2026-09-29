@@ -89,12 +89,32 @@ function ensure_autocontrollo_electrical_inspections_tables(PDO $pdo): void {
       external_check TINYINT(1) DEFAULT NULL,
       differentials_ok TINYINT(1) DEFAULT NULL,
       anomaly VARCHAR(500) DEFAULT NULL,
+      anomaly_resolved_date DATE DEFAULT NULL,
+      anomaly_resolved_by INT UNSIGNED DEFAULT NULL,
+      anomaly_resolved_at DATETIME DEFAULT NULL,
       checked_at DATETIME DEFAULT NULL,
       UNIQUE KEY uq_electrical_result_panel (inspection_id, sort_order),
       CONSTRAINT fk_electrical_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_electrical_inspections(id) ON DELETE CASCADE,
       CONSTRAINT fk_electrical_result_panel FOREIGN KEY (panel_id) REFERENCES autocontrollo_electrical_panels(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   ");
+
+  $resultColumns = $pdo->query("
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'autocontrollo_electrical_inspection_results'
+      AND COLUMN_NAME IN ('anomaly_resolved_date','anomaly_resolved_by','anomaly_resolved_at')
+  ")->fetchAll(PDO::FETCH_COLUMN);
+  $missingResultColumns = [
+    'anomaly_resolved_date' => 'DATE DEFAULT NULL AFTER anomaly',
+    'anomaly_resolved_by' => 'INT UNSIGNED DEFAULT NULL AFTER anomaly_resolved_date',
+    'anomaly_resolved_at' => 'DATETIME DEFAULT NULL AFTER anomaly_resolved_by',
+  ];
+  foreach ($missingResultColumns as $column => $definition) {
+    if (!in_array($column, $resultColumns, true)) {
+      $pdo->exec("ALTER TABLE autocontrollo_electrical_inspection_results ADD COLUMN {$column} {$definition}");
+    }
+  }
 }
 
 

@@ -47,6 +47,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
       header('Location: ' . $base . '/autocontrollo_impianto_elettrico.php?inspection=' . $inspectionId); exit;
     }
+    if ($action === 'resolve_anomaly') {
+      $resultId = (int)($_POST['result_id'] ?? 0);
+      $inspectionId = (int)($_POST['inspection_id'] ?? 0);
+      $resolutionDate = trim((string)($_POST['resolution_date'] ?? ''));
+      $date = DateTimeImmutable::createFromFormat('!Y-m-d', $resolutionDate, new DateTimeZone('Europe/Rome'));
+      if (!$date || $date->format('Y-m-d') !== $resolutionDate) throw new InvalidArgumentException('Indicare una data di risoluzione valida.');
+      if ($date > new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'))) throw new InvalidArgumentException('La data di risoluzione non può essere futura.');
+      $stmt = $pdo->prepare('UPDATE autocontrollo_electrical_inspection_results SET anomaly_resolved_date=?, anomaly_resolved_by=?, anomaly_resolved_at=NOW() WHERE id=? AND inspection_id=? AND differentials_ok=0 AND anomaly_resolved_date IS NULL');
+      $stmt->execute([$resolutionDate, (int)$user['id'], $resultId, $inspectionId]);
+      if ($stmt->rowCount() !== 1) throw new RuntimeException('Anomalia non trovata o già risolta.');
+      header('Location: ' . $base . '/autocontrollo_impianto_elettrico.php?view=' . $inspectionId . '#dettaglio'); exit;
+    }
     throw new InvalidArgumentException('Azione non valida.');
   } catch (Throwable $exception) { $error = $exception->getMessage(); }
 }
@@ -61,11 +73,11 @@ if ($inspectionId > 0) {
     $stmt = $pdo->prepare('SELECT COUNT(*), SUM(checked_at IS NOT NULL) FROM autocontrollo_electrical_inspection_results WHERE inspection_id=?'); $stmt->execute([$inspectionId]); $progress = array_map('intval', $stmt->fetch(PDO::FETCH_NUM));
   }
 }
-$inspections = $pdo->query('SELECT i.*, u.email operator_email, COUNT(r.id) panel_count, COALESCE(SUM(r.differentials_ok=0),0) anomaly_count FROM autocontrollo_electrical_inspections i LEFT JOIN users u ON u.id=i.started_by LEFT JOIN autocontrollo_electrical_inspection_results r ON r.inspection_id=i.id GROUP BY i.id ORDER BY i.started_at DESC')->fetchAll();
+$inspections = $pdo->query('SELECT i.*, u.email operator_email, COUNT(r.id) panel_count, COALESCE(SUM(r.differentials_ok=0),0) anomaly_count, COALESCE(SUM(r.differentials_ok=0 AND r.anomaly_resolved_date IS NULL),0) unresolved_anomaly_count FROM autocontrollo_electrical_inspections i LEFT JOIN users u ON u.id=i.started_by LEFT JOIN autocontrollo_electrical_inspection_results r ON r.inspection_id=i.id GROUP BY i.id ORDER BY i.started_at DESC')->fetchAll();
 $viewResults = [];
 $viewId = (int)($_GET['view'] ?? 0);
 if ($viewId > 0) {
-  $stmt = $pdo->prepare('SELECT panel_location, external_check, differentials_ok, anomaly, checked_at FROM autocontrollo_electrical_inspection_results WHERE inspection_id=? ORDER BY sort_order');
+  $stmt = $pdo->prepare('SELECT id, panel_location, external_check, differentials_ok, anomaly, anomaly_resolved_date, anomaly_resolved_at, checked_at FROM autocontrollo_electrical_inspection_results WHERE inspection_id=? ORDER BY sort_order');
   $stmt->execute([$viewId]);
   $viewResults = $stmt->fetchAll();
 }
@@ -92,7 +104,6 @@ include __DIR__ . '/partials/header.php';
     <button class="btn btn-primary btn-lg w-100">Salva e passa al quadro successivo <i class="bi bi-arrow-right ms-1"></i></button>
   </form>
 </div></div>
-<script src="<?= e($base) ?>/assets/autocontrollo-electrical.js" defer></script>
 <?php else: ?>
 <div class="row g-3 mb-4">
 <?php if (!$schedule): ?><div class="col-12"><div class="alert alert-warning">Configurare le date di apertura e chiusura della stagione nelle impostazioni di sistema.</div></div><?php endif; ?>
@@ -105,7 +116,8 @@ include __DIR__ . '/partials/header.php';
 
 <div class="card shadow-sm mt-4"><div class="card-header bg-white"><h2 class="h5 mb-0">Rilevazioni effettuate</h2></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Data e ora</th><th>Procedura</th><th>Operatore</th><th>Quadri</th><th>Esito</th><th></th></tr></thead><tbody>
 <?php if (!$inspections): ?><tr><td colspan="6" class="text-center text-muted py-4">Nessuna procedura avviata.</td></tr><?php endif; ?>
-<?php foreach ($inspections as $inspection): ?><tr><td><?= e((new DateTimeImmutable($inspection['started_at']))->format('d/m/Y H:i')) ?></td><td><?= $inspection['inspection_type'] === 'pre_apertura' ? 'Pre-apertura' : 'Post-chiusura' ?></td><td><?= e($inspection['operator_email'] ?? '—') ?></td><td><?= (int)$inspection['panel_count'] ?></td><td><?php if ($inspection['status'] === 'in_corso'): ?><span class="badge text-bg-warning">In corso</span><?php elseif ((int)$inspection['anomaly_count'] > 0): ?><span class="badge text-bg-danger"><?= (int)$inspection['anomaly_count'] ?> anomalie</span><?php else: ?><span class="badge text-bg-success">Regolare</span><?php endif; ?></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="?view=<?= (int)$inspection['id'] ?>#dettaglio">Dettagli</a> <?php if ($inspection['status'] === 'in_corso'): ?><a class="btn btn-sm btn-outline-primary" href="?inspection=<?= (int)$inspection['id'] ?>">Continua</a><?php endif; ?></td></tr><?php endforeach; ?>
+<?php foreach ($inspections as $inspection): ?><tr><td><?= e((new DateTimeImmutable($inspection['started_at']))->format('d/m/Y H:i')) ?></td><td><?= $inspection['inspection_type'] === 'pre_apertura' ? 'Pre-apertura' : 'Post-chiusura' ?></td><td><?= e($inspection['operator_email'] ?? '—') ?></td><td><?= (int)$inspection['panel_count'] ?></td><td><?php if ($inspection['status'] === 'in_corso'): ?><span class="badge text-bg-warning">In corso</span><?php elseif ((int)$inspection['anomaly_count'] > 0 && (int)$inspection['unresolved_anomaly_count'] === 0): ?><span class="badge text-bg-success"><i class="bi bi-check-circle me-1"></i>Anomalie Risolte</span><?php elseif ((int)$inspection['anomaly_count'] > 0): ?><span class="badge text-bg-danger"><?= (int)$inspection['unresolved_anomaly_count'] ?> anomalie da risolvere</span><?php else: ?><span class="badge text-bg-success">Regolare</span><?php endif; ?></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-secondary" href="?view=<?= (int)$inspection['id'] ?>#dettaglio">Dettagli</a> <?php if ($inspection['status'] === 'in_corso'): ?><a class="btn btn-sm btn-outline-primary" href="?inspection=<?= (int)$inspection['id'] ?>">Continua</a><?php endif; ?></td></tr><?php endforeach; ?>
 </tbody></table></div></div>
-<?php if ($viewResults): ?><div class="card shadow-sm mt-3" id="dettaglio"><div class="card-header bg-white"><h2 class="h5 mb-0">Dettaglio procedura #<?= $viewId ?></h2></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Quadro</th><th>Stato esterno</th><th>Test differenziali</th><th>Anomalia</th><th>Verificato alle</th></tr></thead><tbody><?php foreach ($viewResults as $result): ?><tr><td><?= e($result['panel_location']) ?></td><td><?= $result['external_check'] === null ? '—' : 'Verificato' ?></td><td><?php if ($result['differentials_ok'] === null): ?>—<?php elseif ((int)$result['differentials_ok'] === 1): ?><span class="text-success fw-semibold">Regolare</span><?php else: ?><span class="text-danger fw-semibold">Anomalia</span><?php endif; ?></td><td><?= e($result['anomaly'] ?: '—') ?></td><td><?= $result['checked_at'] ? e((new DateTimeImmutable($result['checked_at']))->format('d/m/Y H:i')) : '—' ?></td></tr><?php endforeach; ?></tbody></table></div></div><?php endif; ?>
+<?php if ($viewResults): ?><div class="card shadow-sm mt-3" id="dettaglio"><div class="card-header bg-white"><h2 class="h5 mb-0">Dettaglio procedura #<?= $viewId ?></h2></div><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Quadro</th><th>Stato esterno</th><th>Test differenziali</th><th>Anomalia e risoluzione</th><th>Verificato alle</th></tr></thead><tbody><?php foreach ($viewResults as $result): ?><tr><td><?= e($result['panel_location']) ?></td><td><?= $result['external_check'] === null ? '—' : 'Verificato' ?></td><td><?php if ($result['differentials_ok'] === null): ?>—<?php elseif ((int)$result['differentials_ok'] === 1): ?><span class="text-success fw-semibold">Regolare</span><?php else: ?><span class="text-danger fw-semibold">Anomalia</span><?php endif; ?></td><td><?= e($result['anomaly'] ?: '—') ?><?php if ((int)$result['differentials_ok'] === 0 && $result['anomaly_resolved_date']): ?><div class="text-success fw-semibold mt-1"><i class="bi bi-check-circle me-1"></i>Risolta il <?= e((new DateTimeImmutable($result['anomaly_resolved_date']))->format('d/m/Y')) ?></div><?php elseif ((int)$result['differentials_ok'] === 0): ?><div class="mt-2"><button type="button" class="btn btn-sm btn-success show-resolution" data-target="resolution-<?= (int)$result['id'] ?>"><i class="bi bi-check2-circle me-1"></i>Risolto</button><form method="post" id="resolution-<?= (int)$result['id'] ?>" class="resolution-form d-none mt-2"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="resolve_anomaly"><input type="hidden" name="inspection_id" value="<?= $viewId ?>"><input type="hidden" name="result_id" value="<?= (int)$result['id'] ?>"><label class="form-label small fw-semibold" for="resolution-date-<?= (int)$result['id'] ?>">Data di risoluzione</label><div class="input-group"><input class="form-control" type="date" id="resolution-date-<?= (int)$result['id'] ?>" name="resolution_date" max="<?= e($today->format('Y-m-d')) ?>" required><button class="btn btn-success">Conferma</button></div></form></div><?php endif; ?></td><td><?= $result['checked_at'] ? e((new DateTimeImmutable($result['checked_at']))->format('d/m/Y H:i')) : '—' ?></td></tr><?php endforeach; ?></tbody></table></div></div><?php endif; ?>
+<script src="<?= e($base) ?>/assets/autocontrollo-electrical.js" defer></script>
 <?php include __DIR__ . '/partials/footer.php'; ?>

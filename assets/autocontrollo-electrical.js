@@ -17,4 +17,15 @@
     input.addEventListener('change', updateAnomalyField);
   });
   updateAnomalyField();
+
+  document.querySelectorAll('.show-resolution').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var form = document.getElementById(button.getAttribute('data-target'));
+      if (!form) return;
+      form.classList.remove('d-none');
+      button.classList.add('d-none');
+      var dateField = form.querySelector('input[type="date"]');
+      if (dateField) dateField.focus();
+    });
+  });
 }());
