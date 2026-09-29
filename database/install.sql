@@ -121,6 +121,35 @@ CREATE TABLE IF NOT EXISTS autocontrollo_pool_products (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS autocontrollo_pool_inspections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  season_start DATE NOT NULL,
+  season_end DATE NOT NULL,
+  inspection_date DATE NOT NULL,
+  inspection_time TIME NOT NULL,
+  operator_id INT UNSIGNED DEFAULT NULL,
+  chlorine DECIMAL(6,2) NOT NULL,
+  water_temperature DECIMAL(5,2) NOT NULL,
+  ph_value DECIMAL(4,2) NOT NULL,
+  people_in_pool INT UNSIGNED NOT NULL DEFAULT 0,
+  backwash_minutes INT UNSIGNED DEFAULT NULL,
+  sample_location ENUM('interno','esterno') NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_pool_inspection_season_date (season_start, season_end, inspection_date),
+  INDEX idx_pool_inspection_date (inspection_date),
+  CONSTRAINT fk_pool_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS autocontrollo_pool_inspection_products (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  inspection_id INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED DEFAULT NULL,
+  product_description VARCHAR(255) NOT NULL,
+  quantity_kg DECIMAL(8,3) NOT NULL,
+  CONSTRAINT fk_pool_product_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_pool_inspections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pool_product_catalog FOREIGN KEY (product_id) REFERENCES autocontrollo_pool_products(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS autocontrollo_electrical_inspections (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   season_start DATE NOT NULL,
