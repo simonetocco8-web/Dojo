@@ -93,21 +93,43 @@ function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
     LIMIT 1
   ")->fetchColumn();
   if ($legacyColumn !== false) {
-    $legacyIndexes = $pdo->query("
-      SELECT DISTINCT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'autocontrollo_rodent_traps'
-        AND COLUMN_NAME = 'identifier'
-        AND NON_UNIQUE = 0
-        AND INDEX_NAME = 'uq_rodent_trap_identifier'
-    ")->fetchAll(PDO::FETCH_COLUMN);
-    foreach ($legacyIndexes as $indexName) {
-      if (preg_match('/^[A-Za-z0-9_]+$/', (string)$indexName)) {
-        $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP INDEX `' . $indexName . '`');
+    try {
+      $legacyIndexes = $pdo->query("
+        SELECT DISTINCT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'autocontrollo_rodent_traps'
+          AND COLUMN_NAME = 'identifier'
+          AND NON_UNIQUE = 0
+          AND INDEX_NAME = 'uq_rodent_trap_identifier'
+      ")->fetchAll(PDO::FETCH_COLUMN);
+      foreach ($legacyIndexes as $indexName) {
+        if (preg_match('/^[A-Za-z0-9_]+$/', (string)$indexName)) {
+          $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP INDEX `' . $indexName . '`');
+        }
       }
+      $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP COLUMN identifier');
+    } catch (Throwable $exception) {
+      // Alcuni hosting consentono INSERT/UPDATE ma non ALTER TABLE. In questo
+      // caso la pagina usa un identificativo legacy univoco come fallback.
+      error_log('[Autocontrollo] Migrazione identifier trappole non applicata: ' . $exception->getMessage());
     }
-    $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP COLUMN identifier');
   }
+}
+
+/**
+ * Compatibilità con database che conservano ancora la colonna `identifier`.
+ * Restituisce la lunghezza massima disponibile, oppure 0 se la colonna non c'è.
+ */
+function autocontrollo_rodent_traps_legacy_identifier_length(PDO $pdo): int {
+  $stmt = $pdo->query("
+    SELECT CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'autocontrollo_rodent_traps'
+      AND COLUMN_NAME = 'identifier'
+    LIMIT 1
+  ");
+  $length = $stmt->fetchColumn();
+  return $length === false ? 0 : max(1, (int)$length);
 }
 
 function ensure_autocontrollo_pool_inspections_tables(PDO $pdo): void {

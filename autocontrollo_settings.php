@@ -76,8 +76,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new InvalidArgumentException('La location può contenere al massimo 190 caratteri.');
             }
             if ($action === 'rodent_trap_create') {
-                $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_traps (location) VALUES (?)');
-                $stmt->execute([$trapLocation]);
+                $legacyIdentifierLength = autocontrollo_rodent_traps_legacy_identifier_length($pdo);
+                if ($legacyIdentifierLength > 0) {
+                    // Fallback per installazioni sulle quali la migrazione della
+                    // vecchia colonna univoca non è ancora stata applicata.
+                    $legacyIdentifier = substr('TRAP-' . bin2hex(random_bytes(12)), 0, $legacyIdentifierLength);
+                    $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_traps (identifier, location) VALUES (?, ?)');
+                    $stmt->execute([$legacyIdentifier, $trapLocation]);
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_traps (location) VALUES (?)');
+                    $stmt->execute([$trapLocation]);
+                }
                 $message = 'created';
             } else {
                 if ($id <= 0) throw new InvalidArgumentException('ID trappola non valido.');
