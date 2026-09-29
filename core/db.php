@@ -49,6 +49,85 @@ function ensure_system_settings_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_electrical_panels_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_electrical_panels (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      installation_location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
+function ensure_autocontrollo_pool_products_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_pool_products (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      description VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
+function ensure_autocontrollo_electrical_inspections_tables(PDO $pdo): void {
+  ensure_autocontrollo_electrical_panels_table($pdo);
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_electrical_inspections (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      season_start DATE NOT NULL,
+      season_end DATE NOT NULL,
+      inspection_type ENUM('pre_apertura','post_chiusura') NOT NULL,
+      scheduled_date DATE NOT NULL,
+      status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+      started_by INT UNSIGNED DEFAULT NULL,
+      started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME DEFAULT NULL,
+      email_sent_at DATETIME DEFAULT NULL,
+      UNIQUE KEY uq_electrical_inspection_season_type (season_start, season_end, inspection_type),
+      INDEX idx_electrical_inspection_started_at (started_at),
+      CONSTRAINT fk_electrical_inspection_user FOREIGN KEY (started_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_electrical_inspection_results (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      inspection_id INT UNSIGNED NOT NULL,
+      panel_id INT UNSIGNED DEFAULT NULL,
+      panel_location VARCHAR(190) NOT NULL,
+      sort_order INT UNSIGNED NOT NULL,
+      external_check TINYINT(1) DEFAULT NULL,
+      differentials_ok TINYINT(1) DEFAULT NULL,
+      anomaly VARCHAR(500) DEFAULT NULL,
+      anomaly_resolved_date DATE DEFAULT NULL,
+      anomaly_resolved_by INT UNSIGNED DEFAULT NULL,
+      anomaly_resolved_at DATETIME DEFAULT NULL,
+      checked_at DATETIME DEFAULT NULL,
+      UNIQUE KEY uq_electrical_result_panel (inspection_id, sort_order),
+      CONSTRAINT fk_electrical_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_electrical_inspections(id) ON DELETE CASCADE,
+      CONSTRAINT fk_electrical_result_panel FOREIGN KEY (panel_id) REFERENCES autocontrollo_electrical_panels(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+
+  $resultColumns = $pdo->query("
+    SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'autocontrollo_electrical_inspection_results'
+      AND COLUMN_NAME IN ('anomaly_resolved_date','anomaly_resolved_by','anomaly_resolved_at')
+  ")->fetchAll(PDO::FETCH_COLUMN);
+  $missingResultColumns = [
+    'anomaly_resolved_date' => 'DATE DEFAULT NULL AFTER anomaly',
+    'anomaly_resolved_by' => 'INT UNSIGNED DEFAULT NULL AFTER anomaly_resolved_date',
+    'anomaly_resolved_at' => 'DATETIME DEFAULT NULL AFTER anomaly_resolved_by',
+  ];
+  foreach ($missingResultColumns as $column => $definition) {
+    if (!in_array($column, $resultColumns, true)) {
+      $pdo->exec("ALTER TABLE autocontrollo_electrical_inspection_results ADD COLUMN {$column} {$definition}");
+    }
+  }
+}
+
 
 function ensure_users_department_column_supports_multiple(PDO $pdo): void {
   $stmt = $pdo->query("
