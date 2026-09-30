@@ -4,6 +4,7 @@ $core = file_get_contents(__DIR__ . '/../core/autocontrollo_temperature.php');
 $database = file_get_contents(__DIR__ . '/../core/db.php');
 $header = file_get_contents(__DIR__ . '/../partials/header.php');
 $script = file_get_contents(__DIR__ . '/../assets/autocontrollo-temperature.js');
+$backfill = file_get_contents(__DIR__ . '/../database/backfill_autocontrollo_temperature.php');
 foreach ([
   [$page, 'D.Lgs. 110/92', 'disclaimer normativo'], [$page, '+1–2 °C', 'tolleranza frigoriferi'],
   [$core, "['mattina', 'pomeriggio']", 'due controlli giornalieri'],
@@ -11,6 +12,7 @@ foreach ([
   [$page, '<th>ID Frigo</th><th class="text-center">Mattina</th><th class="text-center">Pomeriggio</th>', 'tabella controlli giornalieri'],
   [$core, 'autocontrollo_temperature_start', 'avvio procedura'], [$core, 'autocontrollo_temperature_send_report', 'email amministrazione'],
   [$core, 'autocontrollo_temperature_next_due', 'ordine cronologico obbligatorio'], [$page, 'inspection_date', 'avvio controllo arretrato'],
+  [$core, 'autocontrollo_temperature_backfill_compliant', 'riallineamento storico conforme'], [$backfill, '--confirm', 'comando di riallineamento esplicito'],
   [$database, 'ensure_autocontrollo_temperature_inspections_tables', 'tabelle temperature'],
   [$header, '/autocontrollo_temperature.php', 'link menu'],
   [$script, '.temperature-compliance-yes', 'selezione di tutti i valori conformi'],

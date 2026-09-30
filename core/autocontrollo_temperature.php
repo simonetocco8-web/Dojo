@@ -27,6 +27,55 @@ function autocontrollo_temperature_next_due(array $range, array $completedInspec
   return null;
 }
 
+/**
+ * Crea o sovrascrive con esito conforme tutti i controlli dalla data di
+ * apertura fino a oggi (o alla chiusura, se antecedente). Pensata per il
+ * riallineamento una tantum dei dati storici.
+ */
+function autocontrollo_temperature_backfill_compliant(PDO $pdo, array $range, ?DateTimeImmutable $today = null): array {
+  $timezone = new DateTimeZone('Europe/Rome');
+  $today = ($today ?? new DateTimeImmutable('today', $timezone))->setTimezone($timezone);
+  $end = !empty($range['end']) ? DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['end'], $timezone) : false;
+  if (empty($range['start']) || !$end) throw new RuntimeException('Configurare le date di apertura e chiusura della stagione.');
+  $effectiveEnd = $end < $today ? $end : $today;
+  $controls = array_values(array_filter(autocontrollo_temperature_schedule($range), static fn(array $control): bool => $control['date'] <= $effectiveEnd->format('Y-m-d')));
+  if (!$controls) return ['inspections' => 0, 'results' => 0];
+  $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
+  if (!$refrigerators) throw new RuntimeException('Configurare almeno un frigorifero nei Setting Autocontrollo.');
+
+  $pdo->beginTransaction();
+  try {
+    $find = $pdo->prepare('SELECT id FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=? AND inspection_date=? AND time_slot=? LIMIT 1');
+    $create = $pdo->prepare("INSERT INTO autocontrollo_temperature_inspections (season_start, season_end, inspection_date, time_slot, status, started_at, completed_at) VALUES (?, ?, ?, ?, 'completata', ?, ?)");
+    $complete = $pdo->prepare("UPDATE autocontrollo_temperature_inspections SET status='completata', completed_at=? WHERE id=?");
+    $deleteResults = $pdo->prepare('DELETE FROM autocontrollo_temperature_results WHERE inspection_id=?');
+    $insertResult = $pdo->prepare('INSERT INTO autocontrollo_temperature_results (inspection_id, refrigerator_id, refrigerator_label, appliance_type, operating_temperature, sort_order, is_compliant, checked_at) VALUES (?, ?, ?, ?, ?, ?, 1, ?)');
+    $resultCount = 0;
+    foreach ($controls as $control) {
+      $time = $control['slot'] === 'mattina' ? '09:00:00' : '17:00:00';
+      $checkedAt = $control['date'] . ' ' . $time;
+      $find->execute([$range['start'], $range['end'], $control['date'], $control['slot']]);
+      $inspectionId = (int)($find->fetchColumn() ?: 0);
+      if ($inspectionId === 0) {
+        $create->execute([$range['start'], $range['end'], $control['date'], $control['slot'], $checkedAt, $checkedAt]);
+        $inspectionId = (int)$pdo->lastInsertId();
+      } else {
+        $complete->execute([$checkedAt, $inspectionId]);
+        $deleteResults->execute([$inspectionId]);
+      }
+      foreach ($refrigerators as $index => $refrigerator) {
+        $insertResult->execute([$inspectionId, $refrigerator['id'], $refrigerator['id'], $refrigerator['appliance_type'], $refrigerator['operating_temperature'], $index + 1, $checkedAt]);
+        $resultCount++;
+      }
+    }
+    $pdo->commit();
+    return ['inspections' => count($controls), 'results' => $resultCount];
+  } catch (Throwable $exception) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    throw $exception;
+  }
+}
+
 function autocontrollo_temperature_start(PDO $pdo, array $range, string $date, string $slot, int $operatorId): int {
   if (!in_array($slot, ['mattina', 'pomeriggio'], true)) throw new InvalidArgumentException('Fascia oraria non valida.');
   if (empty($range['start']) || empty($range['end']) || $date < $range['start'] || $date > $range['end']) throw new RuntimeException('La data non rientra nella stagione configurata.');
