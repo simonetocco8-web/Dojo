@@ -380,8 +380,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
           <ul class="dropdown-menu" aria-labelledby="autocontrolloSidebarDropdown">
-            <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
-            <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
             <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
@@ -749,8 +749,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
               <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
-                <li><span class="dropdown-item"><i class="bi bi-bug"></i><span>Derattizzazione</span></span></li>
-                <li><span class="dropdown-item"><i class="bi bi-plug"></i><span>Messa a Terra</span></span></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
                 <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
