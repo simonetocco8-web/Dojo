@@ -143,6 +143,14 @@ CREATE TABLE IF NOT EXISTS autocontrollo_refrigerators (
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS autocontrollo_fire_extinguishers (
+  id VARCHAR(50) NOT NULL PRIMARY KEY,
+  extinguisher_type ENUM('polvere','co2','schiuma','carrellato') NOT NULL,
+  capacity_kg DECIMAL(6,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS autocontrollo_temperature_inspections (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   season_start DATE NOT NULL,

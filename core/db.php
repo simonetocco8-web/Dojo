@@ -139,6 +139,18 @@ function ensure_autocontrollo_refrigerators_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_fire_extinguishers_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_fire_extinguishers (
+      id VARCHAR(50) NOT NULL PRIMARY KEY,
+      extinguisher_type ENUM('polvere','co2','schiuma','carrellato') NOT NULL,
+      capacity_kg DECIMAL(6,2) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 function ensure_autocontrollo_temperature_inspections_tables(PDO $pdo): void {
   ensure_autocontrollo_refrigerators_table($pdo);
   $pdo->exec("
