@@ -4,11 +4,41 @@ require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/mailer.php';
 
+function autocontrollo_temperature_schedule(array $range): array {
+  $timezone = new DateTimeZone('Europe/Rome');
+  $start = !empty($range['start']) ? DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['start'], $timezone) : false;
+  $end = !empty($range['end']) ? DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['end'], $timezone) : false;
+  if (!$start || !$end || $start > $end) return [];
+  $schedule = [];
+  for ($date = $start; $date <= $end; $date = $date->modify('+1 day')) {
+    foreach (['mattina', 'pomeriggio'] as $slot) $schedule[] = ['date' => $date->format('Y-m-d'), 'slot' => $slot];
+  }
+  return $schedule;
+}
+
+function autocontrollo_temperature_next_due(array $range, array $completedInspections): ?array {
+  $completed = [];
+  foreach ($completedInspections as $inspection) {
+    if (($inspection['status'] ?? '') === 'completata') $completed[(string)$inspection['inspection_date'] . '|' . (string)$inspection['time_slot']] = true;
+  }
+  foreach (autocontrollo_temperature_schedule($range) as $control) {
+    if (!isset($completed[$control['date'] . '|' . $control['slot']])) return $control;
+  }
+  return null;
+}
+
 function autocontrollo_temperature_start(PDO $pdo, array $range, string $date, string $slot, int $operatorId): int {
   if (!in_array($slot, ['mattina', 'pomeriggio'], true)) throw new InvalidArgumentException('Fascia oraria non valida.');
   if (empty($range['start']) || empty($range['end']) || $date < $range['start'] || $date > $range['end']) throw new RuntimeException('La data non rientra nella stagione configurata.');
   $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
-  if ($date !== $today->format('Y-m-d')) throw new RuntimeException('È possibile avviare soltanto i controlli della giornata corrente.');
+  if ($date > $today->format('Y-m-d')) throw new RuntimeException('Il controllo non è ancora disponibile.');
+  $openStmt = $pdo->prepare("SELECT id FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=? AND status='in_corso' LIMIT 1");
+  $openStmt->execute([$range['start'], $range['end']]);
+  if ($openStmt->fetchColumn() !== false) throw new RuntimeException('Completare la procedura già in corso prima di avviarne una nuova.');
+  $completedStmt = $pdo->prepare('SELECT inspection_date, time_slot, status FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=?');
+  $completedStmt->execute([$range['start'], $range['end']]);
+  $nextDue = autocontrollo_temperature_next_due($range, $completedStmt->fetchAll(PDO::FETCH_ASSOC));
+  if (!$nextDue || $nextDue['date'] !== $date || $nextDue['slot'] !== $slot) throw new RuntimeException('Completare prima tutti i controlli antecedenti.');
   $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
   if (!$refrigerators) throw new RuntimeException('Configurare almeno un frigorifero nei Setting Autocontrollo.');
   $pdo->beginTransaction();

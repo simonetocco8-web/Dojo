@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   try {
     $action = (string)($_POST['action'] ?? '');
     if ($action === 'start') {
-      $id = autocontrollo_temperature_start($pdo, $range, $todayValue, (string)($_POST['time_slot'] ?? ''), (int)$user['id']);
+      $id = autocontrollo_temperature_start($pdo, $range, (string)($_POST['inspection_date'] ?? ''), (string)($_POST['time_slot'] ?? ''), (int)$user['id']);
       header('Location: ' . $base . '/autocontrollo_temperature.php?inspection=' . $id); exit;
     }
     if ($action === 'save_all') {
@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $inspectionId = (int)($_GET['inspection'] ?? ($_POST['inspection_id'] ?? 0)); $activeInspection = null; $currentResult = null; $activeResults = []; $progress = [0, 0];
+if ($inspectionId <= 0) { $stmt = $pdo->prepare("SELECT id FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=? AND status='in_corso' ORDER BY inspection_date, FIELD(time_slot,'mattina','pomeriggio') LIMIT 1"); $stmt->execute([$range['start'] ?? '', $range['end'] ?? '']); $inspectionId = (int)($stmt->fetchColumn() ?: 0); }
 if ($inspectionId > 0) {
   $stmt = $pdo->prepare('SELECT * FROM autocontrollo_temperature_inspections WHERE id=?'); $stmt->execute([$inspectionId]); $activeInspection = $stmt->fetch(PDO::FETCH_ASSOC);
   if ($activeInspection && $activeInspection['status'] === 'in_corso') {
@@ -54,7 +55,7 @@ if ($inspectionId > 0) {
 }
 $stmt = $pdo->prepare("SELECT i.*, u.email operator_email, TRIM(CONCAT_WS(' ', NULLIF(u.nome,''), NULLIF(u.cognome,''))) operator_name, COUNT(r.id) refrigerator_count, COALESCE(SUM(r.is_compliant=0),0) anomaly_count FROM autocontrollo_temperature_inspections i LEFT JOIN users u ON u.id=i.operator_id LEFT JOIN autocontrollo_temperature_results r ON r.inspection_id=i.id WHERE i.season_start=? AND i.season_end=? GROUP BY i.id ORDER BY i.inspection_date DESC, FIELD(i.time_slot,'pomeriggio','mattina'), i.started_at DESC");
 $stmt->execute([$range['start'] ?? '', $range['end'] ?? '']); $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$startedToday = []; foreach ($inspections as $item) if ($item['inspection_date'] === $todayValue) $startedToday[$item['time_slot']] = true;
+$nextDue = autocontrollo_temperature_next_due($range, $inspections);
 $viewId = (int)($_GET['view'] ?? 0); $viewResults = [];
 if ($viewId > 0) { $stmt = $pdo->prepare('SELECT * FROM autocontrollo_temperature_results WHERE inspection_id=? ORDER BY sort_order'); $stmt->execute([$viewId]); $viewResults = $stmt->fetchAll(PDO::FETCH_ASSOC); }
 $title = 'Autocontrollo Temperature'; include __DIR__ . '/partials/header.php';
@@ -74,9 +75,10 @@ $title = 'Autocontrollo Temperature'; include __DIR__ . '/partials/header.php';
   </form>
 </div></div>
 <?php else: ?>
-<div class="card shadow-sm mb-4"><div class="card-body"><h2 class="h5">Controlli di oggi · <?= e($today->format('d/m/Y')) ?></h2>
-<?php if (!$seasonActive): ?><div class="alert alert-warning mb-0">La giornata corrente non rientra nelle date di apertura e chiusura della stagione configurata.</div>
-<?php else: ?><div class="row g-3"><?php foreach (['mattina'=>'Mattina','pomeriggio'=>'Pomeriggio'] as $slot=>$label): ?><div class="col-12 col-sm-6"><div class="border rounded p-3 h-100"><div class="fw-semibold mb-2"><i class="bi <?= $slot === 'mattina' ? 'bi-sunrise' : 'bi-sunset' ?> me-1"></i><?= $label ?></div><?php if (isset($startedToday[$slot])): ?><span class="badge text-bg-success">Procedura già avviata</span><?php else: ?><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="start"><input type="hidden" name="time_slot" value="<?= e($slot) ?>"><button class="btn btn-primary w-100"><i class="bi bi-play-circle me-1"></i>Avvia controllo</button></form><?php endif; ?></div></div><?php endforeach; ?></div><?php endif; ?>
+<div class="card shadow-sm mb-4"><div class="card-body"><h2 class="h5">Prossimo controllo in ordine cronologico</h2>
+<?php if (empty($range['start']) || empty($range['end'])): ?><div class="alert alert-warning mb-0">Configurare le date di apertura e chiusura della stagione.</div>
+<?php elseif ($nextDue === null): ?><div class="alert alert-success mb-0"><i class="bi bi-check-circle me-1"></i>Tutti i controlli previsti dalla data di apertura alla data di chiusura sono stati completati.</div>
+<?php else: $available = $nextDue['date'] <= $todayValue; $overdue = $nextDue['date'] < $todayValue; ?><div class="border rounded p-3"><div class="d-flex flex-wrap align-items-center gap-2 mb-3"><span class="fs-5 fw-semibold"><?= e((new DateTimeImmutable($nextDue['date']))->format('d/m/Y')) ?></span><span class="badge text-bg-primary"><?= e(ucfirst($nextDue['slot'])) ?></span><?php if ($overdue): ?><span class="badge text-bg-warning">Arretrato</span><?php endif; ?></div><p class="text-muted">I controlli successivi resteranno bloccati finché questa procedura non sarà completata.</p><form method="post"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="start"><input type="hidden" name="inspection_date" value="<?= e($nextDue['date']) ?>"><input type="hidden" name="time_slot" value="<?= e($nextDue['slot']) ?>"><button class="btn btn-primary" <?= $available ? '' : 'disabled' ?>><i class="bi bi-play-circle me-1"></i><?= $available ? 'Avvia controllo' : 'Non ancora disponibile' ?></button></form></div><?php endif; ?>
 </div></div>
 <?php endif; ?>
 
