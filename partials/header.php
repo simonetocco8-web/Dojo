@@ -384,7 +384,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
             <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
-            <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
             <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
             <li><hr class="dropdown-divider"></li>
@@ -753,7 +753,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
                 <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
-                <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
                 <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
                 <li><hr class="dropdown-divider"></li>
