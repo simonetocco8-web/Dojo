@@ -124,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $panels = $pdo->query('SELECT id, installation_location FROM autocontrollo_electrical_panels ORDER BY installation_location, id')->fetchAll(PDO::FETCH_ASSOC);
 $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_products ORDER BY description, id')->fetchAll(PDO::FETCH_ASSOC);
 $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
-$refrigerators = $pdo->query('SELECT id, refrigerator_identifier, location FROM autocontrollo_refrigerators ORDER BY refrigerator_identifier, id')->fetchAll(PDO::FETCH_ASSOC);
+$refrigerators = $pdo->query('SELECT id, location FROM autocontrollo_refrigerators ORDER BY refrigerator_identifier, id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
