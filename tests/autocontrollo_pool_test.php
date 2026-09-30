@@ -12,6 +12,9 @@ if (autocontrollo_pool_next_required_date($range, ['2026-06-01', '2026-06-03']) 
 if (autocontrollo_pool_next_required_date($range, ['2026-06-01', '2026-06-02', '2026-06-03', '2026-06-04']) !== null) {
     throw new RuntimeException('La stagione completa non deve proporre altri controlli.');
 }
+if (autocontrollo_pool_decimal('0', 'Quantità prodotto', 0, 99999) !== 0.0) {
+    throw new RuntimeException('La quantità zero dei prodotti deve essere accettata.');
+}
 
 $page = file_get_contents(__DIR__ . '/../autocontrollo_piscina.php');
 $database = file_get_contents(__DIR__ . '/../core/db.php');
@@ -28,6 +31,7 @@ $requirements = [
     [$page, '/assets/autocontrollo-pool.js', 'script autocompletamento'],
     [$javascript, "setValue('chlorine'", 'copia dei parametri'],
     [$javascript, 'product_quantities[', 'copia dei prodotti'],
+    [$page, 'step="0.001" min="0"', 'quantità prodotto pari a zero'],
 ];
 foreach ($requirements as [$source, $needle, $label]) {
     if ($source === false || strpos($source, $needle) === false) throw new RuntimeException('Funzionalità mancante: ' . $label);

@@ -63,7 +63,7 @@ function autocontrollo_pool_create(PDO $pdo, array $range, string $requiredDate,
     $stmt->execute([$productId]);
     $product = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$product) throw new InvalidArgumentException('Prodotto piscina non valido.');
-    $selectedProducts[] = [$product, autocontrollo_pool_decimal($quantityRaw, 'Quantità prodotto', 0.001, 99999)];
+    $selectedProducts[] = [$product, autocontrollo_pool_decimal($quantityRaw, 'Quantità prodotto', 0, 99999)];
   }
 
   $pdo->beginTransaction();
