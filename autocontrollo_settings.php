@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $location = trim((string)($_POST['installation_location'] ?? ''));
     $description = trim((string)($_POST['description'] ?? ''));
+    $trapIdentifier = trim((string)($_POST['trap_identifier'] ?? ''));
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
     $refrigeratorIdentifier = trim((string)($_POST['refrigerator_identifier'] ?? ''));
     $refrigeratorLocation = trim((string)($_POST['refrigerator_location'] ?? ''));
@@ -74,18 +75,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$id]);
             $message = 'deleted';
         } elseif ($action === 'rodent_trap_create' || $action === 'rodent_trap_update') {
+            if ($trapIdentifier === '') throw new InvalidArgumentException('L’ID della trappola è obbligatorio.');
             if ($trapLocation === '') throw new InvalidArgumentException('La location della trappola è obbligatoria.');
+            if ((function_exists('mb_strlen') ? mb_strlen($trapIdentifier, 'UTF-8') : strlen($trapIdentifier)) > 100) {
+                throw new InvalidArgumentException('L’ID della trappola può contenere al massimo 100 caratteri.');
+            }
             if ((function_exists('mb_strlen') ? mb_strlen($trapLocation, 'UTF-8') : strlen($trapLocation)) > 190) {
                 throw new InvalidArgumentException('La location può contenere al massimo 190 caratteri.');
             }
             if ($action === 'rodent_trap_create') {
-                $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_traps (location) VALUES (?)');
-                $stmt->execute([$trapLocation]);
+                $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_traps (trap_identifier, location) VALUES (?, ?)');
+                $stmt->execute([$trapIdentifier, $trapLocation]);
                 $message = 'created';
             } else {
                 if ($id <= 0) throw new InvalidArgumentException('Trappola roditori non valida.');
-                $stmt = $pdo->prepare('UPDATE autocontrollo_rodent_traps SET location = ? WHERE id = ?');
-                $stmt->execute([$trapLocation, $id]);
+                $stmt = $pdo->prepare('UPDATE autocontrollo_rodent_traps SET trap_identifier = ?, location = ? WHERE id = ?');
+                $stmt->execute([$trapIdentifier, $trapLocation, $id]);
                 $message = 'updated';
             }
         } elseif ($action === 'rodent_trap_delete') {
@@ -123,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $panels = $pdo->query('SELECT id, installation_location FROM autocontrollo_electrical_panels ORDER BY installation_location, id')->fetchAll(PDO::FETCH_ASSOC);
 $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_products ORDER BY description, id')->fetchAll(PDO::FETCH_ASSOC);
-$rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY id')->fetchAll(PDO::FETCH_ASSOC);
+$rodentTraps = $pdo->query('SELECT id, trap_identifier, location FROM autocontrollo_rodent_traps ORDER BY trap_identifier, id')->fetchAll(PDO::FETCH_ASSOC);
 $refrigerators = $pdo->query('SELECT id, refrigerator_identifier, location FROM autocontrollo_refrigerators ORDER BY refrigerator_identifier, id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
@@ -174,7 +179,8 @@ include __DIR__ . '/partials/header.php';
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="rodent_trap_create">
-      <div class="col-12 col-md"><label for="newTrapLocation" class="form-label">Location</label><input class="form-control" id="newTrapLocation" name="trap_location" maxlength="190" required><div class="form-text">L’ID della trappola viene assegnato automaticamente.</div></div>
+      <div class="col-12 col-md-4"><label for="newTrapIdentifier" class="form-label">ID trappola</label><input class="form-control" id="newTrapIdentifier" name="trap_identifier" maxlength="100" required></div>
+      <div class="col-12 col-md"><label for="newTrapLocation" class="form-label">Location</label><input class="form-control" id="newTrapLocation" name="trap_location" maxlength="190" required></div>
       <div class="col-12 col-md-auto"><button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Aggiungi trappola</button></div>
     </form>
 
@@ -183,13 +189,14 @@ include __DIR__ . '/partials/header.php';
     <?php else: ?>
       <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID trappola</th><th>Location</th><th class="text-end" style="width:210px">Azioni</th></tr></thead><tbody>
       <?php foreach ($rodentTraps as $trap): ?>
-        <tr><td><code>#<?= (int)$trap['id'] ?></code></td><td colspan="2">
+        <tr><td colspan="3">
           <form method="post" class="row g-2 align-items-center">
             <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="id" value="<?= (int)$trap['id'] ?>">
+            <div class="col-12 col-md-4"><input class="form-control" name="trap_identifier" maxlength="100" required aria-label="ID trappola" value="<?= e($trap['trap_identifier']) ?>"></div>
             <div class="col-12 col-md"><input class="form-control" name="trap_location" maxlength="190" required aria-label="Location trappola" value="<?= e($trap['location']) ?>"></div>
             <div class="col-12 col-md-auto d-flex gap-2 justify-content-md-end">
               <button class="btn btn-outline-primary text-nowrap" name="action" value="rodent_trap_update"><i class="bi bi-save me-1"></i>Salva</button>
-              <button class="btn btn-outline-danger" name="action" value="rodent_trap_delete" formnovalidate onclick="return confirm('Eliminare questa trappola roditori?')" aria-label="Elimina trappola #<?= (int)$trap['id'] ?>"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-danger" name="action" value="rodent_trap_delete" formnovalidate onclick="return confirm('Eliminare questa trappola roditori?')" aria-label="Elimina trappola <?= e($trap['trap_identifier']) ?>"><i class="bi bi-trash"></i></button>
             </div>
           </form>
         </td></tr>

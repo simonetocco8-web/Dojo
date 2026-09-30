@@ -75,30 +75,13 @@ function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS autocontrollo_rodent_traps (
       id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      trap_identifier VARCHAR(100) NOT NULL,
       location VARCHAR(190) NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_rodent_trap_identifier (trap_identifier)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   ");
-
-  // Migrazione dalle prime versioni: l'ID della trappola coincide ora con la
-  // chiave primaria autoincrementale, quindi il vecchio identificativo non serve.
-  $legacyColumn = $pdo->query("
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = 'autocontrollo_rodent_traps'
-      AND COLUMN_NAME = 'trap_identifier'
-  ")->fetchColumn();
-  if ((int)$legacyColumn > 0) {
-    $legacyIndex = $pdo->query("
-      SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = 'autocontrollo_rodent_traps'
-        AND INDEX_NAME = 'uq_rodent_trap_identifier'
-    ")->fetchColumn();
-    if ((int)$legacyIndex > 0) $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP INDEX uq_rodent_trap_identifier');
-    $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP COLUMN trap_identifier');
-  }
 }
 
 function ensure_autocontrollo_refrigerators_table(PDO $pdo): void {
