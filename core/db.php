@@ -71,6 +71,87 @@ function ensure_autocontrollo_pool_products_table(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_rodent_traps_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_rodent_traps (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+
+  // Migrazione dalle prime versioni: l'ID della trappola coincide ora con la
+  // chiave primaria autoincrementale, quindi il vecchio identificativo non serve.
+  $legacyColumn = $pdo->query("
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'autocontrollo_rodent_traps'
+      AND COLUMN_NAME = 'trap_identifier'
+  ")->fetchColumn();
+  if ((int)$legacyColumn > 0) {
+    $legacyIndex = $pdo->query("
+      SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'autocontrollo_rodent_traps'
+        AND INDEX_NAME = 'uq_rodent_trap_identifier'
+    ")->fetchColumn();
+    if ((int)$legacyIndex > 0) $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP INDEX uq_rodent_trap_identifier');
+    $pdo->exec('ALTER TABLE autocontrollo_rodent_traps DROP COLUMN trap_identifier');
+  }
+}
+
+function ensure_autocontrollo_refrigerators_table(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_refrigerators (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      refrigerator_identifier VARCHAR(100) NOT NULL,
+      location VARCHAR(190) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_refrigerator_identifier (refrigerator_identifier)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
+function ensure_autocontrollo_temperature_tables(PDO $pdo): void {
+  ensure_autocontrollo_refrigerators_table($pdo);
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_temperature_inspections (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      season_start DATE NOT NULL,
+      season_end DATE NOT NULL,
+      inspection_date DATE NOT NULL,
+      period ENUM('mattina','pomeriggio') NOT NULL,
+      status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+      started_by INT UNSIGNED DEFAULT NULL,
+      started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME DEFAULT NULL,
+      email_sent_at DATETIME DEFAULT NULL,
+      UNIQUE KEY uq_temperature_date_period (inspection_date, period),
+      CONSTRAINT fk_temperature_operator FOREIGN KEY (started_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_temperature_results (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      inspection_id INT UNSIGNED NOT NULL,
+      refrigerator_id INT UNSIGNED DEFAULT NULL,
+      refrigerator_identifier VARCHAR(100) NOT NULL,
+      refrigerator_location VARCHAR(190) NOT NULL,
+      sort_order INT UNSIGNED NOT NULL,
+      is_compliant TINYINT(1) DEFAULT NULL,
+      checked_at DATETIME DEFAULT NULL,
+      anomaly_resolved_at DATETIME DEFAULT NULL,
+      anomaly_resolved_by INT UNSIGNED DEFAULT NULL,
+      UNIQUE KEY uq_temperature_result_order (inspection_id, sort_order),
+      CONSTRAINT fk_temperature_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_temperature_inspections(id) ON DELETE CASCADE,
+      CONSTRAINT fk_temperature_result_refrigerator FOREIGN KEY (refrigerator_id) REFERENCES autocontrollo_refrigerators(id) ON DELETE SET NULL,
+      CONSTRAINT fk_temperature_result_resolver FOREIGN KEY (anomaly_resolved_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 function ensure_autocontrollo_pool_inspections_tables(PDO $pdo): void {
   ensure_autocontrollo_pool_products_table($pdo);
   $pdo->exec("
