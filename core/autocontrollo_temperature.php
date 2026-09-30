@@ -1,0 +1,47 @@
+<?php
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/mailer.php';
+
+function autocontrollo_temperature_start(PDO $pdo, array $range, string $date, string $slot, int $operatorId): int {
+  if (!in_array($slot, ['mattina', 'pomeriggio'], true)) throw new InvalidArgumentException('Fascia oraria non valida.');
+  if (empty($range['start']) || empty($range['end']) || $date < $range['start'] || $date > $range['end']) throw new RuntimeException('La data non rientra nella stagione configurata.');
+  $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
+  if ($date !== $today->format('Y-m-d')) throw new RuntimeException('È possibile avviare soltanto i controlli della giornata corrente.');
+  $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
+  if (!$refrigerators) throw new RuntimeException('Configurare almeno un frigorifero nei Setting Autocontrollo.');
+  $pdo->beginTransaction();
+  try {
+    $stmt = $pdo->prepare('INSERT INTO autocontrollo_temperature_inspections (season_start, season_end, inspection_date, time_slot, operator_id) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$range['start'], $range['end'], $date, $slot, $operatorId]);
+    $id = (int)$pdo->lastInsertId();
+    $insert = $pdo->prepare('INSERT INTO autocontrollo_temperature_results (inspection_id, refrigerator_id, refrigerator_label, appliance_type, operating_temperature, sort_order) VALUES (?, ?, ?, ?, ?, ?)');
+    foreach ($refrigerators as $index => $item) $insert->execute([$id, $item['id'], $item['id'], $item['appliance_type'], $item['operating_temperature'], $index + 1]);
+    $pdo->commit();
+    return $id;
+  } catch (Throwable $exception) {
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    if ((string)$exception->getCode() === '23000') throw new RuntimeException('Il controllo selezionato è già stato avviato.');
+    throw $exception;
+  }
+}
+
+function autocontrollo_temperature_send_report(PDO $pdo, int $inspectionId): int {
+  $stmt = $pdo->prepare("SELECT i.*, TRIM(CONCAT_WS(' ', NULLIF(u.nome,''), NULLIF(u.cognome,''))) operator_name, u.email operator_email FROM autocontrollo_temperature_inspections i LEFT JOIN users u ON u.id=i.operator_id WHERE i.id=?");
+  $stmt->execute([$inspectionId]); $inspection = $stmt->fetch(PDO::FETCH_ASSOC);
+  if (!$inspection) return 0;
+  $stmt = $pdo->prepare('SELECT * FROM autocontrollo_temperature_results WHERE inspection_id=? ORDER BY sort_order'); $stmt->execute([$inspectionId]);
+  $rows = ''; $anomalies = 0;
+  foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $result) {
+    $ok = (int)$result['is_compliant'] === 1; if (!$ok) $anomalies++;
+    $style = $ok ? '' : ' style="background:#f8d7da;color:#842029;font-weight:bold"';
+    $rows .= '<tr' . $style . '><td>' . htmlspecialchars($result['refrigerator_label'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars(ucfirst($result['appliance_type']), ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$result['operating_temperature'], ENT_QUOTES, 'UTF-8') . ' °C</td><td>' . ($ok ? 'Sì' : 'NO — ANOMALIA') . '</td></tr>';
+  }
+  $operator = trim((string)$inspection['operator_name']) ?: (string)$inspection['operator_email'];
+  $html = '<h2>Autocontrollo Temperature</h2><p><strong>Data:</strong> ' . date('d/m/Y', strtotime($inspection['inspection_date'])) . '<br><strong>Fascia:</strong> ' . ucfirst($inspection['time_slot']) . '<br><strong>Eseguito:</strong> ' . date('d/m/Y H:i', strtotime($inspection['completed_at'] ?: $inspection['started_at'])) . '<br><strong>Operatore:</strong> ' . htmlspecialchars($operator, ENT_QUOTES, 'UTF-8') . '<br><strong>Anomalie:</strong> ' . $anomalies . '</p><table border="1" cellpadding="7" cellspacing="0"><thead><tr><th>ID Frigo</th><th>Tipologia</th><th>Temperatura esercizio</th><th>Conforme</th></tr></thead><tbody>' . $rows . '</tbody></table>';
+  $users = $pdo->query("SELECT email, dipartimento FROM users WHERE is_active=1 AND deleted_at IS NULL AND email<>''")->fetchAll(PDO::FETCH_ASSOC); $sent = 0;
+  foreach ($users as $recipient) if (user_has_department($recipient, 'Amministrazione') && filter_var($recipient['email'], FILTER_VALIDATE_EMAIL) && send_mail($recipient['email'], 'Esito autocontrollo temperature' . ($anomalies ? ' — ANOMALIE' : ''), $html)) $sent++;
+  if ($sent > 0) $pdo->prepare('UPDATE autocontrollo_temperature_inspections SET email_sent_at=NOW() WHERE id=?')->execute([$inspectionId]);
+  return $sent;
+}
