@@ -186,6 +186,38 @@ function ensure_autocontrollo_fire_inspections_tables(PDO $pdo): void {
   ");
 }
 
+function ensure_autocontrollo_haccp_inspections_tables(PDO $pdo): void {
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_haccp_inspections (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      season_start DATE NOT NULL,
+      season_end DATE NOT NULL,
+      scheduled_date DATE NOT NULL,
+      status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+      operator_id INT UNSIGNED DEFAULT NULL,
+      started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      completed_at DATETIME DEFAULT NULL,
+      email_sent_at DATETIME DEFAULT NULL,
+      UNIQUE KEY uq_haccp_inspection_date (season_start, season_end, scheduled_date),
+      CONSTRAINT fk_haccp_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+  $pdo->exec("
+    CREATE TABLE IF NOT EXISTS autocontrollo_haccp_inspection_results (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      inspection_id INT UNSIGNED NOT NULL,
+      surface_code VARCHAR(50) NOT NULL,
+      surface_label VARCHAR(190) NOT NULL,
+      frequency ENUM('giornaliera','settimanale') NOT NULL,
+      sort_order INT UNSIGNED NOT NULL,
+      is_clean TINYINT(1) DEFAULT NULL,
+      checked_at DATETIME DEFAULT NULL,
+      UNIQUE KEY uq_haccp_result_surface (inspection_id, surface_code),
+      CONSTRAINT fk_haccp_result_inspection FOREIGN KEY (inspection_id) REFERENCES autocontrollo_haccp_inspections(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  ");
+}
+
 function ensure_autocontrollo_temperature_inspections_tables(PDO $pdo): void {
   ensure_autocontrollo_refrigerators_table($pdo);
   $pdo->exec("
