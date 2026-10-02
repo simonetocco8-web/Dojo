@@ -491,6 +491,8 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
     FROM days_off d
     JOIN users u ON u.id = d.user_id
     WHERE d.deleted_at IS NULL
+      AND u.is_active = 1
+      AND u.deleted_at IS NULL
       AND d.day BETWEEN ? AND ?
     ORDER BY d.day ASC, u.cognome ASC, u.nome ASC
     LIMIT 50
