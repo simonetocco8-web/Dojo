@@ -7,6 +7,13 @@ require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
 require_once __DIR__ . '/core/ewelink_mcp.php';
 require_once __DIR__ . '/core/ecowitt.php';
+require_once __DIR__ . '/core/autocontrollo_rodent.php';
+require_once __DIR__ . '/core/autocontrollo_grounding.php';
+require_once __DIR__ . '/core/autocontrollo_fire.php';
+require_once __DIR__ . '/core/autocontrollo_pool.php';
+require_once __DIR__ . '/core/autocontrollo_temperature.php';
+require_once __DIR__ . '/core/autocontrollo_haccp.php';
+require_once __DIR__ . '/core/autocontrollo_electrical.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';
@@ -626,72 +633,39 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
 </div>
 <?php } // end box sottoscorta ?>
 
-<?php
-// --- BOX: Fornitori che accettano ordini oggi ---
-if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
+<?php if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))):
+  $autocontrolloRange = get_summer_season_range($pdo);
+  $autocontrolloToday = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
+  $autocontrolloRows = [];
+  $formatControlDate = static fn(?string $date): string => $date ? (new DateTimeImmutable($date))->format('d/m/Y') : 'Stagione non configurata';
+  $addControl = static function (string $label, string $icon, string $url, ?string $date, bool $inProgress = false, string $suffix = '') use (&$autocontrolloRows, $autocontrolloToday): void {
+    $autocontrolloRows[] = ['label'=>$label,'icon'=>$icon,'url'=>$url,'date'=>$date,'available'=>$date !== null && $date <= $autocontrolloToday,'in_progress'=>$inProgress,'suffix'=>$suffix];
+  };
 
-  // 0=Dom, 1=Lun, ... 6=Sab
-  $tz = new DateTimeZone('Europe/Rome');
-  $todayIdx = (int)(new DateTime('now', $tz))->format('w');
+  ensure_autocontrollo_rodent_inspections_tables($pdo);
+  $stmt=$pdo->prepare('SELECT scheduled_date,status,id FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? ORDER BY scheduled_date');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$next=autocontrollo_rodent_next_date(autocontrollo_rodent_schedule($autocontrolloRange),array_column($rows,'scheduled_date'));$addControl('Derattizzazione','bug','/autocontrollo_derattizzazione.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
 
-  ensure_suppliers_active_column($pdo);
-  $sql = "
-    SELECT s.id, s.name, s.phone, s.email
-    FROM suppliers s
-    JOIN supplier_days d
-      ON d.supplier_id = s.id
-     AND d.kind = 'order'
-     AND d.day = :day
-    WHERE COALESCE(s.is_active, 1) = 1
-    ORDER BY s.name ASC
-  ";
-  $stmt = $pdo->prepare($sql);
-  $stmt->execute([':day' => $todayIdx]);
-  $suppliersToday = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  ensure_autocontrollo_grounding_inspections_tables($pdo);$schedule=autocontrollo_grounding_schedule($autocontrolloRange);$stmt=$pdo->prepare('SELECT id,inspection_type,scheduled_date,status FROM autocontrollo_grounding_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$done=array_column($rows,'inspection_type');$next=null;foreach($schedule as$type=>$entry)if(!in_array($type,$done,true)){$next=$entry['date'];break;}$addControl('Messa a Terra','plug','/autocontrollo_messa_a_terra.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
 
-  // label giorno (opzionale, per intestazione)
-  $weekdayLbl = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'][$todayIdx];
+  ensure_autocontrollo_fire_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,scheduled_date,status FROM autocontrollo_fire_inspections WHERE season_start=? AND season_end=? ORDER BY scheduled_date');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$done=array_column(array_filter($rows,static fn($r)=>$r['status']==='completata'),'scheduled_date');$next=autocontrollo_fire_next_date(autocontrollo_fire_schedule($autocontrolloRange),$done);$addControl('Antincendio','fire','/autocontrollo_antincendio.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
+
+  ensure_autocontrollo_pool_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT inspection_date FROM autocontrollo_pool_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$next=autocontrollo_pool_next_required_date($autocontrolloRange,$stmt->fetchAll(PDO::FETCH_COLUMN));$addControl('Piscina','water','/autocontrollo_piscina.php',$next);
+
+  ensure_autocontrollo_temperature_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,inspection_date,time_slot,status FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$next=autocontrollo_temperature_next_due($autocontrolloRange,$rows);$addControl('Temperature','thermometer-half','/autocontrollo_temperature.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['inspection_date']:($next['date']??null),(bool)$open,$open?ucfirst($open['time_slot']):($next?ucfirst($next['slot']):''));
+
+  ensure_autocontrollo_haccp_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,scheduled_date,status FROM autocontrollo_haccp_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$done=array_column(array_filter($rows,static fn($r)=>$r['status']==='completata'),'scheduled_date');$next=autocontrollo_haccp_next_date(autocontrollo_haccp_schedule($autocontrolloRange),$done);$addControl('Pulizia HACCP','shield-check','/autocontrollo_haccp.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
+
+  ensure_autocontrollo_electrical_inspections_tables($pdo);$schedule=autocontrollo_electrical_schedule($pdo);$stmt=$pdo->prepare('SELECT id,inspection_type,scheduled_date,status FROM autocontrollo_electrical_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$done=array_column($rows,'inspection_type');$next=null;foreach($schedule as$type=>$entry)if(!in_array($type,$done,true)){$next=$entry['date'];break;}$addControl('Impianto Elettrico','lightning-charge','/autocontrollo_impianto_elettrico.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
 ?>
 <div class="col-12 col-lg-4">
   <div class="card h-100 shadow-sm">
     <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h2 class="h6 mb-0"><i class="bi bi-cart-plus"></i> Ordinabili oggi (<?= e($weekdayLbl) ?>)</h2>
-        <a class="btn btn-sm btn-outline-primary" href="<?= e($base) ?>/suppliers/suppliers_list.php">Gestisci</a>
-      </div>
-
-      <?php if (empty($suppliersToday)): ?>
-        <div class="text-muted small">Nessun fornitore accetta ordini oggi.</div>
-      <?php else: ?>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle mb-0">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th style="width:140px;">Telefono</th>
-              </tr>
-            </thead>
-            <tbody>
-            <?php foreach ($suppliersToday as $s): ?>
-              <tr>
-                <td class="fw-semibold"><?= e($s['name']) ?></td>
-                <td>
-                  <?php if (!empty($s['phone'])): ?>
-                    <a href="tel:<?= e($s['phone']) ?>"><?= e($s['phone']) ?></a>
-                  <?php else: ?>
-                    <span class="text-muted">—</span>
-                  <?php endif; ?>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-            </tbody>
-          </table>
-        </div>
-      <?php endif; ?>
+      <h2 class="h6 mb-2"><i class="bi bi-clipboard2-check me-1"></i>Autocontrollo</h2>
+      <ul class="list-group list-group-flush"><?php foreach($autocontrolloRows as$control):?><li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"><div><span class="fw-semibold"><i class="bi bi-<?=e($control['icon'])?> me-1"></i><?=e($control['label'])?></span><?php if($control['suffix']):?><span class="small text-muted ms-1">· <?=e($control['suffix'])?></span><?php endif;?></div><div class="text-end"><?php if($control['in_progress']):?><a class="btn btn-sm btn-primary" href="<?=e($base.$control['url'])?>">Continua</a><?php elseif($control['available']):?><a class="btn btn-sm btn-outline-primary" href="<?=e($base.$control['url'])?>">Avvia</a><?php else:?><span class="small text-muted text-nowrap"><?=e($formatControlDate($control['date']))?></span><?php endif;?></div></li><?php endforeach;?></ul>
     </div>
   </div>
 </div>
-<?php } // end box fornitori oggi ?>
+<?php endif; ?>
 
 
 
