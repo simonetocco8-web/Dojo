@@ -520,9 +520,10 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione'))) {
             </thead>
             <tbody>
               <?php foreach ($daysOffNext as $r): ?>
-                <tr>
-                  <td><?= (new DateTime($r['day'], $tz))->format('d/m/Y') ?></td>
-                  <td><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
+                <?php $isDayOffToday = (string)$r['day'] === $today; ?>
+                <tr class="<?= $isDayOffToday ? 'table-warning' : '' ?>">
+                  <td class="<?= $isDayOffToday ? 'fw-bold' : '' ?>"><?= (new DateTime($r['day'], $tz))->format('d/m/Y') ?><?php if ($isDayOffToday): ?><span class="badge text-bg-warning ms-1">Oggi</span><?php endif; ?></td>
+                  <td class="<?= $isDayOffToday ? 'fw-bold' : '' ?>"><?= e(trim(($r['cognome'] ?? '').' '.($r['nome'] ?? ''))) ?></td>
                   <td><span class="badge bg-light text-dark"><?= e(departments_label($r['dipartimento'] ?? '')) ?></span></td>
                 </tr>
               <?php endforeach; ?>
