@@ -216,7 +216,19 @@ include __DIR__ . '/partials/header.php';
   <div class="alert alert-danger"><?= e($_GET['detail'] ?? 'Operazione non completata.') ?></div>
 <?php endif; ?>
 
-<div class="card shadow-sm">
+<nav class="card shadow-sm mb-4" aria-label="Sezioni setting Autocontrollo"><div class="card-body"><div class="row g-2">
+  <?php foreach ([
+    ['panels','lightning-charge','Quadri Elettrici'], ['pool-products','droplet-half','Prodotti Piscina'],
+    ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
+    ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
+  ] as [$anchor,$icon,$label]): ?>
+  <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
+  <?php endforeach; ?>
+</div></div></nav>
+
+<div class="row g-4 align-items-start">
+<section class="col-12 col-lg-6" id="panels" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Parametri Quadri Elettrici</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -244,8 +256,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="pool-products" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-droplet-half me-1"></i>Prodotti Piscina</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -273,8 +287,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="rodent-traps" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-geo-alt me-1"></i>Mappatura Trappole Roditori</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -302,8 +318,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="grounding-rods" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-plug me-1"></i>Mappatura Paline Messa a Terra</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -331,8 +349,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="refrigerators" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-snow me-1"></i>Mappatura Frigoriferi</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -354,7 +374,9 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
-<div class="card shadow-sm mt-4">
+</section>
+<section class="col-12 col-lg-6" id="fire-extinguishers" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-fire me-1"></i>Estintori</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -369,5 +391,7 @@ include __DIR__ . '/partials/header.php';
     <?php foreach ($fireExtinguishers as $extinguisher): ?><tr><td colspan="4"><form method="post" class="row g-2 align-items-center"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="original_extinguisher_id" value="<?= e($extinguisher['id']) ?>"><div class="col-12 col-md-3"><input class="form-control" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required value="<?= e($extinguisher['id']) ?>" aria-label="ID estintore"></div><div class="col-12 col-md-3"><select class="form-select" name="extinguisher_type" required aria-label="Tipologia estintore"><?php foreach (['polvere'=>'Polvere','co2'=>'CO2','schiuma'=>'Schiuma','carrellato'=>'Carrellato'] as $value=>$label): ?><option value="<?= e($value) ?>" <?= $extinguisher['extinguisher_type'] === $value ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 col-md-3"><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0.01" max="9999.99" name="capacity_kg" required value="<?= e($extinguisher['capacity_kg']) ?>" aria-label="Capacità estintore"><span class="input-group-text">Kg</span></div></div><div class="col-12 col-md-3 d-flex justify-content-md-end gap-2"><button class="btn btn-outline-primary" name="action" value="extinguisher_update"><i class="bi bi-save me-1"></i>Salva</button><button class="btn btn-outline-danger" name="action" value="extinguisher_delete" formnovalidate onclick="return confirm('Eliminare questo estintore?')"><i class="bi bi-trash"></i></button></div></form></td></tr><?php endforeach; ?>
     </tbody></table></div><?php endif; ?>
   </div>
+</div>
+</section>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
