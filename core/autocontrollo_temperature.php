@@ -27,6 +27,15 @@ function autocontrollo_temperature_next_due(array $range, array $completedInspec
   return null;
 }
 
+function autocontrollo_temperature_is_available(string $date, string $slot, ?DateTimeImmutable $now = null): bool {
+  $timezone = new DateTimeZone('Europe/Rome');
+  $now = ($now ?? new DateTimeImmutable('now', $timezone))->setTimezone($timezone);
+  $today = $now->format('Y-m-d');
+  if ($date > $today) return false;
+  if ($date < $today || $slot !== 'pomeriggio') return true;
+  return $now->format('H:i') >= '12:00';
+}
+
 /**
  * Crea o sovrascrive con esito conforme tutti i controlli dalla data di
  * apertura fino a oggi (o alla chiusura, se antecedente). Pensata per il
@@ -79,8 +88,9 @@ function autocontrollo_temperature_backfill_compliant(PDO $pdo, array $range, ?D
 function autocontrollo_temperature_start(PDO $pdo, array $range, string $date, string $slot, int $operatorId): int {
   if (!in_array($slot, ['mattina', 'pomeriggio'], true)) throw new InvalidArgumentException('Fascia oraria non valida.');
   if (empty($range['start']) || empty($range['end']) || $date < $range['start'] || $date > $range['end']) throw new RuntimeException('La data non rientra nella stagione configurata.');
-  $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
-  if ($date > $today->format('Y-m-d')) throw new RuntimeException('Il controllo non è ancora disponibile.');
+  if (!autocontrollo_temperature_is_available($date, $slot)) {
+    throw new RuntimeException($slot === 'pomeriggio' ? 'Il controllo del pomeriggio è disponibile dalle ore 12:00.' : 'Il controllo non è ancora disponibile.');
+  }
   $openStmt = $pdo->prepare("SELECT id FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=? AND status='in_corso' LIMIT 1");
   $openStmt->execute([$range['start'], $range['end']]);
   if ($openStmt->fetchColumn() !== false) throw new RuntimeException('Completare la procedura già in corso prima di avviarne una nuova.');

@@ -24,4 +24,6 @@ $schedule = autocontrollo_temperature_schedule($range);
 if (count($schedule) !== 4 || $schedule[0] !== ['date' => '2026-05-01', 'slot' => 'mattina'] || $schedule[3] !== ['date' => '2026-05-02', 'slot' => 'pomeriggio']) throw new RuntimeException('Calendario giornaliero non valido.');
 $next = autocontrollo_temperature_next_due($range, [['inspection_date' => '2026-05-01', 'time_slot' => 'mattina', 'status' => 'completata']]);
 if ($next !== ['date' => '2026-05-01', 'slot' => 'pomeriggio']) throw new RuntimeException('Il controllo antecedente non viene rispettato.');
+if (autocontrollo_temperature_is_available('2026-05-01', 'pomeriggio', new DateTimeImmutable('2026-05-01 11:59:59', new DateTimeZone('Europe/Rome')))) throw new RuntimeException('Il controllo pomeridiano è disponibile prima delle 12:00.');
+if (!autocontrollo_temperature_is_available('2026-05-01', 'pomeriggio', new DateTimeImmutable('2026-05-01 12:00:00', new DateTimeZone('Europe/Rome')))) throw new RuntimeException('Il controllo pomeridiano non è disponibile dalle 12:00.');
 echo "Autocontrollo temperature verificato.\n";
