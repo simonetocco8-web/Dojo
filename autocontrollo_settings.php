@@ -20,6 +20,7 @@ ensure_autocontrollo_pool_products_table($pdo);
 ensure_autocontrollo_rodent_traps_table($pdo);
 ensure_autocontrollo_grounding_rods_table($pdo);
 ensure_autocontrollo_refrigerators_table($pdo);
+ensure_autocontrollo_fire_extinguishers_table($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -36,6 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $originalRefrigeratorId = trim((string)($_POST['original_refrigerator_id'] ?? ''));
     $refrigeratorType = trim((string)($_POST['refrigerator_type'] ?? ''));
     $operatingTemperatureRaw = str_replace(',', '.', trim((string)($_POST['operating_temperature'] ?? '')));
+    $extinguisherId = trim((string)($_POST['extinguisher_id'] ?? ''));
+    $originalExtinguisherId = trim((string)($_POST['original_extinguisher_id'] ?? ''));
+    $extinguisherType = trim((string)($_POST['extinguisher_type'] ?? ''));
+    $capacityKgRaw = str_replace(',', '.', trim((string)($_POST['capacity_kg'] ?? '')));
     try {
         if ($action === 'panel_create' || $action === 'panel_update') {
             if ($location === '') throw new InvalidArgumentException('Il luogo di installazione è obbligatorio.');
@@ -153,6 +158,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('DELETE FROM autocontrollo_refrigerators WHERE id=?');
             $stmt->execute([$originalRefrigeratorId]);
             $message = 'deleted';
+        } elseif ($action === 'extinguisher_create' || $action === 'extinguisher_update') {
+            if ($extinguisherId === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $extinguisherId)) {
+                throw new InvalidArgumentException('L’ID estintore è obbligatorio e può contenere solo lettere, numeri, punto, trattino e underscore.');
+            }
+            if (strlen($extinguisherId) > 50) throw new InvalidArgumentException('L’ID estintore può contenere al massimo 50 caratteri.');
+            if (!in_array($extinguisherType, ['polvere', 'co2', 'schiuma', 'carrellato'], true)) throw new InvalidArgumentException('Tipologia estintore non valida.');
+            if ($capacityKgRaw === '' || !is_numeric($capacityKgRaw)) throw new InvalidArgumentException('Capacità estintore non valida.');
+            $capacityKg = (float)$capacityKgRaw;
+            if ($capacityKg <= 0 || $capacityKg > 9999.99) throw new InvalidArgumentException('La capacità deve essere maggiore di zero e non superiore a 9999,99 Kg.');
+            $duplicateStmt = $pdo->prepare('SELECT COUNT(*) FROM autocontrollo_fire_extinguishers WHERE id=? AND id<>?');
+            $duplicateStmt->execute([$extinguisherId, $action === 'extinguisher_update' ? $originalExtinguisherId : '']);
+            if ((int)$duplicateStmt->fetchColumn() > 0) throw new InvalidArgumentException('L’ID estintore indicato è già utilizzato.');
+            if ($action === 'extinguisher_create') {
+                $stmt = $pdo->prepare('INSERT INTO autocontrollo_fire_extinguishers (id, extinguisher_type, capacity_kg) VALUES (?, ?, ?)');
+                $stmt->execute([$extinguisherId, $extinguisherType, $capacityKg]);
+                $message = 'created';
+            } else {
+                if ($originalExtinguisherId === '') throw new InvalidArgumentException('ID estintore originale non valido.');
+                $stmt = $pdo->prepare('UPDATE autocontrollo_fire_extinguishers SET id=?, extinguisher_type=?, capacity_kg=? WHERE id=?');
+                $stmt->execute([$extinguisherId, $extinguisherType, $capacityKg, $originalExtinguisherId]);
+                $message = 'updated';
+            }
+        } elseif ($action === 'extinguisher_delete') {
+            if ($originalExtinguisherId === '') throw new InvalidArgumentException('ID estintore non valido.');
+            $stmt = $pdo->prepare('DELETE FROM autocontrollo_fire_extinguishers WHERE id=?');
+            $stmt->execute([$originalExtinguisherId]);
+            $message = 'deleted';
         } else {
             throw new InvalidArgumentException('Azione non valida.');
         }
@@ -169,6 +201,7 @@ $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_prod
 $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $groundingRods = $pdo->query('SELECT id, location FROM autocontrollo_grounding_rods ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
+$fireExtinguishers = $pdo->query('SELECT id, extinguisher_type, capacity_kg FROM autocontrollo_fire_extinguishers ORDER BY extinguisher_type, id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -183,7 +216,19 @@ include __DIR__ . '/partials/header.php';
   <div class="alert alert-danger"><?= e($_GET['detail'] ?? 'Operazione non completata.') ?></div>
 <?php endif; ?>
 
-<div class="card shadow-sm">
+<nav class="card shadow-sm mb-4" aria-label="Sezioni setting Autocontrollo"><div class="card-body"><div class="row g-2">
+  <?php foreach ([
+    ['panels','lightning-charge','Quadri Elettrici'], ['pool-products','droplet-half','Prodotti Piscina'],
+    ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
+    ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
+  ] as [$anchor,$icon,$label]): ?>
+  <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
+  <?php endforeach; ?>
+</div></div></nav>
+
+<div class="row g-4 align-items-start">
+<section class="col-12 col-lg-6" id="panels" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Parametri Quadri Elettrici</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -211,8 +256,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="pool-products" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-droplet-half me-1"></i>Prodotti Piscina</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -240,8 +287,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="rodent-traps" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-geo-alt me-1"></i>Mappatura Trappole Roditori</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -269,8 +318,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="grounding-rods" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-plug me-1"></i>Mappatura Paline Messa a Terra</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -298,8 +349,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
+</section>
 
-<div class="card shadow-sm mt-4">
+<section class="col-12 col-lg-6" id="refrigerators" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-snow me-1"></i>Mappatura Frigoriferi</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -320,5 +373,25 @@ include __DIR__ . '/partials/header.php';
       </tbody></table></div>
     <?php endif; ?>
   </div>
+</div>
+</section>
+<section class="col-12 col-lg-6" id="fire-extinguishers" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
+  <div class="card-body">
+    <h2 class="h5 mb-3"><i class="bi bi-fire me-1"></i>Estintori</h2>
+    <form method="post" class="row g-2 align-items-end mb-4">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="extinguisher_create">
+      <div class="col-12 col-md-4"><label for="newExtinguisherId" class="form-label">ID univoco</label><input class="form-control" id="newExtinguisherId" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
+      <div class="col-12 col-md-3"><label for="newExtinguisherType" class="form-label">Tipologia</label><select class="form-select" id="newExtinguisherType" name="extinguisher_type" required><option value="polvere">Polvere</option><option value="co2">CO2</option><option value="schiuma">Schiuma</option><option value="carrellato">Carrellato</option></select></div>
+      <div class="col-12 col-md-3"><label for="newExtinguisherCapacity" class="form-label">Capacità</label><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0.01" max="9999.99" id="newExtinguisherCapacity" name="capacity_kg" required><span class="input-group-text">Kg</span></div></div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-plus-circle me-1"></i>Aggiungi</button></div>
+    </form>
+    <?php if (!$fireExtinguishers): ?><div class="text-muted">Nessun estintore configurato.</div><?php else: ?>
+    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Tipologia</th><th>Capacità</th><th class="text-end">Azioni</th></tr></thead><tbody>
+    <?php foreach ($fireExtinguishers as $extinguisher): ?><tr><td colspan="4"><form method="post" class="row g-2 align-items-center"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="original_extinguisher_id" value="<?= e($extinguisher['id']) ?>"><div class="col-12 col-md-3"><input class="form-control" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required value="<?= e($extinguisher['id']) ?>" aria-label="ID estintore"></div><div class="col-12 col-md-3"><select class="form-select" name="extinguisher_type" required aria-label="Tipologia estintore"><?php foreach (['polvere'=>'Polvere','co2'=>'CO2','schiuma'=>'Schiuma','carrellato'=>'Carrellato'] as $value=>$label): ?><option value="<?= e($value) ?>" <?= $extinguisher['extinguisher_type'] === $value ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 col-md-3"><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0.01" max="9999.99" name="capacity_kg" required value="<?= e($extinguisher['capacity_kg']) ?>" aria-label="Capacità estintore"><span class="input-group-text">Kg</span></div></div><div class="col-12 col-md-3 d-flex justify-content-md-end gap-2"><button class="btn btn-outline-primary" name="action" value="extinguisher_update"><i class="bi bi-save me-1"></i>Salva</button><button class="btn btn-outline-danger" name="action" value="extinguisher_delete" formnovalidate onclick="return confirm('Eliminare questo estintore?')"><i class="bi bi-trash"></i></button></div></form></td></tr><?php endforeach; ?>
+    </tbody></table></div><?php endif; ?>
+  </div>
+</div>
+</section>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
