@@ -7,13 +7,6 @@ require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
 require_once __DIR__ . '/core/ewelink_mcp.php';
 require_once __DIR__ . '/core/ecowitt.php';
-require_once __DIR__ . '/core/autocontrollo_rodent.php';
-require_once __DIR__ . '/core/autocontrollo_grounding.php';
-require_once __DIR__ . '/core/autocontrollo_fire.php';
-require_once __DIR__ . '/core/autocontrollo_pool.php';
-require_once __DIR__ . '/core/autocontrollo_temperature.php';
-require_once __DIR__ . '/core/autocontrollo_haccp.php';
-require_once __DIR__ . '/core/autocontrollo_electrical.php';
 
 start_session();
 $env   = require __DIR__ . '/config/env.php';

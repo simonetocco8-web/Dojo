@@ -382,10 +382,10 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
           <ul class="dropdown-menu" aria-labelledby="autocontrolloSidebarDropdown">
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
-            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_antincendio.php"><i class="bi bi-fire"></i><span>Antincendio</span></a></li>
+            <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
-            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
-            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_haccp.php"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></a></li>
+            <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+            <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li>
@@ -751,10 +751,10 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
               <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_derattizzazione.php"><i class="bi bi-bug"></i><span>Derattizzazione</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_messa_a_terra.php"><i class="bi bi-plug"></i><span>Messa a Terra</span></a></li>
-                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_antincendio.php"><i class="bi bi-fire"></i><span>Antincendio</span></a></li>
+                <li><span class="dropdown-item"><i class="bi bi-fire"></i><span>Antincendio</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
-                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
-                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_haccp.php"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></a></li>
+                <li><span class="dropdown-item"><i class="bi bi-thermometer-half"></i><span>Temperature</span></span></li>
+                <li><span class="dropdown-item"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></span></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li>
