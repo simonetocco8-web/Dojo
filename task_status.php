@@ -3,6 +3,7 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
+require_once __DIR__ . '/core/login_workflow.php';
 start_session();
 $env  = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
@@ -16,7 +17,7 @@ $allowedViews = ['mio','tutti','completati','nonfattibili','cestino'];
 $returnView = $_POST['return_view'] ?? $_GET['view'] ?? 'mio';
 if (!in_array($returnView, $allowedViews, true)) $returnView = 'mio';
 $returnTo = $_POST['return_to'] ?? $_GET['return_to'] ?? '';
-$returnUrl = $returnTo === 'dashboard' ? $base . '/dashboard.php' : $base . '/tasks.php?view=' . rawurlencode($returnView);
+$returnUrl = $returnTo === 'login_workflow' ? $base . '/login_workflow.php' : ($returnTo === 'dashboard' ? $base . '/dashboard.php' : $base . '/tasks.php?view=' . rawurlencode($returnView));
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_check($_POST['csrf'] ?? '')) {
   header('Location: ' . $returnUrl);
@@ -44,8 +45,17 @@ $assigned->execute([$id, $user['id']]);
 $canAct = $is_admin || (!$hasAssignments && user_has_department($me, $task['dipartimento'])) || (bool)$assigned->fetchColumn();
 
 try {
+  if ($returnTo === 'login_workflow') {
+    $assigned->execute([$id, $user['id']]);
+    if (!$assigned->fetchColumn()) throw new RuntimeException('Task non assegnato a te.');
+    if (!in_array($action, ['complete', 'nonfattibile'], true)) throw new RuntimeException('Azione non valida.');
+  }
+  $pdo->beginTransaction();
+  $lock = $pdo->prepare('SELECT * FROM tasks WHERE id=? FOR UPDATE'); $lock->execute([$id]); $task = $lock->fetch();
   if ($action === 'complete' && $task['status']==='aperto' && $canAct && $task['deleted_at']===null) {
-    $pdo->prepare('UPDATE tasks SET status="completato", completed_by=?, completed_at=NOW() WHERE id=?')->execute([$user['id'], $id]);
+    if ($returnTo === 'login_workflow' && empty($_POST['completed_at'])) throw new InvalidArgumentException('Specificare quando il task è stato completato.');
+    $completedAt = !empty($_POST['completed_at']) ? login_workflow_completion_time((string)$_POST['completed_at']) : (new DateTimeImmutable('now', new DateTimeZone('Europe/Rome')))->format('Y-m-d H:i:s');
+    $pdo->prepare('UPDATE tasks SET status="completato", completed_by=?, completed_at=? WHERE id=?')->execute([$user['id'], $completedAt, $id]);
     if ($task['recurrence'] !== 'nessuna') {
       $due = new DateTime($task['due_date']);
       switch ($task['recurrence']) {
@@ -64,6 +74,7 @@ try {
     }
   } elseif ($action === 'nonfattibile' && $task['status']==='aperto' && $canAct && $task['deleted_at']===null) {
     $note = trim($_POST['status_note'] ?? '');
+    if ($returnTo === 'login_workflow' && $note === '') throw new InvalidArgumentException('Specificare il motivo della non fattibilità.');
     if ($note === '') { $note = 'Non specificato'; }
     $pdo->prepare('UPDATE tasks SET status="non_fattibile", status_note=?, not_feasible_by=?, not_feasible_at=NOW() WHERE id=?')
         ->execute([$note, $user['id'], $id]);
@@ -77,6 +88,7 @@ try {
     $seriesId = (int)($task['recurrence_series_id'] ?: $task['id']);
     $pdo->prepare('UPDATE tasks SET deleted_at=NOW() WHERE recurrence_series_id=? AND due_date>=? AND deleted_at IS NULL')
         ->execute([$seriesId, $task['due_date']]);
+    $pdo->commit();
     header('Location: ' . $returnUrl . '&msg=recurrence_deleted');
     exit;
   } elseif ($action === 'trash' && $is_admin && $task['recurrence'] === 'nessuna') {
@@ -84,7 +96,11 @@ try {
   } elseif ($action === 'restore' && $is_admin) {
     $pdo->prepare('UPDATE tasks SET deleted_at=NULL WHERE id=? AND deleted_at IS NOT NULL')->execute([$id]);
   }
-} catch (PDOException $e) {}
+  $pdo->commit();
+} catch (Throwable $e) {
+  if ($pdo->inTransaction()) $pdo->rollBack();
+  if ($returnTo === 'login_workflow') $_SESSION['login_workflow_error'] = $e->getMessage();
+}
 
 header('Location: ' . $returnUrl);
 exit;

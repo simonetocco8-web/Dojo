@@ -31,3 +31,8 @@ function autocontrollo_save_responsible(PDO $pdo, string $procedure, string $use
     }
     set_setting('autocontrollo_responsible_' . $procedure, $userId === '' ? null : $userId, $pdo);
 }
+
+function autocontrollo_user_can_perform(array $user, string $procedure, ?PDO $pdo = null): bool {
+    if (user_has_department($user, 'Amministrazione')) return true;
+    return !empty($user['is_active']) && (string)get_setting('autocontrollo_responsible_' . $procedure, '', $pdo) === (string)$user['id'];
+}

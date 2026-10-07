@@ -10,6 +10,10 @@ $logo = $base . '/assets/dojo-logo.svg';
 $favicon = $base . '/assets/favicon.svg';
 $styleVersion = @filemtime(__DIR__ . '/../assets/style.css') ?: time();
 $currentPath = basename(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '');
+if (!empty($_SESSION['login_workflow_active']) && str_starts_with($currentPath, 'autocontrollo_') && (isset($_GET['completed']) || isset($_GET['created']))) {
+  header('Location: ' . $base . '/login_workflow.php?msg=control_completed'); exit;
+}
+
 function nav_path_is_current(array $paths, string $currentPath): bool {
   return in_array($currentPath, $paths, true);
 }
@@ -56,6 +60,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
+<?php if (!empty($_SESSION['login_workflow_active'])): ?><div class="container py-2"><a class="btn btn-outline-primary" href="<?= e($base) ?>/login_workflow.php">Torna ai compiti da svolgere</a></div><?php endif; ?>
 <div class="dojo-layout">
   <aside class="dojo-sidebar d-none d-lg-flex flex-column p-3">
     <a class="navbar-brand d-flex justify-content-center mb-4" href="<?= e($base) ?>/index.php" aria-label="Dojo home">

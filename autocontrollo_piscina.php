@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/core/autocontrollo_settings.php';
 
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
@@ -6,7 +7,7 @@ require_once __DIR__ . '/core/autocontrollo_pool.php';
 
 require_login();
 $user = current_user();
-if (!$user || !user_has_department($user, 'Amministrazione')) {
+if (!$user || !autocontrollo_user_can_perform($user, 'pool')) {
     http_response_code(403);
     exit('Accesso negato.');
 }

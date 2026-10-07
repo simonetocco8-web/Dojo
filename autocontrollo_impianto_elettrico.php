@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__ . '/core/autocontrollo_settings.php';
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/autocontrollo_electrical.php';
 
 require_login();
 $user = current_user();
-if (!$user || !user_has_department($user, 'Amministrazione')) { http_response_code(403); exit('Accesso negato.'); }
+if (!$user || !autocontrollo_user_can_perform($user, 'electrical')) { http_response_code(403); exit('Accesso negato.'); }
 $pdo = db();
 ensure_autocontrollo_electrical_inspections_tables($pdo);
 $env = require __DIR__ . '/config/env.php';
