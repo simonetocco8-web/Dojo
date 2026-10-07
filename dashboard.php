@@ -8,6 +8,7 @@ require_once __DIR__ . '/core/settings.php';
 require_once __DIR__ . '/core/ewelink_mcp.php';
 require_once __DIR__ . '/core/ecowitt.php';
 require_once __DIR__ . '/core/autocontrollo_rodent.php';
+require_once __DIR__ . '/core/autocontrollo_rodent_schedule.php';
 require_once __DIR__ . '/core/autocontrollo_grounding.php';
 require_once __DIR__ . '/core/autocontrollo_fire.php';
 require_once __DIR__ . '/core/autocontrollo_pool.php';

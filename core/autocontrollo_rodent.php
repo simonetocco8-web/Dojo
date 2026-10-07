@@ -5,22 +5,7 @@ require_once __DIR__ . '/autocontrollo_schema.php';
 require_once __DIR__ . '/settings.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/mailer.php';
-
-function autocontrollo_rodent_schedule(array $range): array {
-  $timezone = new DateTimeZone('Europe/Rome');
-  $start = !empty($range['start']) ? DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['start'], $timezone) : false;
-  $end = !empty($range['end']) ? DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['end'], $timezone) : false;
-  if (!$start || !$end || $start > $end) return [];
-  $dates = [];
-  for ($date = $start; $date <= $end; $date = $date->modify('+15 days')) $dates[] = $date->format('Y-m-d');
-  return $dates;
-}
-
-function autocontrollo_rodent_next_date(array $schedule, array $startedDates): ?string {
-  $started = array_fill_keys(array_map('strval', $startedDates), true);
-  foreach ($schedule as $date) if (!isset($started[$date])) return $date;
-  return null;
-}
+require_once __DIR__ . '/autocontrollo_rodent_schedule.php';
 
 function autocontrollo_rodent_start(PDO $pdo, array $range, string $scheduledDate, int $operatorId): int {
   $schedule = autocontrollo_rodent_schedule($range);
