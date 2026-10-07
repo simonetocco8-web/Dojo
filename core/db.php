@@ -325,6 +325,17 @@ function ensure_autocontrollo_rodent_inspections_tables(PDO $pdo): void {
       CONSTRAINT fk_rodent_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   ");
+  // Migrazione compatibile con le procedure già registrate.
+  $columns = $pdo->query('SHOW COLUMNS FROM autocontrollo_rodent_inspections')->fetchAll(PDO::FETCH_COLUMN);
+  if (!in_array('is_emergency', $columns, true)) {
+    $pdo->exec("ALTER TABLE autocontrollo_rodent_inspections
+      ADD COLUMN is_emergency TINYINT(1) NOT NULL DEFAULT 0,
+      ADD COLUMN calendar_date DATE GENERATED ALWAYS AS (IF(is_emergency=0, scheduled_date, NULL)) STORED,
+      MODIFY status ENUM('programmata','in_corso','completata') NOT NULL DEFAULT 'in_corso',
+      MODIFY started_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+      DROP INDEX uq_rodent_inspection_schedule,
+      ADD UNIQUE KEY uq_rodent_inspection_schedule (season_start, season_end, calendar_date)");
+  }
   $pdo->exec("
     CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspection_results (
       id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
