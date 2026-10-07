@@ -4,6 +4,7 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/autocontrollo_settings.php';
 
 require_login();
 $user = current_user();
@@ -42,7 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $extinguisherType = trim((string)($_POST['extinguisher_type'] ?? ''));
     $capacityKgRaw = str_replace(',', '.', trim((string)($_POST['capacity_kg'] ?? '')));
     try {
-        if ($action === 'panel_create' || $action === 'panel_update') {
+        if ($action === 'responsible_update') {
+            autocontrollo_save_responsible($pdo, (string)($_POST['procedure'] ?? ''), (string)($_POST['responsible_user_id'] ?? ''));
+            $message = 'updated';
+        } elseif ($action === 'panel_create' || $action === 'panel_update') {
             if ($location === '') throw new InvalidArgumentException('Il luogo di installazione è obbligatorio.');
             if ((function_exists('mb_strlen') ? mb_strlen($location, 'UTF-8') : strlen($location)) > 190) {
                 throw new InvalidArgumentException('Il luogo di installazione può contenere al massimo 190 caratteri.');
@@ -202,6 +206,8 @@ $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps 
 $groundingRods = $pdo->query('SELECT id, location FROM autocontrollo_grounding_rods ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
 $fireExtinguishers = $pdo->query('SELECT id, extinguisher_type, capacity_kg FROM autocontrollo_fire_extinguishers ORDER BY extinguisher_type, id')->fetchAll(PDO::FETCH_ASSOC);
+$activeUsers = $pdo->query('SELECT id, nome, cognome, email FROM users WHERE is_active=1 AND deleted_at IS NULL ORDER BY cognome, nome, email, id')->fetchAll(PDO::FETCH_ASSOC);
+$responsibleSettings = get_settings(array_map(static fn($procedure) => 'autocontrollo_responsible_' . $procedure, array_keys(autocontrollo_responsibility_procedures())), $pdo);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -221,6 +227,7 @@ include __DIR__ . '/partials/header.php';
     ['panels','lightning-charge','Quadri Elettrici'], ['pool-products','droplet-half','Prodotti Piscina'],
     ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
     ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
+    ['haccp-cleaning','clipboard-check','Pulizie HACCP'],
   ] as [$anchor,$icon,$label]): ?>
   <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
   <?php endforeach; ?>
@@ -231,6 +238,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Parametri Quadri Elettrici</h2>
+    <?php $responsibilityProcedure = 'electrical'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="panel_create">
@@ -262,6 +270,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-droplet-half me-1"></i>Prodotti Piscina</h2>
+    <?php $responsibilityProcedure = 'pool'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="pool_product_create">
@@ -293,6 +302,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-geo-alt me-1"></i>Mappatura Trappole Roditori</h2>
+    <?php $responsibilityProcedure = 'rodent'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="rodent_trap_create">
@@ -324,6 +334,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-plug me-1"></i>Mappatura Paline Messa a Terra</h2>
+    <?php $responsibilityProcedure = 'grounding'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="grounding_rod_create">
@@ -355,6 +366,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-snow me-1"></i>Mappatura Frigoriferi</h2>
+    <?php $responsibilityProcedure = 'temperature'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="refrigerator_create">
       <div class="col-12 col-md-4"><label for="newRefrigeratorId" class="form-label">ID univoco</label><input class="form-control" id="newRefrigeratorId" name="refrigerator_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
@@ -379,6 +391,7 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-fire me-1"></i>Estintori</h2>
+    <?php $responsibilityProcedure = 'fire'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="extinguisher_create">
       <div class="col-12 col-md-4"><label for="newExtinguisherId" class="form-label">ID univoco</label><input class="form-control" id="newExtinguisherId" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
@@ -392,6 +405,13 @@ include __DIR__ . '/partials/header.php';
     </tbody></table></div><?php endif; ?>
   </div>
 </div>
+</section>
+<section class="col-12 col-lg-6" id="haccp-cleaning" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100"><div class="card-body">
+  <h2 class="h5 mb-3"><i class="bi bi-clipboard-check me-1"></i>Pulizie HACCP</h2>
+  <p class="text-muted">Assegna il responsabile della procedura di pulizia HACCP.</p>
+  <?php $responsibilityProcedure = 'haccp'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
+</div></div>
 </section>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
