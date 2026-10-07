@@ -25,8 +25,8 @@ if (substr_count($header, '/autocontrollo_impianto_elettrico.php') !== 2) {
     fwrite(STDERR, "La voce Impianto Elettrico deve puntare alla pagina in entrambi i menu.\n");
     exit(1);
 }
-if (strpos($electrical, "user_has_department(\$user, 'Amministrazione')") === false) {
-    fwrite(STDERR, "La pagina Impianto Elettrico deve essere riservata ad Amministrazione.\n");
+if (strpos($electrical, "autocontrollo_user_can_perform(\$user, 'electrical')") === false) {
+    fwrite(STDERR, "La pagina Impianto Elettrico deve verificare Amministrazione o il responsabile assegnato.\n");
     exit(1);
 }
 if (strpos($electrical, '/assets/autocontrollo-electrical.js') === false || strpos($electrical, '<script>document.querySelectorAll') !== false) {

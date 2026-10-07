@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/core/autocontrollo_settings.php';
 
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
@@ -6,7 +7,7 @@ require_once __DIR__ . '/core/autocontrollo_rodent.php';
 
 require_login();
 $user = current_user();
-if (!$user || !user_has_department($user, 'Amministrazione')) { http_response_code(403); exit('Accesso negato.'); }
+if (!$user || !autocontrollo_user_can_perform($user, 'rodent')) { http_response_code(403); exit('Accesso negato.'); }
 $env = require __DIR__ . '/config/env.php';
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo = db();

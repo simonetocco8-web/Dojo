@@ -3,6 +3,7 @@
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/login_workflow.php';
 
 start_session();
 $env  = require __DIR__ . '/config/env.php';
@@ -24,6 +25,7 @@ function login_is_mobile_request(): bool {
 }
 
 function login_redirect_url_for_user(array $user, string $base): string {
+  if (login_workflow_tasks(db(), $user) || login_workflow_controls(db(), $user)) return $base . '/login_workflow.php';
   if (login_is_mobile_request() && user_has_department($user, 'Bar')) {
     return $base . '/inventory/scarico.php';
   }
@@ -52,11 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $st->execute([$email]);
       $u = $st->fetch();
       if ($u) {
-        $ok = password_verify($password, $u['password_hash']);
+        $ok = !empty($u['is_active']) && password_verify($password, $u['password_hash']);
         error_log('LOGIN: utente trovato id='.$u['id'].' pwd_ok=' . ($ok?'1':'0'));
         if ($ok) {
           session_regenerate_id(true);
           $_SESSION['user_id'] = $u['id'];
+          unset($_SESSION['login_workflow_active']);
           // rigenera token CSRF dopo login per sicurezza
           $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
           $redirectUrl = login_redirect_url_for_user($u, $base);

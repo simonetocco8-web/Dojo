@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/core/autocontrollo_settings.php';
 require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/settings.php';
@@ -6,7 +7,7 @@ require_once __DIR__ . '/core/autocontrollo_temperature.php';
 
 require_login();
 $user = current_user();
-if (!$user || !user_has_department($user, 'Amministrazione')) { http_response_code(403); exit('Accesso negato.'); }
+if (!$user || !autocontrollo_user_can_perform($user, 'temperature')) { http_response_code(403); exit('Accesso negato.'); }
 $env = require __DIR__ . '/config/env.php'; $base = rtrim($env['app']['base_url'] ?? '', '/');
 $pdo = db(); ensure_autocontrollo_temperature_inspections_tables($pdo);
 $range = get_summer_season_range($pdo); $timezone = new DateTimeZone('Europe/Rome'); $today = new DateTimeImmutable('today', $timezone); $todayValue = $today->format('Y-m-d');
