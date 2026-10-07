@@ -12,18 +12,17 @@ function autocontrollo_rodent_start(PDO $pdo, array $range, string $scheduledDat
   if (!in_array($scheduledDate, $schedule, true)) throw new InvalidArgumentException('Scadenza di derattizzazione non valida.');
   $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
   if (new DateTimeImmutable($scheduledDate, new DateTimeZone('Europe/Rome')) > $today) throw new RuntimeException('Il controllo non è ancora disponibile.');
+  $openStmt = $pdo->prepare("SELECT id FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? AND status='in_corso' LIMIT 1");
+  $openStmt->execute([$range['start'], $range['end']]);
+  if ($openStmt->fetchColumn() !== false) throw new RuntimeException('Completare la procedura già in corso prima di avviarne una nuova.');
+  $stmt = $pdo->prepare('SELECT scheduled_date FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? ORDER BY scheduled_date');
+  $stmt->execute([$range['start'], $range['end']]);
+  if (autocontrollo_rodent_next_date($schedule, $stmt->fetchAll(PDO::FETCH_COLUMN)) !== $scheduledDate) throw new RuntimeException('Completare prima la scadenza precedente.');
+  $traps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
+  if (!$traps) throw new RuntimeException('Configurare almeno una trappola nei Setting Autocontrollo.');
+
   $pdo->beginTransaction();
   try {
-    $pdo->query('SELECT id FROM autocontrollo_rodent_traps ORDER BY id FOR UPDATE')->fetchAll();
-    $openStmt = $pdo->prepare("SELECT id FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? AND status='in_corso' LIMIT 1");
-    $openStmt->execute([$range['start'], $range['end']]);
-    if ($openStmt->fetchColumn() !== false) throw new RuntimeException('Completare la procedura già in corso prima di avviarne una nuova.');
-    $stmt = $pdo->prepare('SELECT scheduled_date FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? AND is_emergency=0 ORDER BY scheduled_date');
-    $stmt->execute([$range['start'], $range['end']]);
-    if (autocontrollo_rodent_next_date($schedule, $stmt->fetchAll(PDO::FETCH_COLUMN)) !== $scheduledDate) throw new RuntimeException('Completare prima la scadenza precedente.');
-    $traps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
-    if (!$traps) throw new RuntimeException('Configurare almeno una trappola nei Setting Autocontrollo.');
-
     $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_inspections (season_start, season_end, scheduled_date, operator_id) VALUES (?, ?, ?, ?)');
     $stmt->execute([$range['start'], $range['end'], $scheduledDate, $operatorId]);
     $inspectionId = (int)$pdo->lastInsertId();
@@ -31,60 +30,6 @@ function autocontrollo_rodent_start(PDO $pdo, array $range, string $scheduledDat
     foreach ($traps as $index => $trap) $stmt->execute([$inspectionId, $trap['id'], $trap['location'], $index + 1]);
     $pdo->commit();
     return $inspectionId;
-  } catch (Throwable $exception) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    throw $exception;
-  }
-}
-
-function autocontrollo_rodent_emergency_date(string $mode, string $date): string {
-  $today = new DateTimeImmutable('today', new DateTimeZone('Europe/Rome'));
-  if ($mode === 'now') return $today->format('Y-m-d');
-  $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new DateTimeZone('Europe/Rome'));
-  if ($mode !== 'date' || !$parsed || $parsed->format('Y-m-d') !== $date || $parsed < $today) {
-    throw new InvalidArgumentException('Specificare una data valida, non precedente a oggi.');
-  }
-  return $date;
-}
-
-function autocontrollo_rodent_create_emergency(PDO $pdo, array $range, string $mode, string $date, int $operatorId): int {
-  $date = autocontrollo_rodent_emergency_date($mode, $date);
-  if (!autocontrollo_rodent_schedule($range)) throw new RuntimeException('Configurare le date della stagione.');
-  $pdo->beginTransaction();
-  try {
-    // Serializza gli avvii bloccando la configurazione delle trappole.
-    $pdo->query('SELECT id FROM autocontrollo_rodent_traps ORDER BY id FOR UPDATE')->fetchAll();
-    if ($mode === 'now') autocontrollo_rodent_assert_no_open($pdo, $range);
-    $traps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
-    if (!$traps) throw new RuntimeException('Configurare almeno una trappola nei Setting Autocontrollo.');
-    $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_inspections (season_start, season_end, scheduled_date, operator_id, is_emergency, status, started_at) VALUES (?, ?, ?, ?, 1, ?, ?)');
-    $stmt->execute([$range['start'], $range['end'], $date, $operatorId, $mode === 'now' ? 'in_corso' : 'programmata', $mode === 'now' ? (new DateTimeImmutable('now', new DateTimeZone('Europe/Rome')))->format('Y-m-d H:i:s') : null]);
-    $id = (int)$pdo->lastInsertId();
-    $stmt = $pdo->prepare('INSERT INTO autocontrollo_rodent_inspection_results (inspection_id, trap_id, trap_location, sort_order) VALUES (?, ?, ?, ?)');
-    foreach ($traps as $index => $trap) $stmt->execute([$id, $trap['id'], $trap['location'], $index + 1]);
-    $pdo->commit();
-    return $id;
-  } catch (Throwable $exception) {
-    if ($pdo->inTransaction()) $pdo->rollBack();
-    throw $exception;
-  }
-}
-
-function autocontrollo_rodent_assert_no_open(PDO $pdo, array $range): void {
-  $stmt = $pdo->prepare("SELECT id FROM autocontrollo_rodent_inspections WHERE season_start=? AND season_end=? AND status='in_corso' LIMIT 1");
-  $stmt->execute([$range['start'], $range['end']]);
-  if ($stmt->fetchColumn() !== false) throw new RuntimeException('Completare la procedura già in corso prima di avviarne una nuova.');
-}
-
-function autocontrollo_rodent_start_emergency(PDO $pdo, array $range, int $id, int $operatorId): void {
-  $pdo->beginTransaction();
-  try {
-    $pdo->query('SELECT id FROM autocontrollo_rodent_traps ORDER BY id FOR UPDATE')->fetchAll();
-    autocontrollo_rodent_assert_no_open($pdo, $range);
-    $stmt = $pdo->prepare("UPDATE autocontrollo_rodent_inspections SET status='in_corso', started_at=NOW(), operator_id=? WHERE id=? AND season_start=? AND season_end=? AND is_emergency=1 AND status='programmata' AND scheduled_date<=?");
-    $stmt->execute([$operatorId, $id, $range['start'], $range['end'], (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d')]);
-    if ($stmt->rowCount() !== 1) throw new RuntimeException('Procedura di emergenza non disponibile per l’avvio.');
-    $pdo->commit();
   } catch (Throwable $exception) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     throw $exception;
@@ -104,7 +49,7 @@ function autocontrollo_rodent_send_report(PDO $pdo, int $inspectionId): int {
     $rows .= '<tr><td>' . htmlspecialchars($result['trap_location'], ENT_QUOTES, 'UTF-8') . '</td><td>' . $yesNo($result['bait_present']) . '</td><td>' . ($result['bait_eaten'] === null ? 'Non applicabile' : $yesNo($result['bait_eaten'])) . '</td><td>' . $yesNo($result['bait_replaced']) . '</td></tr>';
   }
   $operator = trim((string)$inspection['operator_name']) ?: (string)$inspection['operator_email'];
-  $html = '<h2>Autocontrollo Derattizzazione' . (!empty($inspection['is_emergency']) ? ' — Emergenza' : '') . '</h2><p><strong>Scadenza:</strong> ' . date('d/m/Y', strtotime($inspection['scheduled_date'])) . '<br><strong>Eseguito:</strong> ' . date('d/m/Y H:i', strtotime($inspection['completed_at'] ?: $inspection['started_at'])) . '<br><strong>Operatore:</strong> ' . htmlspecialchars($operator, ENT_QUOTES, 'UTF-8') . '</p><table border="1" cellpadding="7" cellspacing="0"><thead><tr><th>Trappola</th><th>Esca presente</th><th>Esca mangiata</th><th>Esca sostituita</th></tr></thead><tbody>' . $rows . '</tbody></table>';
+  $html = '<h2>Autocontrollo Derattizzazione</h2><p><strong>Scadenza:</strong> ' . date('d/m/Y', strtotime($inspection['scheduled_date'])) . '<br><strong>Eseguito:</strong> ' . date('d/m/Y H:i', strtotime($inspection['completed_at'] ?: $inspection['started_at'])) . '<br><strong>Operatore:</strong> ' . htmlspecialchars($operator, ENT_QUOTES, 'UTF-8') . '</p><table border="1" cellpadding="7" cellspacing="0"><thead><tr><th>Trappola</th><th>Esca presente</th><th>Esca mangiata</th><th>Esca sostituita</th></tr></thead><tbody>' . $rows . '</tbody></table>';
   $users = $pdo->query("SELECT email, dipartimento FROM users WHERE is_active=1 AND deleted_at IS NULL AND email<>''")->fetchAll(PDO::FETCH_ASSOC);
   $sent = 0;
   foreach ($users as $recipient) {
