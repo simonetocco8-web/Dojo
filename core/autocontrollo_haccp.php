@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/autocontrollo_schema.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/mailer.php';
 
