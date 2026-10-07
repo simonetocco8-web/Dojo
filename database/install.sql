@@ -253,12 +253,14 @@ CREATE TABLE IF NOT EXISTS autocontrollo_rodent_inspections (
   season_start DATE NOT NULL,
   season_end DATE NOT NULL,
   scheduled_date DATE NOT NULL,
-  status ENUM('in_corso','completata') NOT NULL DEFAULT 'in_corso',
+  is_emergency TINYINT(1) NOT NULL DEFAULT 0,
+  calendar_date DATE GENERATED ALWAYS AS (IF(is_emergency=0, scheduled_date, NULL)) STORED,
+  status ENUM('programmata','in_corso','completata') NOT NULL DEFAULT 'in_corso',
   operator_id INT UNSIGNED DEFAULT NULL,
-  started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  started_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   completed_at DATETIME DEFAULT NULL,
   email_sent_at DATETIME DEFAULT NULL,
-  UNIQUE KEY uq_rodent_inspection_schedule (season_start, season_end, scheduled_date),
+  UNIQUE KEY uq_rodent_inspection_schedule (season_start, season_end, calendar_date),
   CONSTRAINT fk_rodent_inspection_operator FOREIGN KEY (operator_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
