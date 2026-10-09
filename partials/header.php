@@ -428,6 +428,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
   </aside>
 
   <div class="dojo-content">
+    <?php include __DIR__ . '/system_topbar.php'; ?>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark d-lg-none">
       <div class="container-fluid">
         <a class="navbar-brand" href="<?= e($base) ?>/index.php" aria-label="Dojo home"><img class="dojo-logo" src="<?= e($logo) ?>" width="128" height="48" alt="Dojo"></a>

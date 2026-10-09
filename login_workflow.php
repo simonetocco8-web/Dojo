@@ -58,7 +58,7 @@ include __DIR__ . '/partials/header.php';
 </div></div></div>
 <div class="col-12 col-lg-6"><div class="card"><div class="card-body"><h2 class="h5">Autocontrolli da eseguire (<?= count($controls) ?>)</h2>
 <?php if (!$controls): ?><p class="text-muted">Nessuna procedura assegnata disponibile.</p><?php endif; ?>
-<?php foreach ($controls as $procedure => $control): ?><form method="post" class="border-bottom py-3">
+<?php foreach ($controls as $procedure => $control): ?><form method="post" class="border-bottom py-3" id="control-<?= e($procedure) ?>">
 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="control"><input type="hidden" name="procedure" value="<?= e($procedure) ?>">
 <div class="fw-semibold mb-1"><?= e($control['label']) ?></div><div class="small text-muted mb-2">Data prevista: <?= e($control['date']) ?> <?= e($control['slot'] ?? '') ?><?= $control['emergency'] ? ' · Emergenza' : '' ?></div><button class="btn btn-primary"><?= $control['inspection'] ? 'Continua procedura' : 'Avvia procedura guidata' ?></button>
 </form><?php endforeach; ?>
