@@ -65,3 +65,6 @@ body{min-height:100vh}.card{border-radius:1rem}
 .dojo-topbar{position:sticky;top:0;z-index:1020;min-height:56px;background:var(--dojo-dark)}
 .dojo-alerts-menu{width:min(380px,calc(100vw - 2rem))}
 .dojo-alerts-list{max-height:60vh;overflow-y:auto}
+
+.dashboard-kpi{transition:border-color .15s,box-shadow .15s}
+.dashboard-kpi:hover,.dashboard-kpi:focus-visible{border-color:var(--bs-primary);box-shadow:0 .25rem .75rem rgba(15,23,42,.15)!important}

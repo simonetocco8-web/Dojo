@@ -5,6 +5,7 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/settings.php';
+require_once __DIR__ . '/core/dashboard_kpis.php';
 require_once __DIR__ . '/core/ewelink_mcp.php';
 require_once __DIR__ . '/core/ecowitt.php';
 require_once __DIR__ . '/core/autocontrollo_rodent.php';
@@ -135,6 +136,7 @@ if ($can_see_parking) {
   }
 }
 
+$dashboardKpis = dashboard_kpis($pdo, $user);
 $title = 'Dashboard';
 include __DIR__ . '/partials/header.php';
 
@@ -238,6 +240,7 @@ function tramontoday_dashboard_money($amount): string {
 
 
 ?>
+<?php include __DIR__ . '/partials/dashboard_kpis.php'; ?>
 <div class="row g-4 mb-4">
 
   <!-- BOX TASK -->
