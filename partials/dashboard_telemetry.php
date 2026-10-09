@@ -6,7 +6,8 @@ $ecowittMetrics = [
   ['key' => 'daily_rain', 'label' => 'Pioggia oggi', 'icon' => 'cloud-rain', 'unit' => 'mm'],
   ['key' => 'pressure', 'label' => 'Pressione', 'icon' => 'speedometer', 'unit' => 'hPa'],
 ];
-$lowPressureAlert = $ecowittWeather['pressure'] !== null && $ecowittWeather['pressure'] <= 1013;
+$pressureAlertThreshold = get_atmospheric_pressure_alert_threshold($pdo);
+$lowPressureAlert = atmospheric_pressure_alert_is_active($ecowittWeather['pressure'] ?? null, $pressureAlertThreshold);
 $windGustAlert = $ecowittWeather['wind_gust'] !== null && $ecowittWeather['wind_gust'] >= 40;
 ?>
 <?php if ($ecowittWeather['configured'] || $boilerTemperatures['configured']): ?>
@@ -44,7 +45,7 @@ $windGustAlert = $ecowittWeather['wind_gust'] !== null && $ecowittWeather['wind_
   <?php endif; ?>
 
   <?php if ($lowPressureAlert): ?>
-    <div class="col-12"><div class="alert alert-warning mb-0"><i class="bi bi-cloud-lightning-rain-fill me-2"></i><strong>Possibile maltempo in arrivo:</strong> pressione atmosferica pari o inferiore a 1013 hPa.</div></div>
+    <div class="col-12"><div class="alert alert-warning mb-0"><i class="bi bi-cloud-lightning-rain-fill me-2"></i><strong>Possibile maltempo in arrivo:</strong> pressione atmosferica pari o inferiore a <?= e((string)$pressureAlertThreshold) ?> hPa.</div></div>
   <?php endif; ?>
   <?php if ($windGustAlert): ?>
     <div class="col-12"><div class="alert alert-danger mb-0"><i class="bi bi-wind me-2"></i><strong>Possibili raffiche di vento:</strong> controllare la situazione degli ombrelloni in spiaggia.</div></div>

@@ -150,3 +150,22 @@ function is_today_within_summer_season(?PDO $pdo = null): bool {
   $today = new DateTimeImmutable('now', $timezone);
   return is_date_within_summer_season($today, $pdo);
 }
+
+function parse_atmospheric_pressure_alert_threshold(string $value): float {
+  $value = str_replace(',', '.', trim($value));
+  if ($value === '' || !is_numeric($value) || !is_finite((float)$value) || (float)$value <= 0) {
+    throw new InvalidArgumentException('Inserisci una soglia di pressione valida e maggiore di zero, in hPa.');
+  }
+  return (float)$value;
+}
+
+function get_atmospheric_pressure_alert_threshold(?PDO $pdo = null): float {
+  $value = get_setting('atmospheric_pressure_alert_threshold', null, $pdo);
+  if ($value === null || $value === '') return 1013.0;
+  try { return parse_atmospheric_pressure_alert_threshold((string)$value); }
+  catch (InvalidArgumentException $exception) { return 1013.0; }
+}
+
+function atmospheric_pressure_alert_is_active(mixed $pressure, float $threshold): bool {
+  return is_numeric($pressure) && is_finite((float)$pressure) && (float)$pressure <= $threshold;
+}

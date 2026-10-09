@@ -181,7 +181,7 @@ function generate_daily_summary_pdf(
     // --- Days off ---
     if ($showFullSummary && $pdo instanceof PDO) {
         $daysOffStmt = $pdo->prepare(
-            "SELECT u.nome, u.cognome, u.dipartimento, d.note\n         FROM days_off d\n         JOIN users u ON u.id = d.user_id\n         WHERE d.deleted_at IS NULL\n           AND d.day = ?\n         ORDER BY u.cognome ASC, u.nome ASC"
+            "SELECT u.nome, u.cognome, u.dipartimento, d.note\n         FROM days_off d\n         JOIN users u ON u.id = d.user_id\n         WHERE d.deleted_at IS NULL\n           AND u.is_active = 1\n           AND d.day = ?\n         ORDER BY u.cognome ASC, u.nome ASC"
         );
         $daysOffStmt->execute([$dayYmd]);
         $daysOff = $daysOffStmt->fetchAll(PDO::FETCH_ASSOC);
