@@ -61,3 +61,7 @@ body{min-height:100vh}.card{border-radius:1rem}
 .tramontoday-report-chart-wrap{position:relative;height:380px;min-height:280px}
 .transfer-fields-contents:not(.d-none){display:contents}
 @media(max-width:767.98px){.parking-page{padding-left:.25rem;padding-right:.25rem}.parking-map-scroll{max-height:68vh}.parking-map{width:780px;max-height:none}.parking-legend{width:100%;justify-content:center}.parking-summary-card .display-6{font-size:2rem}}
+
+.dojo-topbar{position:sticky;top:0;z-index:1020;min-height:56px}
+.dojo-alerts-menu{width:min(380px,calc(100vw - 2rem))}
+.dojo-alerts-list{max-height:60vh;overflow-y:auto}
