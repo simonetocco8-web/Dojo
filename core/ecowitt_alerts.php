@@ -31,7 +31,7 @@ function ecowitt_alert_season_is_active(PDO $pdo, DateTimeInterface $now): bool
     return $today >= $start && $today <= $end;
 }
 
-function ecowitt_weather_alert_definitions(array $weather): array
+function ecowitt_weather_alert_definitions(array $weather, float $pressureThreshold = 1013.0): array
 {
     $gust = $weather['wind_gust'] ?? null;
     $pressure = $weather['pressure'] ?? null;
@@ -43,7 +43,7 @@ function ecowitt_weather_alert_definitions(array $weather): array
                 : '',
         ],
         'pressure' => [
-            'active' => is_numeric($pressure) && (float)$pressure <= 1013,
+            'active' => atmospheric_pressure_alert_is_active($pressure, $pressureThreshold),
             'message' => is_numeric($pressure)
                 ? 'ALLERTA METEO: pressione ' . number_format((float)$pressure, 1, ',', '') . ' hPa. Possibili piogge nelle prossime ore o giorni. Prestare attenzione al canale di scolo acqua piovana.'
                 : '',
@@ -79,7 +79,7 @@ function send_ecowitt_weather_alerts(PDO $pdo, array $env, ?DateTimeInterface $n
         $result['recipients'] = count($recipients);
         $states = get_settings(['ecowitt_alert_wind_active', 'ecowitt_alert_pressure_active'], $pdo);
 
-        foreach (ecowitt_weather_alert_definitions($weather) as $type => $alert) {
+        foreach (ecowitt_weather_alert_definitions($weather, get_atmospheric_pressure_alert_threshold($pdo)) as $type => $alert) {
             $stateKey = 'ecowitt_alert_' . $type . '_active';
             if (!$alert['active']) {
                 if (($states[$stateKey] ?? '0') !== '0') set_setting($stateKey, '0', $pdo);

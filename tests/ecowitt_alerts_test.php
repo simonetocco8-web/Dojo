@@ -29,3 +29,16 @@ if (!boiler_temperature_is_below_setpoint(50, 50) || !boiler_temperature_is_belo
     || boiler_temperature_is_below_setpoint(50.1, 50) || boiler_temperature_is_below_setpoint(null, 50)) {
     throw new RuntimeException('La soglia di temperatura caldaie non è valutata correttamente.');
 }
+
+$threshold = parse_atmospheric_pressure_alert_threshold(' 1005,5 ');
+if ($threshold !== 1005.5) throw new RuntimeException('Soglia decimale non accettata.');
+foreach (['', '0', '-1', 'abc', '1e999'] as $invalid) {
+    try { parse_atmospheric_pressure_alert_threshold($invalid); }
+    catch (InvalidArgumentException $exception) { continue; }
+    throw new RuntimeException('Soglia non valida accettata.');
+}
+foreach ([[1005.4, true], [1005.5, true], [1005.6, false], [1013, false], [null, false], ['invalid', false]] as [$pressure, $expected]) {
+    $alert = ecowitt_weather_alert_definitions(['pressure' => $pressure], $threshold);
+    if ($alert['pressure']['active'] !== $expected || atmospheric_pressure_alert_is_active($pressure, $threshold) !== $expected) throw new RuntimeException('Soglia pressione configurabile errata.');
+}
+echo "Soglia pressione configurabile e validazione input verificate.\n";

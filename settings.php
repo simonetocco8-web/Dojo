@@ -29,6 +29,7 @@ $messages = [];
 $startValue = null;
 $endValue = null;
 $linenCostValues = null;
+$pressureThresholdValue = null;
 
 function save_departments_setting(PDO $pdo, array $departments): void {
   $departments = normalize_departments_list($departments);
@@ -106,6 +107,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($usage['users'] > 0 || $usage['tasks'] > 0) {
         $messages[] = 'Nota: esistono ancora ' . $usage['users'] . ' utenti e ' . $usage['tasks'] . ' task collegati a questo dipartimento nei dati storici.';
       }
+    }
+  } elseif ($action === 'pressure_alert_threshold') {
+    $pressureThresholdValue = trim((string)($_POST['atmospheric_pressure_alert_threshold'] ?? ''));
+    try {
+      $threshold = parse_atmospheric_pressure_alert_threshold($pressureThresholdValue);
+      set_setting('atmospheric_pressure_alert_threshold', (string)$threshold, $pdo);
+      $pressureThresholdValue = (string)$threshold;
+      $messages[] = 'Soglia di allerta della pressione atmosferica salvata correttamente.';
+    } catch (InvalidArgumentException $exception) {
+      $errors[] = $exception->getMessage();
     }
   } elseif ($action === 'linen_costs') {
     $linenCostValues = [];
@@ -188,6 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $errors && (($_POST['action'] ?? 's
 }
 
 $seasonActive = is_today_within_summer_season($pdo);
+$pressureThresholdValue ??= (string)get_atmospheric_pressure_alert_threshold($pdo);
 
 $title = 'Impostazioni di sistema';
 include __DIR__ . '/partials/header.php';
@@ -364,6 +376,18 @@ include __DIR__ . '/partials/header.php';
         </form>
       </div>
     </div>
+  </div>
+  <div class="col-12 col-xl-10">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5 mb-3">Alert pressione atmosferica</h2>
+      <p class="text-muted">L’allerta in dashboard e gli SMS meteo si attivano quando la pressione è pari o inferiore alla soglia. Gli SMS mantengono le regole di invio durante la stagione estiva e di prevenzione degli avvisi ripetuti. Valore predefinito: 1013 hPa.</p>
+      <form method="post" class="row g-3 align-items-end">
+        <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="pressure_alert_threshold">
+        <div class="col-12 col-md-6"><label for="pressureAlertThreshold" class="form-label">Soglia pressione atmosferica</label><div class="input-group"><input type="number" class="form-control" id="pressureAlertThreshold" name="atmospheric_pressure_alert_threshold" step="any" value="<?= e(str_replace(',', '.', $pressureThresholdValue)) ?>" required><span class="input-group-text">hPa</span></div><div class="form-text">Inserisci un valore maggiore di zero.</div></div>
+        <div class="col-12 col-md-auto"><button class="btn btn-primary">Salva soglia pressione</button></div>
+      </form>
+    </div></div>
   </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
