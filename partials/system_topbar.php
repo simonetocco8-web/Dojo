@@ -1,8 +1,8 @@
 <?php if ($user): ?>
-<header class="dojo-topbar d-flex align-items-center justify-content-between gap-3 px-3 py-2 bg-white border-bottom">
-  <span class="fw-semibold">Dojo <span class="text-muted fw-normal d-none d-sm-inline">· <?= e($user['email']) ?></span></span>
+<header class="dojo-topbar d-flex align-items-center justify-content-between gap-3 px-3 py-2 text-white">
+  <span class="fw-semibold">Dojo <span class="text-white-50 fw-normal d-none d-sm-inline">· <?= e($user['email']) ?></span></span>
   <div class="dropdown" id="systemAlerts" data-alerts-url="<?= e($base) ?>/user_alerts.php" data-base-url="<?= e($base) ?>">
-    <button class="btn btn-outline-secondary position-relative" type="button" id="systemAlertsButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Alert di sistema">
+    <button class="btn btn-outline-light position-relative" type="button" id="systemAlertsButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Alert di sistema">
       <i class="bi bi-bell" aria-hidden="true"></i>
       <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="systemAlertsCount"></span>
     </button>
