@@ -109,7 +109,7 @@ function booking_linen_schedule(array $reservations): array {
         $date = (new DateTimeImmutable($booking['check_in']))->modify('+' . intdiv((int)$booking['nights'], 2) . ' days')->format('Y-m-d');
         foreach (json_decode($booking['rooms_json'], true, 512, JSON_THROW_ON_ERROR) as $room) {
             $adults = (int)$room['adults'];
-            $schedule[] = ['reference'=>$booking['reference'],'booker'=>$booking['booker'],'date'=>$date,'room'=>$room['room'],'adults'=>$adults,'children'=>(int)$room['children'],'infants'=>(int)($room['infants'] ?? 0),'double'=>$adults >= 2 ? 1 : 0,'single'=>($adults >= 2 ? $adults - 2 : $adults) + (int)$room['children'],'review'=>$adults >= 4 || !empty($room['infants'])];
+            $schedule[] = ['reference'=>$booking['reference'],'booker'=>$booking['booker'],'date'=>$date,'room'=>$room['room'],'adults'=>$adults,'children'=>(int)$room['children'],'infants'=>(int)($room['infants'] ?? 0),'double'=>$adults >= 2 ? 1 : 0,'single'=>($adults >= 2 ? $adults - 2 : $adults) + (int)$room['children'],'bath_sets'=>$adults + (int)$room['children'] + (int)($room['infants'] ?? 0),'review'=>$adults >= 4 || !empty($room['infants'])];
         }
     }
     usort($schedule, static fn($a,$b)=>[$a['date'],(int)$a['room'],$a['reference']] <=> [$b['date'],(int)$b['room'],$b['reference']] );
