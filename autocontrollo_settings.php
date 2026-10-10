@@ -36,14 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim((string)($_POST['description'] ?? ''));
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
     $groundingRodLocation = trim((string)($_POST['grounding_rod_location'] ?? ''));
-    $refrigeratorId = trim((string)($_POST['refrigerator_id'] ?? ''));
-    $originalRefrigeratorId = trim((string)($_POST['original_refrigerator_id'] ?? ''));
-    $refrigeratorType = trim((string)($_POST['refrigerator_type'] ?? ''));
-    $operatingTemperatureRaw = str_replace(',', '.', trim((string)($_POST['operating_temperature'] ?? '')));
-    $extinguisherId = trim((string)($_POST['extinguisher_id'] ?? ''));
-    $originalExtinguisherId = trim((string)($_POST['original_extinguisher_id'] ?? ''));
-    $extinguisherType = trim((string)($_POST['extinguisher_type'] ?? ''));
-    $capacityKgRaw = str_replace(',', '.', trim((string)($_POST['capacity_kg'] ?? '')));
     try {
         if ($action === 'vehicle_create' || $action === 'vehicle_update') {
             autocontrollo_vehicle_save($pdo, $action === 'vehicle_create' ? null : $id, (string)($_POST['vehicle_brand'] ?? ''), (string)($_POST['vehicle_model'] ?? ''), (string)($_POST['vehicle_plate'] ?? ''));
@@ -143,60 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare('DELETE FROM autocontrollo_grounding_rods WHERE id = ?');
             $stmt->execute([$id]);
             $message = 'deleted';
-        } elseif ($action === 'refrigerator_create' || $action === 'refrigerator_update') {
-            if ($refrigeratorId === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $refrigeratorId)) {
-                throw new InvalidArgumentException('L’ID frigorifero è obbligatorio e può contenere solo lettere, numeri, punto, trattino e underscore.');
-            }
-            if (strlen($refrigeratorId) > 50) throw new InvalidArgumentException('L’ID frigorifero può contenere al massimo 50 caratteri.');
-            if (!in_array($refrigeratorType, ['frigorifero', 'congelatore', 'cella'], true)) throw new InvalidArgumentException('Tipologia frigorifero non valida.');
-            if ($operatingTemperatureRaw === '' || !is_numeric($operatingTemperatureRaw)) throw new InvalidArgumentException('Temperatura di esercizio non valida.');
-            $operatingTemperature = (float)$operatingTemperatureRaw;
-            if ($operatingTemperature < -99.99 || $operatingTemperature > 99.99) throw new InvalidArgumentException('La temperatura di esercizio deve essere compresa tra -99,99 e 99,99 °C.');
-            $duplicateStmt = $pdo->prepare('SELECT COUNT(*) FROM autocontrollo_refrigerators WHERE id=? AND id<>?');
-            $duplicateStmt->execute([$refrigeratorId, $action === 'refrigerator_update' ? $originalRefrigeratorId : '']);
-            if ((int)$duplicateStmt->fetchColumn() > 0) throw new InvalidArgumentException('L’ID frigorifero indicato è già utilizzato.');
-            if ($action === 'refrigerator_create') {
-                $stmt = $pdo->prepare('INSERT INTO autocontrollo_refrigerators (id, appliance_type, operating_temperature) VALUES (?, ?, ?)');
-                $stmt->execute([$refrigeratorId, $refrigeratorType, $operatingTemperature]);
-                $message = 'created';
-            } else {
-                if ($originalRefrigeratorId === '') throw new InvalidArgumentException('ID frigorifero originale non valido.');
-                $stmt = $pdo->prepare('UPDATE autocontrollo_refrigerators SET id=?, appliance_type=?, operating_temperature=? WHERE id=?');
-                $stmt->execute([$refrigeratorId, $refrigeratorType, $operatingTemperature, $originalRefrigeratorId]);
-                $message = 'updated';
-            }
-        } elseif ($action === 'refrigerator_delete') {
-            if ($originalRefrigeratorId === '') throw new InvalidArgumentException('ID frigorifero non valido.');
-            $stmt = $pdo->prepare('DELETE FROM autocontrollo_refrigerators WHERE id=?');
-            $stmt->execute([$originalRefrigeratorId]);
-            $message = 'deleted';
-        } elseif ($action === 'extinguisher_create' || $action === 'extinguisher_update') {
-            if ($extinguisherId === '' || !preg_match('/^[A-Za-z0-9._-]+$/', $extinguisherId)) {
-                throw new InvalidArgumentException('L’ID estintore è obbligatorio e può contenere solo lettere, numeri, punto, trattino e underscore.');
-            }
-            if (strlen($extinguisherId) > 50) throw new InvalidArgumentException('L’ID estintore può contenere al massimo 50 caratteri.');
-            if (!in_array($extinguisherType, ['polvere', 'co2', 'schiuma', 'carrellato'], true)) throw new InvalidArgumentException('Tipologia estintore non valida.');
-            if ($capacityKgRaw === '' || !is_numeric($capacityKgRaw)) throw new InvalidArgumentException('Capacità estintore non valida.');
-            $capacityKg = (float)$capacityKgRaw;
-            if ($capacityKg <= 0 || $capacityKg > 9999.99) throw new InvalidArgumentException('La capacità deve essere maggiore di zero e non superiore a 9999,99 Kg.');
-            $duplicateStmt = $pdo->prepare('SELECT COUNT(*) FROM autocontrollo_fire_extinguishers WHERE id=? AND id<>?');
-            $duplicateStmt->execute([$extinguisherId, $action === 'extinguisher_update' ? $originalExtinguisherId : '']);
-            if ((int)$duplicateStmt->fetchColumn() > 0) throw new InvalidArgumentException('L’ID estintore indicato è già utilizzato.');
-            if ($action === 'extinguisher_create') {
-                $stmt = $pdo->prepare('INSERT INTO autocontrollo_fire_extinguishers (id, extinguisher_type, capacity_kg) VALUES (?, ?, ?)');
-                $stmt->execute([$extinguisherId, $extinguisherType, $capacityKg]);
-                $message = 'created';
-            } else {
-                if ($originalExtinguisherId === '') throw new InvalidArgumentException('ID estintore originale non valido.');
-                $stmt = $pdo->prepare('UPDATE autocontrollo_fire_extinguishers SET id=?, extinguisher_type=?, capacity_kg=? WHERE id=?');
-                $stmt->execute([$extinguisherId, $extinguisherType, $capacityKg, $originalExtinguisherId]);
-                $message = 'updated';
-            }
-        } elseif ($action === 'extinguisher_delete') {
-            if ($originalExtinguisherId === '') throw new InvalidArgumentException('ID estintore non valido.');
-            $stmt = $pdo->prepare('DELETE FROM autocontrollo_fire_extinguishers WHERE id=?');
-            $stmt->execute([$originalExtinguisherId]);
-            $message = 'deleted';
         } else {
             throw new InvalidArgumentException('Azione non valida.');
         }
@@ -247,7 +185,6 @@ include __DIR__ . '/partials/header.php';
 <div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Parametri Quadri Elettrici</h2>
-    <?php $responsibilityProcedure = 'electrical'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="panel_create">
@@ -273,13 +210,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
-</section>
 
-<section class="col-12 col-lg-6" id="pool-products" style="scroll-margin-top:1rem">
-<div class="card shadow-sm h-100">
+<div class="card shadow-sm mt-4">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-droplet-half me-1"></i>Prodotti Piscina</h2>
-    <?php $responsibilityProcedure = 'pool'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="pool_product_create">
@@ -305,13 +239,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
-</section>
 
-<section class="col-12 col-lg-6" id="rodent-traps" style="scroll-margin-top:1rem">
-<div class="card shadow-sm h-100">
+<div class="card shadow-sm mt-4">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-geo-alt me-1"></i>Mappatura Trappole Roditori</h2>
-    <?php $responsibilityProcedure = 'rodent'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="rodent_trap_create">
@@ -337,13 +268,10 @@ include __DIR__ . '/partials/header.php';
     <?php endif; ?>
   </div>
 </div>
-</section>
 
-<section class="col-12 col-lg-6" id="grounding-rods" style="scroll-margin-top:1rem">
-<div class="card shadow-sm h-100">
+<div class="card shadow-sm mt-4">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-plug me-1"></i>Mappatura Paline Messa a Terra</h2>
-    <?php $responsibilityProcedure = 'grounding'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
     <form method="post" class="row g-2 align-items-end mb-4">
       <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
       <input type="hidden" name="action" value="grounding_rod_create">
