@@ -4,6 +4,8 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/autocontrollo_settings.php';
+require_once __DIR__ . '/core/autocontrollo_vehicles.php';
 
 require_login();
 $user = current_user();
@@ -19,6 +21,9 @@ ensure_autocontrollo_electrical_panels_table($pdo);
 ensure_autocontrollo_pool_products_table($pdo);
 ensure_autocontrollo_rodent_traps_table($pdo);
 ensure_autocontrollo_grounding_rods_table($pdo);
+ensure_autocontrollo_refrigerators_table($pdo);
+ensure_autocontrollo_fire_extinguishers_table($pdo);
+ensure_autocontrollo_vehicles_table($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -32,7 +37,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
     $groundingRodLocation = trim((string)($_POST['grounding_rod_location'] ?? ''));
     try {
-        if ($action === 'panel_create' || $action === 'panel_update') {
+        if ($action === 'vehicle_create' || $action === 'vehicle_update') {
+            autocontrollo_vehicle_save($pdo, $action === 'vehicle_create' ? null : $id, (string)($_POST['vehicle_brand'] ?? ''), (string)($_POST['vehicle_model'] ?? ''), (string)($_POST['vehicle_plate'] ?? ''));
+            $message = $action === 'vehicle_create' ? 'created' : 'updated';
+        } elseif ($action === 'vehicle_delete') {
+            autocontrollo_vehicle_delete($pdo, $id);
+            $message = 'deleted';
+        } elseif ($action === 'responsible_update') {
+            autocontrollo_save_responsible($pdo, (string)($_POST['procedure'] ?? ''), (string)($_POST['responsible_user_id'] ?? ''));
+            $message = 'updated';
+        } elseif ($action === 'panel_create' || $action === 'panel_update') {
             if ($location === '') throw new InvalidArgumentException('Il luogo di installazione è obbligatorio.');
             if ((function_exists('mb_strlen') ? mb_strlen($location, 'UTF-8') : strlen($location)) > 190) {
                 throw new InvalidArgumentException('Il luogo di installazione può contenere al massimo 190 caratteri.');
@@ -136,6 +150,11 @@ $panels = $pdo->query('SELECT id, installation_location FROM autocontrollo_elect
 $poolProducts = $pdo->query('SELECT id, description FROM autocontrollo_pool_products ORDER BY description, id')->fetchAll(PDO::FETCH_ASSOC);
 $rodentTraps = $pdo->query('SELECT id, location FROM autocontrollo_rodent_traps ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
 $groundingRods = $pdo->query('SELECT id, location FROM autocontrollo_grounding_rods ORDER BY location, id')->fetchAll(PDO::FETCH_ASSOC);
+$refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature FROM autocontrollo_refrigerators ORDER BY appliance_type, id')->fetchAll(PDO::FETCH_ASSOC);
+$fireExtinguishers = $pdo->query('SELECT id, extinguisher_type, capacity_kg FROM autocontrollo_fire_extinguishers ORDER BY extinguisher_type, id')->fetchAll(PDO::FETCH_ASSOC);
+$activeUsers = $pdo->query('SELECT id, nome, cognome, email FROM users WHERE is_active=1 AND deleted_at IS NULL ORDER BY cognome, nome, email, id')->fetchAll(PDO::FETCH_ASSOC);
+$responsibleSettings = get_settings(array_map(static fn($procedure) => 'autocontrollo_responsible_' . $procedure, array_keys(autocontrollo_responsibility_procedures())), $pdo);
+$vehicles = $pdo->query('SELECT id,brand,model,license_plate FROM autocontrollo_vehicles ORDER BY brand,model,id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -150,7 +169,20 @@ include __DIR__ . '/partials/header.php';
   <div class="alert alert-danger"><?= e($_GET['detail'] ?? 'Operazione non completata.') ?></div>
 <?php endif; ?>
 
-<div class="card shadow-sm">
+<nav class="card shadow-sm mb-4" aria-label="Sezioni setting Autocontrollo"><div class="card-body"><div class="row g-2">
+  <?php foreach ([
+    ['panels','lightning-charge','Quadri Elettrici'], ['pool-products','droplet-half','Prodotti Piscina'],
+    ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
+    ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
+    ['haccp-cleaning','clipboard-check','Pulizie HACCP'], ['vehicles','truck','Veicoli'],
+  ] as [$anchor,$icon,$label]): ?>
+  <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
+  <?php endforeach; ?>
+</div></div></nav>
+
+<div class="row g-4 align-items-start">
+<section class="col-12 col-lg-6" id="panels" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
   <div class="card-body">
     <h2 class="h5 mb-3"><i class="bi bi-lightning-charge me-1"></i>Parametri Quadri Elettrici</h2>
     <form method="post" class="row g-2 align-items-end mb-4">
@@ -264,5 +296,60 @@ include __DIR__ . '/partials/header.php';
       </tbody></table></div>
     <?php endif; ?>
   </div>
+</div>
+</section>
+
+<section class="col-12 col-lg-6" id="refrigerators" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
+  <div class="card-body">
+    <h2 class="h5 mb-3"><i class="bi bi-snow me-1"></i>Mappatura Frigoriferi</h2>
+    <?php $responsibilityProcedure = 'temperature'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
+    <form method="post" class="row g-2 align-items-end mb-4">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="refrigerator_create">
+      <div class="col-12 col-md-4"><label for="newRefrigeratorId" class="form-label">ID univoco</label><input class="form-control" id="newRefrigeratorId" name="refrigerator_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
+      <div class="col-12 col-md-3"><label for="newRefrigeratorType" class="form-label">Tipologia</label><select class="form-select" id="newRefrigeratorType" name="refrigerator_type" required><option value="frigorifero">Frigorifero</option><option value="congelatore">Congelatore</option><option value="cella">Cella</option></select></div>
+      <div class="col-12 col-md-3"><label for="newOperatingTemperature" class="form-label">Temperatura esercizio °C</label><input class="form-control" type="number" inputmode="decimal" step="0.01" min="-99.99" max="99.99" id="newOperatingTemperature" name="operating_temperature" required></div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-plus-circle me-1"></i>Aggiungi</button></div>
+    </form>
+
+    <?php if (!$refrigerators): ?>
+      <div class="text-muted">Nessun frigorifero configurato.</div>
+    <?php else: ?>
+      <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Tipologia</th><th>Temperatura esercizio</th><th class="text-end">Azioni</th></tr></thead><tbody>
+      <?php foreach ($refrigerators as $refrigerator): ?>
+        <tr><td colspan="4"><form method="post" class="row g-2 align-items-center"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="original_refrigerator_id" value="<?= e($refrigerator['id']) ?>"><div class="col-12 col-md-3"><input class="form-control" name="refrigerator_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required value="<?= e($refrigerator['id']) ?>" aria-label="ID frigorifero"></div><div class="col-12 col-md-3"><select class="form-select" name="refrigerator_type" required aria-label="Tipologia frigorifero"><?php foreach (['frigorifero'=>'Frigorifero','congelatore'=>'Congelatore','cella'=>'Cella'] as $value=>$label): ?><option value="<?= e($value) ?>" <?= $refrigerator['appliance_type'] === $value ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 col-md-3"><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="-99.99" max="99.99" name="operating_temperature" required value="<?= e($refrigerator['operating_temperature']) ?>" aria-label="Temperatura esercizio"><span class="input-group-text">°C</span></div></div><div class="col-12 col-md-3 d-flex justify-content-md-end gap-2"><button class="btn btn-outline-primary" name="action" value="refrigerator_update"><i class="bi bi-save me-1"></i>Salva</button><button class="btn btn-outline-danger" name="action" value="refrigerator_delete" formnovalidate onclick="return confirm('Eliminare questo frigorifero?')"><i class="bi bi-trash"></i></button></div></form></td></tr>
+      <?php endforeach; ?>
+      </tbody></table></div>
+    <?php endif; ?>
+  </div>
+</div>
+</section>
+<section class="col-12 col-lg-6" id="fire-extinguishers" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100">
+  <div class="card-body">
+    <h2 class="h5 mb-3"><i class="bi bi-fire me-1"></i>Estintori</h2>
+    <?php $responsibilityProcedure = 'fire'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
+    <form method="post" class="row g-2 align-items-end mb-4">
+      <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="extinguisher_create">
+      <div class="col-12 col-md-4"><label for="newExtinguisherId" class="form-label">ID univoco</label><input class="form-control" id="newExtinguisherId" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required></div>
+      <div class="col-12 col-md-3"><label for="newExtinguisherType" class="form-label">Tipologia</label><select class="form-select" id="newExtinguisherType" name="extinguisher_type" required><option value="polvere">Polvere</option><option value="co2">CO2</option><option value="schiuma">Schiuma</option><option value="carrellato">Carrellato</option></select></div>
+      <div class="col-12 col-md-3"><label for="newExtinguisherCapacity" class="form-label">Capacità</label><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0.01" max="9999.99" id="newExtinguisherCapacity" name="capacity_kg" required><span class="input-group-text">Kg</span></div></div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-plus-circle me-1"></i>Aggiungi</button></div>
+    </form>
+    <?php if (!$fireExtinguishers): ?><div class="text-muted">Nessun estintore configurato.</div><?php else: ?>
+    <div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>ID</th><th>Tipologia</th><th>Capacità</th><th class="text-end">Azioni</th></tr></thead><tbody>
+    <?php foreach ($fireExtinguishers as $extinguisher): ?><tr><td colspan="4"><form method="post" class="row g-2 align-items-center"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="original_extinguisher_id" value="<?= e($extinguisher['id']) ?>"><div class="col-12 col-md-3"><input class="form-control" name="extinguisher_id" maxlength="50" pattern="[A-Za-z0-9._-]+" required value="<?= e($extinguisher['id']) ?>" aria-label="ID estintore"></div><div class="col-12 col-md-3"><select class="form-select" name="extinguisher_type" required aria-label="Tipologia estintore"><?php foreach (['polvere'=>'Polvere','co2'=>'CO2','schiuma'=>'Schiuma','carrellato'=>'Carrellato'] as $value=>$label): ?><option value="<?= e($value) ?>" <?= $extinguisher['extinguisher_type'] === $value ? 'selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?></select></div><div class="col-12 col-md-3"><div class="input-group"><input class="form-control" type="number" inputmode="decimal" step="0.01" min="0.01" max="9999.99" name="capacity_kg" required value="<?= e($extinguisher['capacity_kg']) ?>" aria-label="Capacità estintore"><span class="input-group-text">Kg</span></div></div><div class="col-12 col-md-3 d-flex justify-content-md-end gap-2"><button class="btn btn-outline-primary" name="action" value="extinguisher_update"><i class="bi bi-save me-1"></i>Salva</button><button class="btn btn-outline-danger" name="action" value="extinguisher_delete" formnovalidate onclick="return confirm('Eliminare questo estintore?')"><i class="bi bi-trash"></i></button></div></form></td></tr><?php endforeach; ?>
+    </tbody></table></div><?php endif; ?>
+  </div>
+</div>
+</section>
+<section class="col-12 col-lg-6" id="haccp-cleaning" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100"><div class="card-body">
+  <h2 class="h5 mb-3"><i class="bi bi-clipboard-check me-1"></i>Pulizie HACCP</h2>
+  <p class="text-muted">Assegna il responsabile della procedura di pulizia HACCP.</p>
+  <?php $responsibilityProcedure = 'haccp'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
+</div></div>
+</section>
+<?php include __DIR__ . '/partials/autocontrollo_vehicles.php'; ?>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
