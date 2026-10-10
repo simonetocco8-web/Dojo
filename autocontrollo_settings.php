@@ -5,6 +5,7 @@ require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/db.php';
 require_once __DIR__ . '/core/autocontrollo_settings.php';
+require_once __DIR__ . '/core/autocontrollo_vehicles.php';
 
 require_login();
 $user = current_user();
@@ -22,6 +23,7 @@ ensure_autocontrollo_rodent_traps_table($pdo);
 ensure_autocontrollo_grounding_rods_table($pdo);
 ensure_autocontrollo_refrigerators_table($pdo);
 ensure_autocontrollo_fire_extinguishers_table($pdo);
+ensure_autocontrollo_vehicles_table($pdo);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check((string)($_POST['csrf'] ?? ''))) {
@@ -43,7 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $extinguisherType = trim((string)($_POST['extinguisher_type'] ?? ''));
     $capacityKgRaw = str_replace(',', '.', trim((string)($_POST['capacity_kg'] ?? '')));
     try {
-        if ($action === 'responsible_update') {
+        if ($action === 'vehicle_create' || $action === 'vehicle_update') {
+            autocontrollo_vehicle_save($pdo, $action === 'vehicle_create' ? null : $id, (string)($_POST['vehicle_brand'] ?? ''), (string)($_POST['vehicle_model'] ?? ''), (string)($_POST['vehicle_plate'] ?? ''));
+            $message = $action === 'vehicle_create' ? 'created' : 'updated';
+        } elseif ($action === 'vehicle_delete') {
+            autocontrollo_vehicle_delete($pdo, $id);
+            $message = 'deleted';
+        } elseif ($action === 'responsible_update') {
             autocontrollo_save_responsible($pdo, (string)($_POST['procedure'] ?? ''), (string)($_POST['responsible_user_id'] ?? ''));
             $message = 'updated';
         } elseif ($action === 'panel_create' || $action === 'panel_update') {
@@ -208,6 +216,7 @@ $refrigerators = $pdo->query('SELECT id, appliance_type, operating_temperature F
 $fireExtinguishers = $pdo->query('SELECT id, extinguisher_type, capacity_kg FROM autocontrollo_fire_extinguishers ORDER BY extinguisher_type, id')->fetchAll(PDO::FETCH_ASSOC);
 $activeUsers = $pdo->query('SELECT id, nome, cognome, email FROM users WHERE is_active=1 AND deleted_at IS NULL ORDER BY cognome, nome, email, id')->fetchAll(PDO::FETCH_ASSOC);
 $responsibleSettings = get_settings(array_map(static fn($procedure) => 'autocontrollo_responsible_' . $procedure, array_keys(autocontrollo_responsibility_procedures())), $pdo);
+$vehicles = $pdo->query('SELECT id,brand,model,license_plate FROM autocontrollo_vehicles ORDER BY brand,model,id')->fetchAll(PDO::FETCH_ASSOC);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -227,7 +236,7 @@ include __DIR__ . '/partials/header.php';
     ['panels','lightning-charge','Quadri Elettrici'], ['pool-products','droplet-half','Prodotti Piscina'],
     ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
     ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
-    ['haccp-cleaning','clipboard-check','Pulizie HACCP'],
+    ['haccp-cleaning','clipboard-check','Pulizie HACCP'], ['vehicles','truck','Veicoli'],
   ] as [$anchor,$icon,$label]): ?>
   <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
   <?php endforeach; ?>
@@ -413,5 +422,6 @@ include __DIR__ . '/partials/header.php';
   <?php $responsibilityProcedure = 'haccp'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
 </div></div>
 </section>
+<?php include __DIR__ . '/partials/autocontrollo_vehicles.php'; ?>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
