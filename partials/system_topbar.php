@@ -1,6 +1,10 @@
 <?php if ($user): ?>
 <header class="dojo-topbar d-flex align-items-center justify-content-between gap-3 px-3 py-2 text-white">
   <span class="fw-semibold">Dojo <span class="text-white-50 fw-normal d-none d-sm-inline">· <?= e($user['email']) ?></span></span>
+  <div class="d-flex align-items-center gap-3">
+    <?php if (user_is_reception_or_amministrazione($user)): ?>
+    <a class="btn btn-outline-light" href="<?= e($base) ?>/booking_linen.php" title="Carica prenotazioni CSV" aria-label="Carica prenotazioni CSV"><i class="bi bi-upload" aria-hidden="true"></i></a>
+    <?php endif; ?>
   <div class="dropdown" id="systemAlerts" data-alerts-url="<?= e($base) ?>/user_alerts.php" data-base-url="<?= e($base) ?>">
     <button class="btn btn-outline-light position-relative" type="button" id="systemAlertsButton" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Alert di sistema">
       <i class="bi bi-bell" aria-hidden="true"></i>
@@ -11,6 +15,7 @@
       <div id="systemAlertsList" class="dojo-alerts-list"><p class="text-muted small m-0 px-3 py-3">Caricamento degli alert…</p></div>
       <div id="systemAlertsStatus" class="small text-muted px-3 py-2 border-top" role="status" aria-live="polite"></div>
     </div>
+  </div>
   </div>
 </header>
 <script src="<?= e($base) ?>/assets/system-alerts.js?v=<?= (int)(@filemtime(__DIR__ . '/../assets/system-alerts.js') ?: time()) ?>" defer></script>
