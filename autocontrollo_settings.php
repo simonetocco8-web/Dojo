@@ -4,6 +4,7 @@ require_once __DIR__ . '/core/auth.php';
 require_once __DIR__ . '/core/security.php';
 require_once __DIR__ . '/core/roles.php';
 require_once __DIR__ . '/core/db.php';
+require_once __DIR__ . '/core/autocontrollo_schema.php';
 require_once __DIR__ . '/core/autocontrollo_settings.php';
 require_once __DIR__ . '/core/autocontrollo_vehicles.php';
 
