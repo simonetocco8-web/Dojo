@@ -2,6 +2,16 @@
 
 require_once __DIR__ . '/settings.php';
 
+function autocontrollo_dashboard_date_label(?string $date, array $range): string {
+    $zone = new DateTimeZone('Europe/Rome');
+    if ($date !== null) return (new DateTimeImmutable($date, $zone))->format('d/m/Y');
+    if (empty($range['start']) || empty($range['end'])) return 'Stagione non configurata';
+    $start = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['start'], $zone);
+    $end = DateTimeImmutable::createFromFormat('!Y-m-d', (string)$range['end'], $zone);
+    if (!$start || !$end || $start->format('Y-m-d') !== $range['start'] || $end->format('Y-m-d') !== $range['end'] || $start > $end) return 'Date stagione non valide';
+    return 'Controlli stagionali completati';
+}
+
 function autocontrollo_parse_gas_alert_level(string $value): int {
     $value = trim($value);
     if (!ctype_digit($value) || strlen($value) > 4 || (int)$value > 1000 || (int)$value % 100 !== 0) {
