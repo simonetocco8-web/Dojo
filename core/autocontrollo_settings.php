@@ -27,6 +27,7 @@ function autocontrollo_responsibility_procedures(): array {
         'temperature' => 'Temperature Frigoriferi',
         'fire' => 'Antincendio',
         'haccp' => 'Pulizie HACCP',
+        'gas' => 'Livello Gas',
     ];
 }
 

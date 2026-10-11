@@ -15,6 +15,7 @@ require_once __DIR__ . '/core/autocontrollo_fire.php';
 require_once __DIR__ . '/core/autocontrollo_pool.php';
 require_once __DIR__ . '/core/autocontrollo_temperature.php';
 require_once __DIR__ . '/core/autocontrollo_haccp.php';
+require_once __DIR__ . '/core/autocontrollo_gas.php';
 require_once __DIR__ . '/core/autocontrollo_electrical.php';
 
 start_session();
@@ -660,6 +661,8 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
   ensure_autocontrollo_pool_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT inspection_date FROM autocontrollo_pool_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$next=autocontrollo_pool_next_required_date($autocontrolloRange,$stmt->fetchAll(PDO::FETCH_COLUMN));$addControl('Piscina','water','/autocontrollo_piscina.php',$next);
 
   ensure_autocontrollo_temperature_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,inspection_date,time_slot,status FROM autocontrollo_temperature_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$next=autocontrollo_temperature_next_due($autocontrolloRange,$rows);$temperatureAvailable=$open?null:($next?autocontrollo_temperature_is_available($next['date'],$next['slot']):null);$addControl('Temperature','thermometer-half','/autocontrollo_temperature.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['inspection_date']:($next['date']??null),(bool)$open,$open?ucfirst($open['time_slot']):($next?ucfirst($next['slot']):''),$temperatureAvailable);
+
+  ensure_autocontrollo_gas_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,scheduled_date,status FROM autocontrollo_gas_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$gasRows=$stmt->fetchAll(PDO::FETCH_ASSOC);$gasOpen=array_values(array_filter($gasRows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$gasDone=array_column(array_filter($gasRows,static fn($r)=>$r['status']==='completata'),'scheduled_date');$gasNext=autocontrollo_gas_next_date(autocontrollo_gas_schedule($autocontrolloRange),$gasDone);$addControl('Livello Gas','speedometer2','/autocontrollo_gas.php'.($gasOpen?'?inspection='.(int)$gasOpen['id']:''),$gasOpen?$gasOpen['scheduled_date']:$gasNext,(bool)$gasOpen);
 
   ensure_autocontrollo_haccp_inspections_tables($pdo);$stmt=$pdo->prepare('SELECT id,scheduled_date,status FROM autocontrollo_haccp_inspections WHERE season_start=? AND season_end=?');$stmt->execute([$autocontrolloRange['start']??'',$autocontrolloRange['end']??'']);$rows=$stmt->fetchAll(PDO::FETCH_ASSOC);$open=array_values(array_filter($rows,static fn($r)=>$r['status']==='in_corso'))[0]??null;$done=array_column(array_filter($rows,static fn($r)=>$r['status']==='completata'),'scheduled_date');$next=autocontrollo_haccp_next_date(autocontrollo_haccp_schedule($autocontrolloRange),$done);$addControl('Pulizia HACCP','shield-check','/autocontrollo_haccp.php'.($open?'?inspection='.(int)$open['id']:''),$open?$open['scheduled_date']:$next,(bool)$open);
 

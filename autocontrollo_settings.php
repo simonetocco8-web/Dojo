@@ -433,10 +433,11 @@ include __DIR__ . '/partials/header.php';
 <section class="col-12 col-lg-6" id="gas-level" style="scroll-margin-top:1rem">
 <div class="card shadow-sm h-100"><div class="card-body">
   <h2 class="h5 mb-3"><i class="bi bi-speedometer2 me-1"></i>Livello Gas</h2>
+  <?php $responsibilityProcedure = 'gas'; include __DIR__ . '/partials/autocontrollo_responsible_form.php'; ?>
   <form method="post">
     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
     <input type="hidden" name="action" value="gas_alert_update">
-    <label class="form-label" for="gasAlertLevel">Livello minimo di alert del bombolone del gas: <output id="gasAlertValue" for="gasAlertLevel" class="fw-semibold" aria-live="polite"><?= $gasAlertLevel ?></output></label>
+    <label class="form-label" for="gasAlertLevel">Livello minimo di alert del bombolone del gas (litri): <output id="gasAlertValue" for="gasAlertLevel" class="fw-semibold" aria-live="polite"><?= $gasAlertLevel ?></output></label>
     <input type="range" class="form-range" id="gasAlertLevel" name="gas_alert_level" min="0" max="1000" step="100" value="<?= $gasAlertLevel ?>" aria-describedby="gasAlertHelp">
     <div class="d-flex justify-content-between small text-muted"><span>0</span><span>1000</span></div>
     <p class="form-text" id="gasAlertHelp">Sposta il cursore per impostare la soglia minima, a intervalli di 100.</p>

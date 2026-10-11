@@ -2,9 +2,11 @@
 require_once __DIR__ . '/../core/auth.php';
 require_once __DIR__ . '/../core/security.php';
 require_once __DIR__ . '/../core/roles.php';
+require_once __DIR__ . '/../core/autocontrollo_settings.php';
 start_session();
 $env = require __DIR__ . '/../config/env.php';
 $user = current_user();
+$gasResponsibleMenu = $user && !user_has_department($user, 'Amministrazione') && autocontrollo_user_can_perform($user, 'gas');
 $base = rtrim($env['app']['base_url'] ?? '', '/');
 $logo = $base . '/assets/dojo-logo.svg';
 $favicon = $base . '/assets/favicon.svg';
@@ -41,7 +43,7 @@ $magazzinoMenuOpen = str_starts_with($currentPath, 'product_') || nav_path_is_cu
 ], $currentPath);
 $personaleMenuOpen = nav_path_is_current(['days_off_list.php', 'days_off_create.php', 'overtime.php', 'overtime_monthly.php', 'absence.php', 'send_sms.php'], $currentPath);
 $riassettiMenuOpen = nav_path_is_current(['riassetti.php', 'riassetti_statistiche.php'], $currentPath);
-$autocontrolloMenuOpen = nav_path_is_current(['autocontrollo_settings.php', 'autocontrollo_impianto_elettrico.php', 'autocontrollo_piscina.php', 'autocontrollo_derattizzazione.php', 'autocontrollo_messa_a_terra.php'], $currentPath);
+$autocontrolloMenuOpen = nav_path_is_current(['autocontrollo_settings.php', 'autocontrollo_impianto_elettrico.php', 'autocontrollo_piscina.php', 'autocontrollo_derattizzazione.php', 'autocontrollo_messa_a_terra.php', 'autocontrollo_gas.php'], $currentPath);
 $parkingMenuOpen = nav_path_is_current(['parking.php', 'parking_settings.php'], $currentPath);
 $avanzateMenuOpen = nav_path_is_current(['settings.php', 'users.php', 'user_create.php', 'user_edit.php', 'daily_summary_pdf.php', 'season_end_report.php', 'season_end_pdf.php'], $currentPath);
 $canSeePersonaleMenu = $user && (user_is_amministrazione($user) || user_can_send_sms($user));
@@ -380,6 +382,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
           </ul>
         </li>
         <?php endif; ?>
+        <?php if ($gasResponsibleMenu): ?><li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/autocontrollo_gas.php"><i class="bi bi-speedometer2"></i><span>Livello Gas</span></a></li><?php endif; ?>
         <?php if ($user && user_has_department($user, 'Amministrazione')): ?>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloSidebarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
@@ -389,6 +392,7 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_antincendio.php"><i class="bi bi-fire"></i><span>Antincendio</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_gas.php"><i class="bi bi-speedometer2"></i><span>Livello Gas</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_haccp.php"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></a></li>
             <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
             <li><hr class="dropdown-divider"></li>
@@ -750,7 +754,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
               </ul>
             </li>
             <?php endif; ?>
-            <?php if ($user && user_has_department($user, 'Amministrazione')): ?>
+            <?php if ($gasResponsibleMenu): ?><li class="nav-item"><a class="nav-link" href="<?= e($base) ?>/autocontrollo_gas.php"><i class="bi bi-speedometer2"></i><span>Livello Gas</span></a></li><?php endif; ?>
+        <?php if ($user && user_has_department($user, 'Amministrazione')): ?>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle <?= $autocontrolloMenuOpen ? 'active' : '' ?>" href="#" id="autocontrolloDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-clipboard2-check"></i><span>Autocontrollo</span></a>
               <ul class="dropdown-menu" aria-labelledby="autocontrolloDropdown">
@@ -759,7 +764,8 @@ $canSeeAvanzateMenu = $user && (user_is_admin($user) || user_is_amministrazione(
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_antincendio.php"><i class="bi bi-fire"></i><span>Antincendio</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_piscina.php"><i class="bi bi-water"></i><span>Piscina</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_temperature.php"><i class="bi bi-thermometer-half"></i><span>Temperature</span></a></li>
-                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_haccp.php"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></a></li>
+                <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_gas.php"><i class="bi bi-speedometer2"></i><span>Livello Gas</span></a></li>
+            <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_haccp.php"><i class="bi bi-shield-check"></i><span>Pulizia HACCP</span></a></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_impianto_elettrico.php"><i class="bi bi-lightning-charge"></i><span>Impianto Elettrico</span></a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><a class="dropdown-item" href="<?= e($base) ?>/autocontrollo_settings.php"><i class="bi bi-sliders"></i><span>Setting</span></a></li>
