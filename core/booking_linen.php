@@ -115,3 +115,18 @@ function booking_linen_schedule(array $reservations): array {
     usort($schedule, static fn($a,$b)=>[$a['date'],(int)$a['room'],$a['reference']] <=> [$b['date'],(int)$b['room'],$b['reference']] );
     return $schedule;
 }
+
+/** Write today's label rows as an Excel-compatible UTF-8 CSV. */
+function booking_linen_export_labels($stream, array $changes, string $today): void {
+    fwrite($stream, "\xEF\xBB\xBF");
+    fputcsv($stream, ['Data cambio', 'Prenotante', 'Camera', 'Occupanti', 'Matrimoniali', 'Singole', 'Set da bagno'], ';', '"', '');
+    foreach ($changes as $change) {
+        if ($change['date'] !== $today) continue;
+        $occupants = $change['adults'] . ' adulti, ' . $change['children'] . ' bambini';
+        if (!empty($change['infants'])) $occupants .= ', ' . $change['infants'] . ' neonati';
+        $row = [(new DateTimeImmutable($change['date']))->format('d/m/Y'), $change['booker'], $change['room'], $occupants, $change['double'], $change['single'], $change['bath_sets']];
+        // Imported text must remain text when the CSV is opened in a spreadsheet.
+        $row = array_map(static fn($value) => preg_match('/^[\s]*[=+\-@]/u', (string)$value) ? "'" . $value : $value, $row);
+        fputcsv($stream, $row, ';', '"', '');
+    }
+}

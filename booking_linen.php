@@ -22,10 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . $base . '/booking_linen.php'); exit;
     } catch (Throwable $exception) { $error = $exception->getMessage(); }
 }
-$result = $_SESSION['booking_linen_import_result'] ?? null; unset($_SESSION['booking_linen_import_result']);
 $today = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
 $bookings = $pdo->query('SELECT * FROM booking_linen_reservations ORDER BY check_in,reference')->fetchAll(PDO::FETCH_ASSOC);
 $changes = booking_linen_schedule($bookings);
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['export'] ?? '') === 'labels') {
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="etichette_biancheria_' . $today . '.csv"');
+    header('Cache-Control: no-store');
+    $stream = fopen('php://output', 'w');
+    booking_linen_export_labels($stream, $changes, $today);
+    fclose($stream);
+    exit;
+}
+$result = $_SESSION['booking_linen_import_result'] ?? null; unset($_SESSION['booking_linen_import_result']);
 $title = 'Import prenotazioni e cambi biancheria'; include __DIR__ . '/partials/header.php';
 ?>
 <h1 class="h4">Prenotazioni e cambi biancheria <span class="badge text-bg-warning">Sperimentale</span></h1>
@@ -36,7 +45,7 @@ $title = 'Import prenotazioni e cambi biancheria'; include __DIR__ . '/partials/
 <p class="text-muted">Vengono importate solo prenotazioni “Confermate” con più di 7 notti. I riferimenti già presenti vengono aggiornati solo nei campi modificati. Dopo ogni import vengono eliminate le prenotazioni con check-out precedente a oggi. L’assenza di una prenotazione dal CSV non la elimina.</p>
 <form method="post" enctype="multipart/form-data"><input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><label class="form-label" for="bookingsCsv">Elenco prenotazioni (CSV, massimo 5 MB)</label><input class="form-control mb-3" type="file" id="bookingsCsv" name="bookings_csv" accept=".csv,text/csv" required><button class="btn btn-primary"><i class="bi bi-upload me-1"></i>Importa prenotazioni</button></form>
 </div></div>
-<div class="card"><div class="card-body"><h2 class="h5">Cambi biancheria da fare</h2>
+<div class="card"><div class="card-body"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><h2 class="h5 mb-0">Cambi biancheria da fare</h2><a class="btn btn-outline-primary" href="<?= e($base) ?>/booking_linen.php?export=labels"><i class="bi bi-download me-1"></i>Export Etichette</a></div>
 <p class="small text-muted">Un cambio a metà soggiorno, arrotondando per difetto le notti dispari. Per camera: una matrimoniale per i primi 2 adulti, una singola per ogni adulto aggiuntivo e per ogni bambino. È previsto un set da bagno per ogni persona, inclusi bambini ed eventuali neonati. Le prenotazioni con almeno 4 adulti sono sottolineate e da verificare. Eventuali neonati sono segnalati: la loro biancheria va verificata.</p>
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Data cambio</th><th>Riferimento</th><th>Prenotante</th><th>Camera</th><th>Occupanti</th><th>Matrimoniali</th><th>Singole</th><th>Set da bagno</th><th>Note</th></tr></thead><tbody>
 <?php if (!$changes): ?><tr><td colspan="9" class="text-muted text-center">Nessun cambio previsto.</td></tr><?php endif; ?>
