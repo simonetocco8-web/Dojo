@@ -15,19 +15,3 @@
   form.querySelectorAll('input[name="bait_present"]').forEach(function (input) { input.addEventListener('change', update); });
   update();
 }());
-
-(function () {
-  'use strict';
-  var form = document.getElementById('rodentEmergencyForm');
-  if (!form) return;
-  var date = document.getElementById('emergencyDate');
-  function update() {
-    var scheduled = form.querySelector('input[value="date"]').checked;
-    date.required = scheduled;
-    date.disabled = !scheduled;
-  }
-  form.querySelectorAll('input[name="emergency_mode"]').forEach(function (input) {
-    input.addEventListener('change', update);
-  });
-  update();
-}());
