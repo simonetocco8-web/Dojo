@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/autocontrollo_schema.php';
 require_once __DIR__ . '/autocontrollo_settings.php';
-foreach (['rodent','grounding','fire','pool','temperature','haccp','electrical'] as $controlModule) require_once __DIR__ . '/autocontrollo_' . $controlModule . '.php';
+foreach (['rodent','grounding','fire','pool','temperature','haccp','electrical','gas'] as $controlModule) require_once __DIR__ . '/autocontrollo_' . $controlModule . '.php';
 
 function login_workflow_tasks(PDO $pdo, array $user): array {
     ensure_task_user_assignments_table($pdo);
@@ -15,7 +15,7 @@ function login_workflow_controls(PDO $pdo, array $user): array {
     $range = get_summer_season_range($pdo);
     if (empty($range['start']) || empty($range['end'])) return [];
     $today = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
-    $paths = ['electrical'=>'impianto_elettrico','grounding'=>'messa_a_terra','rodent'=>'derattizzazione','fire'=>'antincendio','pool'=>'piscina','temperature'=>'temperature','haccp'=>'haccp'];
+    $paths = ['electrical'=>'impianto_elettrico','grounding'=>'messa_a_terra','rodent'=>'derattizzazione','fire'=>'antincendio','pool'=>'piscina','temperature'=>'temperature','haccp'=>'haccp','gas'=>'gas'];
     $result = [];
     foreach (autocontrollo_responsibility_procedures() as $procedure => $label) {
         if ((string)get_setting('autocontrollo_responsible_' . $procedure, '', $pdo) !== (string)$user['id']) continue;
