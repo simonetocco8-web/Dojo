@@ -204,12 +204,13 @@ $pressureThresholdValue ??= (string)get_atmospheric_pressure_alert_threshold($pd
 $title = 'Impostazioni di sistema';
 include __DIR__ . '/partials/header.php';
 ?>
-<div class="row justify-content-center g-3">
-  <div class="col-12 col-xl-10">
-    <div class="card shadow-sm mb-3">
+<div class="row g-4 align-items-start">
+  <div class="col-12">
+    <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h4 mb-3">Impostazioni di sistema</h1>
-        <p class="text-muted">Definisci il periodo di apertura della stagione estiva e gestisci i dipartimenti disponibili nelle schede utenti, task e invio SMS.</p>
+        <div class="text-muted small text-uppercase fw-semibold mb-1">Configurazione</div>
+        <h1 class="h4 mb-2">Impostazioni di sistema</h1>
+        <p class="text-muted">Gestisci stagione, parametri degli alert, costi biancheria e dipartimenti. Ogni sezione ha il proprio pulsante di salvataggio.</p>
 
         <?php if ($messages): ?>
           <div class="alert alert-success">
@@ -230,10 +231,19 @@ include __DIR__ . '/partials/header.php';
     </div>
   </div>
 
-  <div class="col-12 col-lg-5">
+  <div class="col-12">
+    <nav class="card shadow-sm" aria-label="Sezioni impostazioni generali"><div class="card-body"><div class="row g-2">
+      <div class="col-6 col-lg-3"><a class="btn btn-outline-primary w-100 h-100 py-3" href="#general-season"><i class="bi bi-calendar-range me-1" aria-hidden="true"></i>Stagione e acqua calda</a></div>
+      <div class="col-6 col-lg-3"><a class="btn btn-outline-primary w-100 h-100 py-3" href="#general-weather"><i class="bi bi-cloud me-1" aria-hidden="true"></i>Alert meteo</a></div>
+      <div class="col-6 col-lg-3"><a class="btn btn-outline-primary w-100 h-100 py-3" href="#general-linen"><i class="bi bi-cash-coin me-1" aria-hidden="true"></i>Costi biancheria</a></div>
+      <div class="col-6 col-lg-3"><a class="btn btn-outline-primary w-100 h-100 py-3" href="#general-departments"><i class="bi bi-people me-1" aria-hidden="true"></i>Dipartimenti</a></div>
+    </div></div></nav>
+  </div>
+
+  <section class="col-12 col-xl-6" id="general-season" style="scroll-margin-top:5rem" aria-labelledby="general-season-title">
     <div class="card shadow-sm h-100">
       <div class="card-body">
-        <h2 class="h5 mb-3">Stagione estiva</h2>
+        <h2 class="h5 mb-3" id="general-season-title"><i class="bi bi-calendar-range me-2" aria-hidden="true"></i>Stagione e acqua calda</h2>
         <dl class="row small text-muted mb-4">
           <dt class="col-sm-6">Intervallo attuale</dt>
           <dd class="col-sm-6">
@@ -278,18 +288,69 @@ include __DIR__ . '/partials/header.php';
             <div class="input-group"><input type="number" min="0" max="100" step="0.1" class="form-control" id="hot_water_temperature_setpoint" name="hot_water_temperature_setpoint" value="<?= e($hotWaterSetpoint !== null ? number_format($hotWaterSetpoint, 1, '.', '') : '') ?>"><span class="input-group-text">°C</span></div>
             <div class="form-text">Lascia vuoto per disattivare gli alert caldaie.</div>
           </div>
-          <button type="submit" class="btn btn-primary">Salva impostazioni</button>
+          <button type="submit" class="btn btn-primary">Salva stagione e acqua calda</button>
         </form>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="col-12 col-lg-7">
+
+  <section class="col-12 col-xl-6" id="general-weather" style="scroll-margin-top:5rem" aria-labelledby="general-weather-title">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h5 mb-3" id="general-weather-title"><i class="bi bi-cloud me-2" aria-hidden="true"></i>Alert meteo</h2>
+      <p class="text-muted">L’allerta in dashboard e gli SMS meteo si attivano quando la pressione è pari o inferiore alla soglia. Gli SMS mantengono le regole di invio durante la stagione estiva e di prevenzione degli avvisi ripetuti. Valore predefinito: 1013 hPa.</p>
+      <form method="post" class="row g-3 align-items-end">
+        <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+        <input type="hidden" name="action" value="pressure_alert_threshold">
+        <div class="col-12 col-md-6"><label for="pressureAlertThreshold" class="form-label">Soglia pressione atmosferica</label><div class="input-group"><input type="number" class="form-control" id="pressureAlertThreshold" name="atmospheric_pressure_alert_threshold" step="any" value="<?= e(str_replace(',', '.', $pressureThresholdValue)) ?>" required><span class="input-group-text">hPa</span></div><div class="form-text">Inserisci un valore maggiore di zero.</div></div>
+        <div class="col-12 col-md-auto"><button class="btn btn-primary">Salva soglia pressione</button></div>
+      </form>
+    </div></div>
+  </section>
+
+  <section class="col-12 col-xl-6" id="general-linen" style="scroll-margin-top:5rem" aria-labelledby="general-linen-title">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-1" id="general-linen-title"><i class="bi bi-cash-coin me-2" aria-hidden="true"></i>Costi biancheria</h2>
+        <p class="text-muted small mb-3">Imposta i costi unitari utilizzati nella pagina Statistiche dei riassetti.</p>
+        <form method="post" class="row g-3" novalidate>
+          <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
+          <input type="hidden" name="action" value="linen_costs">
+          <div class="col-12 col-md-4">
+            <label for="cost_matrimoniale" class="form-label">Lenzuolo matrimoniale</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_matrimoniale" name="cost_matrimoniale" min="0" step="0.01" value="<?= e(number_format($linenCosts['matrimoniale'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="cost_singola" class="form-label">Lenzuolo singolo</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_singola" name="cost_singola" min="0" step="0.01" value="<?= e(number_format($linenCosts['singola'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label for="cost_set_bagno" class="form-label">Set da bagno</label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="cost_set_bagno" name="cost_set_bagno" min="0" step="0.01" value="<?= e(number_format($linenCosts['set_bagno'], 2, '.', '')) ?>" required>
+            </div>
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">Salva costi</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="col-12 col-xl-6" id="general-departments" style="scroll-margin-top:5rem" aria-labelledby="general-departments-title">
     <div class="card shadow-sm h-100">
       <div class="card-body">
         <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
           <div>
-            <h2 class="h5 mb-1">Dipartimenti</h2>
+            <h2 class="h5 mb-1" id="general-departments-title"><i class="bi bi-people me-2" aria-hidden="true"></i>Dipartimenti</h2>
             <div class="text-muted small">Crea o rimuovi i dipartimenti selezionabili nel sistema.</div>
           </div>
           <span class="badge text-bg-light align-self-start"><?= count($departments) ?> dipartimenti</span>
@@ -339,55 +400,7 @@ include __DIR__ . '/partials/header.php';
         <div class="form-text mt-2">L’eliminazione rimuove il dipartimento dalle nuove selezioni. Eventuali utenti o task già collegati mantengono il valore storico finché non vengono modificati.</div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="col-12 col-xl-10">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h5 mb-1">Costi biancheria riassetti</h2>
-        <p class="text-muted small mb-3">Imposta i costi unitari utilizzati nella pagina Statistiche dei riassetti.</p>
-        <form method="post" class="row g-3" novalidate>
-          <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-          <input type="hidden" name="action" value="linen_costs">
-          <div class="col-12 col-md-4">
-            <label for="cost_matrimoniale" class="form-label">Lenzuolo matrimoniale</label>
-            <div class="input-group">
-              <span class="input-group-text">€</span>
-              <input type="number" class="form-control" id="cost_matrimoniale" name="cost_matrimoniale" min="0" step="0.01" value="<?= e(number_format($linenCosts['matrimoniale'], 2, '.', '')) ?>" required>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <label for="cost_singola" class="form-label">Lenzuolo singolo</label>
-            <div class="input-group">
-              <span class="input-group-text">€</span>
-              <input type="number" class="form-control" id="cost_singola" name="cost_singola" min="0" step="0.01" value="<?= e(number_format($linenCosts['singola'], 2, '.', '')) ?>" required>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <label for="cost_set_bagno" class="form-label">Set da bagno</label>
-            <div class="input-group">
-              <span class="input-group-text">€</span>
-              <input type="number" class="form-control" id="cost_set_bagno" name="cost_set_bagno" min="0" step="0.01" value="<?= e(number_format($linenCosts['set_bagno'], 2, '.', '')) ?>" required>
-            </div>
-          </div>
-          <div class="col-12">
-            <button type="submit" class="btn btn-primary">Salva costi</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-xl-10">
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h5 mb-3">Alert pressione atmosferica</h2>
-      <p class="text-muted">L’allerta in dashboard e gli SMS meteo si attivano quando la pressione è pari o inferiore alla soglia. Gli SMS mantengono le regole di invio durante la stagione estiva e di prevenzione degli avvisi ripetuti. Valore predefinito: 1013 hPa.</p>
-      <form method="post" class="row g-3 align-items-end">
-        <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-        <input type="hidden" name="action" value="pressure_alert_threshold">
-        <div class="col-12 col-md-6"><label for="pressureAlertThreshold" class="form-label">Soglia pressione atmosferica</label><div class="input-group"><input type="number" class="form-control" id="pressureAlertThreshold" name="atmospheric_pressure_alert_threshold" step="any" value="<?= e(str_replace(',', '.', $pressureThresholdValue)) ?>" required><span class="input-group-text">hPa</span></div><div class="form-text">Inserisci un valore maggiore di zero.</div></div>
-        <div class="col-12 col-md-auto"><button class="btn btn-primary">Salva soglia pressione</button></div>
-      </form>
-    </div></div>
-  </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
