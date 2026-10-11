@@ -2,6 +2,19 @@
 require_once __DIR__ . '/login_workflow.php';
 require_once __DIR__ . '/ecowitt_alerts.php';
 
+function user_alerts_tasks(array $tasks, ?DateTimeImmutable $now = null): array {
+    $zone = new DateTimeZone('Europe/Rome');
+    $today = ($now ?? new DateTimeImmutable('now', $zone))->setTimezone($zone)->format('Y-m-d');
+    $alerts = [];
+    foreach ($tasks as $task) {
+        $raw = (string)($task['due_date'] ?? '');
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $raw, $zone);
+        if (!$date || $date->format('Y-m-d') !== $raw || $raw > $today) continue;
+        $alerts[] = ['type'=>'task','title'=>$task['title'],'summary'=>'Task aperto · Scadenza: ' . $date->format('d/m/Y'), 'url'=>'/login_workflow.php?task=' . (int)$task['id']];
+    }
+    return $alerts;
+}
+
 function user_alerts_weather(array $weather, float $threshold): array {
     $alerts = [];
     foreach (ecowitt_weather_alert_definitions($weather, $threshold) as $type => $alert) {
@@ -14,9 +27,7 @@ function user_alerts_weather(array $weather, float $threshold): array {
 function user_alerts_collect(PDO $pdo, array $user, ?array $weather = null): array {
     $alerts = []; $errors = [];
     try {
-        foreach (login_workflow_tasks($pdo, $user) as $task) {
-            $alerts[] = ['type'=>'task','title'=>$task['title'],'summary'=>'Task aperto · Scadenza: ' . $task['due_date'], 'url'=>'/login_workflow.php?task=' . (int)$task['id']];
-        }
+        $alerts = array_merge($alerts, user_alerts_tasks(login_workflow_tasks($pdo, $user)));
     } catch (Throwable $exception) { error_log('[User alerts tasks] ' . $exception->getMessage()); $errors[] = 'Task'; }
     try {
         foreach (login_workflow_controls($pdo, $user) as $procedure => $control) {
