@@ -645,7 +645,7 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
   $autocontrolloRange = get_summer_season_range($pdo);
   $autocontrolloToday = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
   $autocontrolloRows = [];
-  $formatControlDate = static fn(?string $date): string => $date ? (new DateTimeImmutable($date))->format('d/m/Y') : 'Stagione non configurata';
+  $formatControlDate = static fn(?string $date): string => autocontrollo_dashboard_date_label($date, $autocontrolloRange);
   $addControl = static function (string $label, string $icon, string $url, ?string $date, bool $inProgress = false, string $suffix = '', ?bool $availableOverride = null) use (&$autocontrolloRows, $autocontrolloToday): void {
     $available = $date !== null && $date <= $autocontrolloToday;
     $autocontrolloRows[] = ['label'=>$label,'icon'=>$icon,'url'=>$url,'date'=>$date,'available'=>$availableOverride ?? $available,'in_progress'=>$inProgress,'suffix'=>$suffix];
