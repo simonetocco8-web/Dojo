@@ -38,7 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trapLocation = trim((string)($_POST['trap_location'] ?? ''));
     $groundingRodLocation = trim((string)($_POST['grounding_rod_location'] ?? ''));
     try {
-        if ($action === 'vehicle_create' || $action === 'vehicle_update') {
+        if ($action === 'gas_alert_update') {
+            $gasLevel = autocontrollo_parse_gas_alert_level((string)($_POST['gas_alert_level'] ?? ''));
+            set_setting('autocontrollo_gas_alert_level', (string)$gasLevel, $pdo);
+            $message = 'updated';
+        } elseif ($action === 'vehicle_create' || $action === 'vehicle_update') {
             autocontrollo_vehicle_save($pdo, $action === 'vehicle_create' ? null : $id, (string)($_POST['vehicle_brand'] ?? ''), (string)($_POST['vehicle_model'] ?? ''), (string)($_POST['vehicle_plate'] ?? ''));
             $message = $action === 'vehicle_create' ? 'created' : 'updated';
         } elseif ($action === 'vehicle_delete') {
@@ -156,6 +160,7 @@ $fireExtinguishers = $pdo->query('SELECT id, extinguisher_type, capacity_kg FROM
 $activeUsers = $pdo->query('SELECT id, nome, cognome, email FROM users WHERE is_active=1 AND deleted_at IS NULL ORDER BY cognome, nome, email, id')->fetchAll(PDO::FETCH_ASSOC);
 $responsibleSettings = get_settings(array_map(static fn($procedure) => 'autocontrollo_responsible_' . $procedure, array_keys(autocontrollo_responsibility_procedures())), $pdo);
 $vehicles = $pdo->query('SELECT id,brand,model,license_plate FROM autocontrollo_vehicles ORDER BY brand,model,id')->fetchAll(PDO::FETCH_ASSOC);
+$gasAlertLevel = autocontrollo_get_gas_alert_level($pdo);
 $message = (string)($_GET['msg'] ?? '');
 $title = 'Setting Autocontrollo';
 include __DIR__ . '/partials/header.php';
@@ -176,6 +181,7 @@ include __DIR__ . '/partials/header.php';
     ['rodent-traps','geo-alt','Trappole Roditori'], ['grounding-rods','plug','Paline Messa a Terra'],
     ['refrigerators','snow','Frigoriferi'], ['fire-extinguishers','fire','Estintori'],
     ['haccp-cleaning','clipboard-check','Pulizie HACCP'], ['vehicles','truck','Veicoli'],
+    ['gas-level','speedometer2','Livello Gas'],
   ] as [$anchor,$icon,$label]): ?>
   <div class="col-6 col-md-4 col-xl-2"><a class="btn btn-outline-primary w-100 h-100 py-3 d-flex flex-column justify-content-center align-items-center" href="#<?= e($anchor) ?>"><i class="bi bi-<?= e($icon) ?> fs-4 mb-1"></i><span><?= e($label) ?></span></a></div>
   <?php endforeach; ?>
@@ -352,5 +358,24 @@ include __DIR__ . '/partials/header.php';
 </div></div>
 </section>
 <?php include __DIR__ . '/partials/autocontrollo_vehicles.php'; ?>
+<section class="col-12 col-lg-6" id="gas-level" style="scroll-margin-top:1rem">
+<div class="card shadow-sm h-100"><div class="card-body">
+  <h2 class="h5 mb-3"><i class="bi bi-speedometer2 me-1"></i>Livello Gas</h2>
+  <form method="post">
+    <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
+    <input type="hidden" name="action" value="gas_alert_update">
+    <label class="form-label" for="gasAlertLevel">Livello minimo di alert del bombolone del gas: <output id="gasAlertValue" for="gasAlertLevel" class="fw-semibold" aria-live="polite"><?= $gasAlertLevel ?></output></label>
+    <input type="range" class="form-range" id="gasAlertLevel" name="gas_alert_level" min="0" max="1000" step="100" value="<?= $gasAlertLevel ?>" aria-describedby="gasAlertHelp">
+    <div class="d-flex justify-content-between small text-muted"><span>0</span><span>1000</span></div>
+    <p class="form-text" id="gasAlertHelp">Sposta il cursore per impostare la soglia minima, a intervalli di 100.</p>
+    <button class="btn btn-primary">Salva soglia gas</button>
+  </form>
+</div></div>
+</section>
 </div>
+<script>
+document.getElementById('gasAlertLevel').addEventListener('input', function () {
+  document.getElementById('gasAlertValue').value = this.value;
+});
+</script>
 <?php include __DIR__ . '/partials/footer.php'; ?>
