@@ -2,6 +2,22 @@
 
 require_once __DIR__ . '/settings.php';
 
+function autocontrollo_parse_gas_alert_level(string $value): int {
+    $value = trim($value);
+    if (!ctype_digit($value) || strlen($value) > 4 || (int)$value > 1000 || (int)$value % 100 !== 0) {
+        throw new InvalidArgumentException('Il livello minimo del gas deve essere tra 0 e 1000, a intervalli di 100.');
+    }
+    return (int)$value;
+}
+
+function autocontrollo_get_gas_alert_level(?PDO $pdo = null): int {
+    try {
+        return autocontrollo_parse_gas_alert_level((string)get_setting('autocontrollo_gas_alert_level', '0', $pdo));
+    } catch (InvalidArgumentException $exception) {
+        return 0;
+    }
+}
+
 function autocontrollo_responsibility_procedures(): array {
     return [
         'electrical' => 'Quadri Elettrici',
