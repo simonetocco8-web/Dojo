@@ -62,3 +62,15 @@ logout.php
 - Durante la stagione estiva, `notification/ecowitt-weather-alerts-cron.php` invia al reparto Manutenzione un SMS quando la raffica supera 30 km/h o la pressione è pari o inferiore a 1013 hPa. Ogni allerta viene inviata una sola volta finché il valore non torna nella norma.
 - Esempio cron ogni 5 minuti: `*/5 * * * * /usr/bin/php /percorso/dojo/notification/ecowitt-weather-alerts-cron.php`
 - Lo stesso cron verifica i boiler eWeLink durante la stagione: il setpoint dell'acqua calda si configura in **Avanzate → Impostazioni** e genera un SMS a Manutenzione quando una temperatura è pari o inferiore alla soglia.
+
+### Controllo temperature boiler ogni 5 minuti
+
+Il processo `notification/boiler-temperature-alerts-cron.php` legge le temperature di Boiler Appartamenti e Boiler Cottage e invia email e SMS agli utenti attivi Manutenzione se una temperatura è **inferiore** al setpoint acqua calda dei setting generali. Usa le date di apertura e chiusura degli stessi setting, estremi inclusi, nel fuso Europe/Rome; senza stagione o setpoint non invia avvisi. Ogni canale invia un solo alert per boiler finché la temperatura non torna almeno al setpoint. Una lettura mancante non riabilita gli alert.
+
+Configurare sul server, sostituendo il percorso con quello reale:
+
+```cron
+*/5 * * * * /usr/bin/php /percorso/dojo/notification/boiler-temperature-alerts-cron.php
+```
+
+Richiede la configurazione eWeLink MCP, il servizio di posta, SMS abilitati e i contatti degli utenti Manutenzione. Il controllo boiler già presente nel CRON meteo usa gli stessi stati e lo stesso blocco contro esecuzioni simultanee. L'invio email usa il servizio esistente, che in caso di errore della funzione mail salva il messaggio in `storage/mail.log`.

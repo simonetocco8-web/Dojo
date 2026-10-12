@@ -1,0 +1,21 @@
+<?php
+require_once __DIR__ . '/../../core/boiler_alerts.php';
+$dsn=getenv('DOJO_TEST_MYSQL_DSN');if(!$dsn)exit("Use a dedicated empty test database.\n");
+$p=new PDO($dsn,'root','',[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+$p->exec('CREATE TABLE users (email VARCHAR(100),telefono VARCHAR(30),dipartimento VARCHAR(100),is_active TINYINT,deleted_at DATETIME NULL)');
+$p->exec("INSERT INTO users VALUES ('maintenance@example.invalid','3331234567','Manutenzione',1,NULL),('inactive@example.invalid','3339999999','Manutenzione',0,NULL),('other@example.invalid','3338888888','Reception',1,NULL)");
+set_setting('summer_season_start','2026-06-01',$p);set_setting('summer_season_end','2026-09-30',$p);set_setting('hot_water_temperature_setpoint','50',$p);
+$env=['sms'=>['enabled'=>false]];
+$data=['boilers'=>['Boiler Appartamenti'=>49,'Boiler Cottage'=>50]];
+$now=new DateTimeImmutable('2026-06-01 00:00:00',new DateTimeZone('Europe/Rome'));
+$r=send_boiler_temperature_alerts($p,$env,$now,$data);
+if(!$r['season_active']||$r['emails_sent']!==1||$r['recipients']!==1)throw new RuntimeException('Season boundary or recipients wrong.');
+$r=send_boiler_temperature_alerts($p,$env,$now,$data);if($r['emails_sent']!==0)throw new RuntimeException('Repeated emails.');
+$r=send_boiler_temperature_alerts($p,$env,$now,['boilers'=>['Boiler Appartamenti'=>null,'Boiler Cottage'=>50]]);
+$r=send_boiler_temperature_alerts($p,$env,$now,$data);if($r['emails_sent']!==0)throw new RuntimeException('Missing reading reset alert.');
+send_boiler_temperature_alerts($p,$env,$now,['boilers'=>['Boiler Appartamenti'=>50,'Boiler Cottage'=>51]]);
+$r=send_boiler_temperature_alerts($p,$env,$now,$data);if($r['emails_sent']!==1)throw new RuntimeException('Recovery did not rearm.');
+$last=new DateTimeImmutable('2026-09-30 23:59:59',new DateTimeZone('Europe/Rome'));if(!ecowitt_alert_season_is_active($p,$last))throw new RuntimeException('Closing day excluded.');
+$r=send_boiler_temperature_alerts($p,$env,$last->modify('+1 second'),$data);if($r['season_active']||$r['emails_sent'])throw new RuntimeException('Outside season sent alert.');
+set_setting('summer_season_start',null,$p);if(send_boiler_temperature_alerts($p,$env,$now,$data)['season_active'])throw new RuntimeException('Missing season accepted.');
+echo "Boiler: stagione inclusiva, destinatari, deduplica, ripristino e letture mancanti verificati.\n";

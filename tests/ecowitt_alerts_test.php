@@ -25,7 +25,7 @@ $boilerMessage = boiler_temperature_alert_message('Boiler Appartamenti', 45, 50)
 if (sms_utf8_length(sms_gsm7_sanitize($boilerMessage)) > 160) {
     throw new RuntimeException('Il messaggio di allerta caldaia supera il limite di un SMS.');
 }
-if (!boiler_temperature_is_below_setpoint(50, 50) || !boiler_temperature_is_below_setpoint(49.9, 50)
+if (boiler_temperature_is_below_setpoint(50, 50) || !boiler_temperature_is_below_setpoint(49.9, 50)
     || boiler_temperature_is_below_setpoint(50.1, 50) || boiler_temperature_is_below_setpoint(null, 50)) {
     throw new RuntimeException('La soglia di temperatura caldaie non è valutata correttamente.');
 }
