@@ -692,8 +692,8 @@ if ($user && (is_admin() || user_has_department($user, 'Amministrazione') || use
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h2 class="h6 mb-0"><i class="bi bi-cloud-sun me-1"></i>Previsioni Meteo</h2>
         </div>
-        <div class="ratio" style="--bs-aspect-ratio:50%;">
-          <iframe src="https://www.3bmeteo.com/moduli_esterni/localita_7_giorni_compatto/11525246/ffffff/4a4a4a/5e5e5e/ffffff/it" class="border-0 w-100 h-100" allowtransparency="true"></iframe>
+        <div>
+          <iframe src="https://www.3bmeteo.com/moduli_esterni/localita_7_giorni_orario/11525244/000000/ffffff/5e5e5e/ffffff/it/0/1" width="382" height="497" class="border-0 w-100 d-block" title="Previsioni meteo orarie per i prossimi 7 giorni"></iframe>
         </div>
         <div class="small text-end mt-2">
           <a href="https://www.3bmeteo.com/meteo/capo+vaticano" target="_blank" rel="noopener">Meteo Capo Vaticano</a>
