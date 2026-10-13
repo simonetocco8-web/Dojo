@@ -116,40 +116,44 @@ $title = 'Nuovo Transfer Interno';
 include __DIR__ . '/partials/header.php';
 ?>
 <div class="row justify-content-center">
-  <div class="col-12 col-lg-7 col-xl-6">
+  <div class="col-12 col-lg-9 col-xl-8">
     <div class="card shadow-sm">
-      <div class="card-body">
-        <h1 class="h5 mb-3">Nuovo Transfer Interno</h1>
-        <?php if($message): ?><div class="alert alert-info"><?= e($message) ?></div><?php endif; ?>
+      <div class="card-body p-3 p-md-4">
+        <div class="text-muted small text-uppercase fw-semibold mb-1">Transfer interni</div>
+        <h1 class="h4 mb-2">Nuovo transfer interno</h1>
+        <p class="text-muted mb-4">Indica camera, data e orario, poi scegli persone, direzione e località.</p>
+        <?php if($message): ?><div class="alert alert-danger" role="alert"><?= e($message) ?></div><?php endif; ?>
         <form method="post" id="internalTransferCreateForm" data-wait-feedback="Creazione transfer e invio SMS in corso...">
           <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
           <div class="row g-3">
+            <div class="col-12"><h2 class="h6 border-bottom pb-2 mb-0">Quando e per chi</h2></div>
             <div class="col-md-4">
-              <label class="form-label">Camera</label>
-              <input type="text" name="room_number" class="form-control" required>
+              <label class="form-label" for="transfer_room_number">Camera</label>
+              <input type="text" name="room_number" id="transfer_room_number" class="form-control" required>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Verso</label>
-              <select name="direction" class="form-select">
-                <option value="da">da</option>
-                <option value="per">per</option>
+              <label class="form-label" for="transfer_date">Data</label>
+              <input type="date" name="date" id="transfer_date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="transfer_time">Ora</label>
+              <input type="time" name="time" id="transfer_time" class="form-control" required>
+            </div>
+            <div class="col-12"><h2 class="h6 border-bottom pb-2 mb-0 mt-2">Dettagli del tragitto</h2></div>
+            <div class="col-md-4">
+              <label class="form-label" for="transfer_people_count">Persone</label>
+              <input type="number" name="people_count" id="transfer_people_count" class="form-control" min="1" step="1" value="1" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="transfer_direction">Verso</label>
+              <select name="direction" id="transfer_direction" class="form-select">
+                <option value="da">Da località alla struttura</option>
+                <option value="per">Dalla struttura alla località</option>
               </select>
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Data</label>
-              <input type="date" name="date" class="form-control" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Ora</label>
-              <input type="time" name="time" class="form-control" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">Persone</label>
-              <input type="number" name="people_count" class="form-control" min="1" step="1" value="1" required>
-            </div>
-            <div class="col-md-8">
-              <label class="form-label">Località</label>
-              <div class="d-flex gap-2">
+            <div class="col-12">
+              <label class="form-label" for="loc_predef">Località predefinita</label>
+              <div class="d-flex flex-column flex-sm-row gap-2">
                 <select name="location_predef" class="form-select" id="loc_predef" <?= !$hasPredefinedLocations ? 'disabled' : '' ?>>
                   <?php foreach($predef as $p): ?>
                     <?php $locationRow = $locationRows[array_search($p, $predef, true)] ?? null; ?>
@@ -158,11 +162,12 @@ include __DIR__ . '/partials/header.php';
                 </select>
                 <div class="form-check d-flex align-items-center">
                   <input class="form-check-input" type="radio" name="loc_mode" value="predef" id="loc_mode_predef" <?= $hasPredefinedLocations ? 'checked' : 'disabled' ?>>
-                  <label class="form-check-label ms-1" for="loc_mode_predef">Predef.</label>
+                  <label class="form-check-label ms-1" for="loc_mode_predef">Predefinita</label>
                 </div>
               </div>
-              <div class="d-flex gap-2 mt-2">
-                <input type="text" name="location_custom" class="form-control" placeholder="Oppure inserisci manualmente...">
+              <label class="form-label mt-3" for="location_custom">Località manuale</label>
+              <div class="d-flex flex-column flex-sm-row gap-2">
+                <input type="text" name="location_custom" id="location_custom" class="form-control" placeholder="Oppure inserisci manualmente...">
                 <div class="form-check d-flex align-items-center">
                   <input class="form-check-input" type="radio" name="loc_mode" value="custom" id="loc_mode_custom" <?= !$hasPredefinedLocations ? 'checked' : '' ?>>
                   <label class="form-check-label ms-1" for="loc_mode_custom">Manuale</label>
@@ -170,12 +175,12 @@ include __DIR__ . '/partials/header.php';
               </div>
             </div>
             <div class="col-12">
-              <label class="form-label">Note</label>
-              <input type="text" name="note" class="form-control" maxlength="255" placeholder="Nota opzionale su singola riga">
+              <label class="form-label" for="transfer_note">Note</label>
+              <input type="text" name="note" id="transfer_note" class="form-control" maxlength="255" placeholder="Nota opzionale su singola riga">
             </div>
           </div>
-          <div class="mt-3 d-flex gap-2">
-            <button class="btn btn-primary">Crea transfer</button>
+          <div class="mt-4 pt-3 border-top d-flex flex-column flex-sm-row gap-2">
+            <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Crea transfer</button>
             <a class="btn btn-outline-secondary" href="<?= e($base) ?>/transfers_internal.php">Annulla</a>
           </div>
         </form>
