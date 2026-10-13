@@ -6,8 +6,9 @@ foreach (['rodent','grounding','fire','pool','temperature','haccp','electrical',
 
 function login_workflow_tasks(PDO $pdo, array $user): array {
     ensure_task_user_assignments_table($pdo);
-    $stmt = $pdo->prepare("SELECT t.* FROM tasks t WHERE t.status='aperto' AND t.deleted_at IS NULL AND EXISTS (SELECT 1 FROM task_user_assignments a WHERE a.task_id=t.id AND a.user_id=?) ORDER BY t.due_date, t.id");
-    $stmt->execute([$user['id']]);
+    $today = (new DateTimeImmutable('today', new DateTimeZone('Europe/Rome')))->format('Y-m-d');
+    $stmt = $pdo->prepare("SELECT t.* FROM tasks t WHERE t.status='aperto' AND t.deleted_at IS NULL AND t.due_date<=? AND EXISTS (SELECT 1 FROM task_user_assignments a WHERE a.task_id=t.id AND a.user_id=?) ORDER BY t.due_date, t.id");
+    $stmt->execute([$today, $user['id']]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

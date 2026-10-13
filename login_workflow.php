@@ -36,7 +36,7 @@ include __DIR__ . '/partials/header.php';
 <?php if ($selectedTask): ?>
 <div class="card shadow-sm mb-4"><div class="card-body">
   <h2 class="h5"><?= e($selectedTask['title']) ?></h2>
-  <p class="text-muted">Scadenza: <?= e($selectedTask['due_date']) ?> · Priorità: <?= e($selectedTask['priority']) ?></p>
+  <p class="text-muted">Scadenza: <?= e((new DateTimeImmutable($selectedTask['due_date']))->format('d/m/Y')) ?> · Priorità: <?= e($selectedTask['priority']) ?></p>
   <p><?= nl2br(e($selectedTask['description'])) ?></p>
   <form method="post" action="<?= e($base) ?>/task_status.php" class="mb-3">
     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="id" value="<?= (int)$selectedTask['id'] ?>"><input type="hidden" name="return_to" value="login_workflow"><input type="hidden" name="action" value="complete">
@@ -54,7 +54,7 @@ include __DIR__ . '/partials/header.php';
 <div class="row g-4">
 <div class="col-12 col-lg-6"><div class="card"><div class="card-body"><h2 class="h5">Task assegnati (<?= count($tasks) ?>)</h2>
 <?php if (!$tasks): ?><p class="text-muted">Nessun task aperto assegnato.</p><?php endif; ?>
-<ul class="list-group list-group-flush"><?php foreach ($tasks as $task): ?><li class="list-group-item px-0"><a href="<?= e($base) ?>/login_workflow.php?task=<?= (int)$task['id'] ?>"><?= e($task['title']) ?></a><div class="small text-muted">Scadenza: <?= e($task['due_date']) ?> · <?= e($task['priority']) ?></div></li><?php endforeach; ?></ul>
+<ul class="list-group list-group-flush"><?php foreach ($tasks as $task): ?><li class="list-group-item px-0"><a href="<?= e($base) ?>/login_workflow.php?task=<?= (int)$task['id'] ?>"><?= e($task['title']) ?></a><div class="small text-muted">Scadenza: <?= e((new DateTimeImmutable($task['due_date']))->format('d/m/Y')) ?> · <?= e($task['priority']) ?></div></li><?php endforeach; ?></ul>
 </div></div></div>
 <div class="col-12 col-lg-6"><div class="card"><div class="card-body"><h2 class="h5">Autocontrolli da eseguire (<?= count($controls) ?>)</h2>
 <?php if (!$controls): ?><p class="text-muted">Nessuna procedura assegnata disponibile.</p><?php endif; ?>

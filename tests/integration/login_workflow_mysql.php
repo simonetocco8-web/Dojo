@@ -12,6 +12,10 @@ $pdo->exec('INSERT INTO task_user_assignments (task_id,user_id) VALUES (1,1),(2,
 function expect($condition,$message) { if(!$condition)throw new RuntimeException($message); }
 $user=['id'=>1,'is_active'=>1,'dipartimento'=>'Bar'];
 expect(array_column(login_workflow_tasks($pdo,$user),'id')===[1],'Task visibility wrong');
+$pdo->exec("INSERT INTO tasks VALUES (5,'Past','Detail',DATE_SUB(CURDATE(),INTERVAL 1 DAY),'alta','aperto',NULL),(6,'Future','Detail',DATE_ADD(CURDATE(),INTERVAL 2 DAY),'alta','aperto',NULL)");
+$pdo->exec('INSERT INTO task_user_assignments (task_id,user_id) VALUES (5,1),(6,1)');
+expect(array_column(login_workflow_tasks($pdo,$user),'id')===[5,1],'Past or future task filtering wrong');
+
 $today=new DateTimeImmutable('today',new DateTimeZone('Europe/Rome'));
 $range=['start'=>$today->format('Y-m-d'),'end'=>$today->modify('+30 days')->format('Y-m-d')];
 set_setting('summer_season_start',$range['start'],$pdo);set_setting('summer_season_end',$range['end'],$pdo);
